@@ -33,5 +33,3 @@ jobs:
       - name: Deploy to GitHub Pages (optional)
         if: github.ref == 'refs/heads/main'  # Deploy only on pushes to `main` branch
         run: mkdocs gh-deploy --force
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
