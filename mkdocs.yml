@@ -1,0 +1,44 @@
+site_name: datethyme Documentation
+docs_dir: docs/md
+site_dir: docs/site
+
+nav:
+  - About: index.md
+  - Date: date.md
+  - NoneDate: nonedate.md
+  - Time: time.md
+  - NoneTime: nonetime.md
+
+plugins:
+  - mkdocstrings:
+      enabled: true
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_signature_annotations: true
+            show_symbol_type_toc: true
+            show_inheritance_diagram: false
+            docstring_section_style: list
+            summary: false
+            show_root_heading: true
+            show_source: false
+            show_submodules: false
+            members: true
+            group_by_category: true
+  - search:
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+
+theme:
+  name: readthedocs
+  highlightjs: true
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: false
+
+use_directory_urls: false

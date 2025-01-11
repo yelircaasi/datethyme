@@ -24,13 +24,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material
+          pip install mkdocs
 
       - name: Build the documentation
         run: mkdocs build
 
       - name: Deploy to GitHub Pages (optional)
         if: github.ref == 'refs/heads/main'  # Deploy only on pushes to `main` branch
-        run: mkdocs gh-deploy --force  # Deploy using the `gh-deploy` plugin to GitHub Pages
+        run: mkdocs gh-deploy --force
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}  # Your GitHub Pages deploy key, if needed
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
