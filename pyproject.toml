@@ -47,7 +47,7 @@ pytest-profiling = "^1.8.1"
 coverage         = ">=7.5.4"
 hypothesis       = ">6"
 
-[tool.poetry.group.mkdocs.dependencies]
+[tool.poetry.group.docs.dependencies]
 mkdocs               = ">=1.6"
 mkdocstrings-python  = ">=1.11"
 mkdocs-minify-plugin = ">=0.8"
