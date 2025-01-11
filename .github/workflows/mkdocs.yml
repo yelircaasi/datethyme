@@ -32,4 +32,4 @@ jobs:
 
       - name: Deploy to GitHub Pages (optional)
         if: github.ref == 'refs/heads/main'  # Deploy only on pushes to `main` branch
-        run: mkdocs gh-deploy --force
+        run: poetry run mkdocs gh-deploy --force
