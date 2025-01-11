@@ -35,10 +35,4 @@ theme:
   name: readthedocs
   highlightjs: true
 
-markdown_extensions:
-  - pymdownx.arithmatex:
-      generic: true
-  - toc:
-      permalink: false
-
 use_directory_urls: false
