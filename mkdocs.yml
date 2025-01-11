@@ -26,9 +26,11 @@ plugins:
             show_submodules: false
             members: true
             group_by_category: true
+  - minify:
+      enabled: true
 
 theme:
-  name: readthedocs
+  name: material
   highlightjs: true
 
 use_directory_urls: false

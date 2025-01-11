@@ -90,7 +90,7 @@
               };
               preferWheels = true;
               extras = [];
-              groups = ["main" "dev" "docs" "test"];
+              groups = ["main" "dev" "test"];
             })
           ]
           ++ (with pkgs; [
