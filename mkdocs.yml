@@ -31,6 +31,9 @@ plugins:
 
 theme:
   name: material
+  scheme: slate
+  palette:
+    accent: teal
   highlightjs: true
 
 use_directory_urls: false
