@@ -31,8 +31,8 @@ plugins:
 
 theme:
   name: material
-  scheme: slate
   palette:
+    scheme: slate
     accent: teal
   highlightjs: true
 
