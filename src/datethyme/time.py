@@ -10,7 +10,8 @@ class TimeValidationError(TypeError):
 
 
 class Time(BaseModel):
-    """Bespoke time class designed to simplify the nebokrai codebase."""
+    """Bespoke immutable date class designed to simplify working with times,
+        in particular input parsing, time calculations, and ranges."""
 
     model_config = ConfigDict(frozen=True)
 

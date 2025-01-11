@@ -30,7 +30,10 @@ class DateValidationError(TypeError):
 
 
 class Date(BaseModel):
-    """Bespoke immutable date class designed to simplify working with dates."""
+    """
+    Bespoke immutable date class designed to simplify working with dates,
+        in particular input parsing, date calculations, and ranges.
+    """
 
     model_config = ConfigDict(frozen=True)
 
