@@ -67,13 +67,12 @@ class Date(BaseModel):
             else:
                 raise DateValidationError(f"Invalid string for conversion to Date: '{raw_date}'.")
         elif isinstance(raw_date, list | tuple):
-            assert len(raw_date) == 3, "Wrong unumber of arguments to Date (expected 3): {raw_date}"
+            assert len(raw_date) == 3, "Wrong number of arguments to Date (expected 3): {raw_date}"
             outdict = dict(zip(("year", "month", "day"), map(int, raw_date)))
         else:
             raise DateValidationError(f"Invalid value for conversion to Date: '{raw_date}'.")
-        assert (
-            0 < outdict["day"] <= MAX_DAYS.get(outdict["month"], 0)
-        ), f"Invalid month or number of days for month: {outdict}"
+        if not (outdict["month"] in MAX_DAYS) and (0 < outdict["day"] <= MAX_DAYS[outdict["month"]]):
+            raise DateValidationError(f"Invalid month or number of days for month: {outdict}")
         return outdict
 
     @model_serializer
