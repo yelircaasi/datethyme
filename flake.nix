@@ -5,7 +5,27 @@
       url = "github:nixos/nixpkgs/f7542cb59c3215123304811023035d4470751b2f";
     };
 
-    flake-utils.url = "github:numtide/flake-utils/11707dc2f618dd54ca8739b309ec4fc024de578b";
+    flake-utils = {
+      url = "github:numtide/flake-utils/11707dc2f618dd54ca8739b309ec4fc024de578b";
+    };
+
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix/64fedcac9fb75016f8f421a5a5587352d6482df6";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix/1daa3dd83abcfa95c08d6b3847e672bd90e0c9d8";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs/68b4c6dae0c47974bda803cf4e87921776f6081d";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     poetry2nix = {
       url = "github:nix-community/poetry2nix/4af430dfed3cb579de2e6e304076647bbea60959";
@@ -17,119 +37,36 @@
     self,
     nixpkgs,
     flake-utils,
+    pyproject-nix,
+    uv2nix,
+    pyproject-build-systems,
     poetry2nix,
   }:
     flake-utils.lib.eachDefaultSystem (system: let
-      datethyme = pkgs.poetry2nix.mkPoetryApplication {
-        projectDir = ./.;
-        preferWheels = true;
-        pyproject = ./pyproject.toml;
-        poetrylock = ./poetry.lock;
-      };
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [
-          poetry2nix.overlays.default
-          (final: _: {
-          })
-        ];
-        config.permittedInsecurePackages = [
-          "olm-3.2.16"
-        ];
       };
-
-      fhsEnv =
-        (pkgs.buildFHSUserEnv rec {
-          name = "datethyme";
-          targetPkgs = pkgs: (with pkgs; [
-            zlib
-            poetry
-            libuuid
-            file
-            libz
-            gcc
-            which
-            olm
-          ]);
-          profile = ''
-            export LD_LIBRARY_PATH="/lib:$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.libuuid]}"
-            poetry install # add --no-root here if this is just a metapackage
-            source "$(poetry env info --path)"/bin/activate
-          '';
-        })
-        .env;
-
-      python = pkgs.python312.withPackages (py:
-        with py; [
-          (
-            pkgs.poetry2nix.mkPoetryEditablePackage {
-              python = pkgs.python312;
-              projectDir = ./.;
-              editablePackageSources = {
-                datethyme = "${builtins.getEnv "PWD"}/src";
-              };
-            }
-          )
-        ]);
-
-      liveEnv = pkgs.mkShell {
-        shellHook = ''
-          export PYTHONPATH=$PWD/src:$PYTHONPATH
-          export PYTHONWARNINGS="ignore"
-          source .envrc
-        '';
-        buildInputs =
-          [
-            pkgs.python312
-            (pkgs.poetry2nix.mkPoetryEnv {
-              projectDir = ./.;
-              pyproject = ./pyproject.toml;
-              poetrylock = ./poetry.lock;
-              editablePackageSources = {
-                datethyme = ./src;
-              };
-              preferWheels = true;
-              extras = [];
-              groups = ["main" "dev" "test"];
-            })
-          ]
-          ++ (with pkgs; [
-            stdenv.cc.cc.lib
-            zlib
-            poetry
-            libuuid
-            file
-            libz
-            gcc
-            which
-            olm
-            openssh
-            graphviz
-            inferno  # inferno-flamegraph
-            flamegraph # flamegraph.pl
-            cargo-flamegraph # flamegraph
-            pre-commit
-            python312Packages.ipython
-            bandit
-            black
-            isort
-            mypy
-            pylint
-            semver
-            cyclonedx-python
-            pydeps
-            ruff
-            just
-            scalene
-          ]);
+      datethyme = (import ./nix/datethyme.nix {inherit pkgs;}).package;
+      uvEnv = import ./nix/uv.nix {
+        inherit
+          pkgs
+          pyproject-nix
+          uv2nix
+          pyproject-build-systems
+          ;
       };
-      pwd = builtins.getEnv "PWD";
+      poetryEnv = import ./nix/poetry.nix {inherit pkgs poetry2nix;};
     in {
-      packages.default = datethyme;
+      packages = {
+        inherit datethyme;
+        default = datethyme;
+      };
       devShells = {
-        default = liveEnv;
-        live = liveEnv;
-        fhs = fhsEnv;
+        default = uvEnv.pure;
+        uv = uvEnv.pure;
+        fhsUv = uvEnv.fhs;
+        poetry = poetryEnv.pure;
+        fhsPoetry = poetryEnv.fhs;
       };
       legacyPackages = pkgs;
     });

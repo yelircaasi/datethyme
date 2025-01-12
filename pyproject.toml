@@ -1,60 +1,60 @@
-[tool.poetry]
+[project]
 name = "datethyme"
 version = "0.2.0"
-description = ""
-authors = ["Isaac Riley <isaac.r.riley@proton.me>"]
+description = "Ergonomic date and time types built on Pydantic and datetime, with an emphasis on parsing, ranges, and arithmetic."
+authors = [{name = "Isaac Riley", email = "isaac.r.riley@proton.me"}]
 readme = "README.md"
-packages = [{ include = "datethyme", from = "src" }]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pydantic>=2.8",
+    "deal>4.24",
+    "multipledispatch>=1",
+]
 
-[tool.poetry.dependencies]
-# --- core -----------------------------------------------
-python           = ">3.12,<3.14"
-pydantic         = ">=2.8"
-deal             = ">4.24"
-multipledispatch = ">=1"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.group.dev.dependencies]
-deply        = ">=0.5.0"
-modulegraph  = ">=0.19.6"
-snakefood3   = ">=0.0.7"
-grimp        = ">=3.5"
-pyflame      = ">=0.3.2"
-
-[tool.poetry.group.util.dependencies]
-ipython       = ">=8.21"
-lefthook      = "^1.8.2"
-pre-commit    = ">=3.7"
-black         = ">=24.8"
-isort         = ">=5.13"
-mypy          = ">=1.10"
-pylint        = ">=3.1"
-semver        = ">=3.0"
-cyclonedx-bom = ">=4.4"
-tomli         = ">=2.0"
-pydeps        = ">=1.12"
-rust-just     = ">=1.37.0"
-ruff          = ">=0.8.1"
-scalene       = ">=1.5.49"
-bandit = "^1.8.0"
-
-[tool.poetry.group.test.dependencies]
-pytest           = ">=8.3"
-pytest-mock      = ">=3.14"
-pytest-testmon   = ">=2.1"
-pytest-cov       = ">=5.0"
-pytest-loguru    = ">=0.2"
-pytest-profiling = "^1.8.1"
-coverage         = ">=7.5.4"
-hypothesis       = ">6"
-
-[tool.poetry.group.docs.dependencies]
-mkdocs               = ">=1.6"
-mkdocstrings         = ">=0.27.0"
-mkdocstrings-python  = ">=1.11"
-mkdocs-minify-plugin = ">=0.8"
-mkdocs-dracula-theme = ">=1.0.7"
-mkdocs-plugin-inline-svg = "^0.1.0"
-mkdocs-material = "<9.5"
+[project.optional-dependencies]
+dev = [
+    "deply>=0.5.0",
+    "modulegraph>=0.19.6",
+    "snakefood3>=0.0.7",
+    "grimp>=3.5",
+    "pyflame>=0.3.2",
+]
+util = [
+    "ipython>=8.21",
+    "lefthook>=1.8.2",
+    "pre-commit>=3.7",
+    "mypy>=1.10",
+    "semver>=3.0",
+    "cyclonedx-bom>=4.4",
+    "tomli>=2.0",
+    "pydeps>=1.12",
+    "rust-just>=1.37.0",
+    "ruff>=0.8.1",
+    "scalene>=1.5.49",
+    "bandit>=1.8.0",
+]
+test = [
+    "pytest>=8.3",
+    "pytest-mock>=3.14",
+    "pytest-testmon>=2.1",
+    "pytest-cov>=5.0",
+    "pytest-loguru>=0.2",
+    "pytest-profiling>=1.8.1",
+    "coverage>=7.5.4",
+    "hypothesis>6",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocstrings>=0.27.0",
+    "mkdocstrings-python>=1.11",
+    # "mkdocs-minify-plugin>=0.8",
+    # "mkdocs-plugin-inline-svg>=0.1.0",
+    "mkdocs-material<9.5",
+]
 
 [tool.pytest.ini_options]
 cache_dir = ".cache/pytest_cache"
@@ -188,7 +188,3 @@ disable_error_code = ["prop-decorator"]
 strict = false
 python_executable = ".venv/bin/python"
 exclude = "(.venv/.*|.cache.*|scratch.*)"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
