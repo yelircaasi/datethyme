@@ -33,14 +33,8 @@ class Time(BaseModel):
                 return dict(zip(("hour", "minute"), map(int, substrings)))
             if len(substrings) == 3:
                 return dict(zip(("hour", "minute", "second"), map(float, substrings)))
-            # raise TimeValidationError(
-            #         "Argument to Time.model_validate must have exactly one or two colons."
-            #         " Given: '{raw_time}'."
-            #     )
-
         if isinstance(raw_time, list | tuple):
             if 0 < len(raw_time) < 3:
-                # raise TimeValidationError(f"Wrong number of arguments (expected 2): '{raw_time}'.")
                 hour = int(raw_time[0])
                 minute = int(raw_time[1]) if (len(raw_time) == 2) else 0
                 return {"hour": hour, "minute": minute}
@@ -64,43 +58,43 @@ class Time(BaseModel):
 
     @deal.pure
     def __add__(self, mins: int) -> "Time":
-        return Time.fromminutes(min(1440, max(0, self.tominutes() + mins)))
+        return Time.from_minutes(min(1440, max(0, self.to_minutes() + mins)))
 
     @deal.pure
     def __sub__(self, mins: int) -> "Time":
-        return Time.fromminutes(min(1440, max(0, self.tominutes() - mins)))
+        return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
 
     @deal.pure
     def __eq__(self, __other: Any) -> bool:
         if isinstance(__other, NoneTime):
             return False
         if isinstance(__other, Time):
-            return self.tominutes() == __other.tominutes()
+            return self.to_minutes() == __other.to_minutes()
         return False
 
     @deal.has()
     def __lt__(self, __other: "Time") -> bool:  # type: ignore
         if isinstance(__other, NoneTime):
             return False
-        return self.tominutes() < __other.tominutes()
+        return self.to_minutes() < __other.to_minutes()
 
     @deal.has()
     def __gt__(self, __other: "Time") -> bool:  # type: ignore
         if isinstance(__other, NoneTime):
             return False
-        return self.tominutes() > __other.tominutes()
+        return self.to_minutes() > __other.to_minutes()
 
     @deal.has()
     def __le__(self, __other: "Time") -> bool:  # type: ignore
         if isinstance(__other, NoneTime):
             return False
-        return self.tominutes() <= __other.tominutes()
+        return self.to_minutes() <= __other.to_minutes()
 
     @deal.has()
     def __ge__(self, __other: "Time") -> bool:  # type: ignore
         if isinstance(__other, NoneTime):
             return False
-        return self.tominutes() >= __other.tominutes()
+        return self.to_minutes() >= __other.to_minutes()
 
     @deal.pure
     def __hash__(self) -> int:
@@ -122,7 +116,7 @@ class Time(BaseModel):
 
     @classmethod
     @deal.pure
-    def fromminutes(cls, mins: int) -> "Time":
+    def from_minutes(cls, mins: int) -> "Time":
         hour, minute = divmod(mins, 60)
         return cls(hour=hour, minute=minute)
 
@@ -132,17 +126,17 @@ class Time(BaseModel):
         return NONETIME
 
     @deal.pure
-    def tominutes(self) -> int:
+    def to_minutes(self) -> int:
         return 60 * self.hour + self.minute
 
     @deal.pure
-    def timeto(self, time2: "Time") -> int:
-        t2, t1 = time2.tominutes(), self.tominutes()
+    def minutes_to(self, time2: "Time") -> int:
+        t2, t1 = time2.to_minutes(), self.to_minutes()
         return t2 - t1
 
     @deal.pure
-    def timefrom(self, time2: "Time") -> int:
-        t2, t1 = self.tominutes(), time2.tominutes()
+    def minutes_from(self, time2: "Time") -> int:
+        t2, t1 = self.to_minutes(), time2.to_minutes()
         return t2 - t1
 
 

@@ -14,7 +14,7 @@ class TestTime:
 
         assert (t + 102) == Time(hour=7, minute=18)
         assert (t - 123) == Time(hour=3, minute=33)
-        assert Time.fromminutes(666) == Time(hour=11, minute=6)
+        assert Time.from_minutes(666) == Time(hour=11, minute=6)
 
         assert (
             Time(hour=5, minute=36)
@@ -51,15 +51,10 @@ class TestTime:
 
     def test_timespans(self):
         t = Time(hour=5, minute=36)
-        assert t.timeto(Time(hour=23, minute=56)) == 1100
-        assert t.timefrom(Time(hour=3, minute=23)) == 133
+        assert t.minutes_to(Time(hour=23, minute=56)) == 1100
+        assert t.minutes_from(Time(hour=3, minute=23)) == 133
 
     def test_validation_error(self):
-        # with pytest.raises(
-        #     ValueError,
-        #     match=r"Argument to Time.model_validate must have exactly one colon",
-        # ):
-        #     _d = Time.model_validate("12:13:05")
 
         with pytest.raises(
             TimeValidationError,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "datethyme"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Isaac Riley <isaac.r.riley@proton.me>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ packages = [{ include = "datethyme", from = "src" }]
 [tool.poetry.dependencies]
 # --- core -----------------------------------------------
 python           = ">3.12,<3.14"
-pydantic         = ">2.9"
+pydantic         = ">=2.8"
 deal             = ">4.24"
 multipledispatch = ">=1"
 

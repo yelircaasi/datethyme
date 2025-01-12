@@ -23,9 +23,9 @@ class TestDate:
             == Date.model_validate("2025-4-25")
         )
 
-    def test_daysto(self):
+    def test_days_to(self):
         d = Date(year=2025, month=4, day=25)
-        assert d.daysto(Date(year=2026, month=1, day=15)) == 265
+        assert d.days_to(Date(year=2026, month=1, day=15)) == 265
 
         assert d._date == datetime.date(2025, 4, 25)
         assert d.weekday == "fri"

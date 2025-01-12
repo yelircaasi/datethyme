@@ -92,14 +92,14 @@ class Date(BaseModel):
     def __repr__(self) -> str:
         return f"Date({self.__str__()})"
 
-    @deal.pure
+    @deal.has()
     def __add__(self, days: int) -> "Date":
         d = date.fromordinal(self.ordinal + int(days))
         return Date(year=d.year, month=d.month, day=d.day)
 
-    @deal.pure
+    @deal.has()
     def __sub__(self, days: int) -> "Date":
-        return Date.fromordinal(self.ordinal - int(days))
+        return Date.from_ordinal(self.ordinal - int(days))
 
     @deal.pure
     def __eq__(self, __other: object) -> bool:
@@ -176,17 +176,29 @@ class Date(BaseModel):
     @classmethod
     def parse(cls, date_string: str) -> Self:
         return cls.model_validate(date_string)
+    
+    @classmethod
+    def if_valid(cls, date_string: str) -> Self | None:
+        """
+        Parse a string and return an instance of Date if possible; otherwise None.
+        """
+        try:
+            return cls.model_validate(date_string)
+        except DateValidationError:
+            return None
+        finally:
+            return None
 
     @classmethod
     @deal.has("time")
     def today(cls) -> "Date":
         d = date.today()
         return cls(year=d.year, month=d.month, day=d.day)
-
+    
     @classmethod
     @deal.pure
-    def fromordinal(cls, __ord: int) -> "Date":
-        d = date.fromordinal(__ord)
+    def from_ordinal(cls, ord: int) -> "Date":
+        d = date.fromordinal(ord)
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
@@ -200,7 +212,7 @@ class Date(BaseModel):
         return NoneDate()
 
     @deal.pure
-    def daysto(self, date2: "Date") -> int:
+    def days_to(self, date2: "Date") -> int:
         return date2.ordinal - self.ordinal
 
     @deal.pure
@@ -241,7 +253,7 @@ class Date(BaseModel):
         ending = ordinal_endings.get(self.day, "th")
         return f"{days[self.weekday_ordinal]}, {months[self.month]} {self.day}{ending}, {self.year}"
 
-    @deal.pure
+    @deal.has()
     def range(self, end: Union["Date", int], inclusive: bool = True) -> list["Date"]:
         """Returns a list of consecutive days, default inclusive. Supports reverse-order ranges."""
         inclusive = inclusive and (self != end != 0)
