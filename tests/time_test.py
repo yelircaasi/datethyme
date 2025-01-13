@@ -3,12 +3,20 @@ import re
 
 import pytest
 
-from datethyme import NoneTime, Time, TimeValidationError
+from datethyme import NoneTime, OptionalTime, Time, TimeValidationError
 
 
 class TestTime:
     time = Time(hour=5, minute=36)
     nonetime = Time.none()
+
+    def test_class_hierarchy(self):
+        assert isinstance(self.time, Time)
+        assert isinstance(self.nonetime, NoneTime)
+        assert isinstance(self.time, OptionalTime)
+        assert isinstance(self.nonetime, OptionalTime)
+        assert not isinstance(self.nonetime, Time)
+        assert not isinstance(self.time, NoneTime)
 
     def test_parse(self):
         assert (

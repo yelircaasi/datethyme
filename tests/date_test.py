@@ -3,12 +3,20 @@ import re
 
 import pytest
 
-from datethyme import Date, DateValidationError, NoneDate
+from datethyme import Date, DateValidationError, NoneDate, OptionalDate
 
 
 class TestDate:
     date = Date(year=2025, month=4, day=25)
     nonedate = Date.none()
+
+    def test_class_hierarchy(self):
+        assert isinstance(self.date, Date)
+        assert isinstance(self.nonedate, NoneDate)
+        assert isinstance(self.date, OptionalDate)
+        assert isinstance(self.nonedate, OptionalDate)
+        assert not isinstance(self.nonedate, Date)
+        assert not isinstance(self.date, NoneDate)
 
     def test_parse(self):
         assert self.date == Date.parse("2025-04-25") == Date.parse("2025-4-25")
@@ -41,12 +49,12 @@ class TestDate:
 
         assert d.stdlib == datetime.date(2025, 4, 25)
         assert d.weekday == "fri"
-        assert d.pretty() == "Friday, April 25th, 2025"
+        assert d.prose == "Friday, April 25th, 2025"
 
     def test_formatting(self):
-        assert Date(year=2025, month=4, day=3).pretty() == "Thursday, April 3rd, 2025"
-        assert Date(year=2027, month=10, day=4).pretty() == "Monday, October 4th, 2027"
-        assert Date(year=2019, month=6, day=21).pretty() == "Friday, June 21st, 2019"
+        assert Date(year=2025, month=4, day=3).prose == "Thursday, April 3rd, 2025"
+        assert Date(year=2027, month=10, day=4).prose == "Monday, October 4th, 2027"
+        assert Date(year=2019, month=6, day=21).prose == "Friday, June 21st, 2019"
 
     def test_today_and_tomorrow(self):
         today = Date.today()
