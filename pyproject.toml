@@ -1,6 +1,6 @@
 [project]
 name = "datethyme"
-version = "0.3.0"
+version = "0.4.0"
 description = "Ergonomic date and time types built on Pydantic and datetime, with an emphasis on parsing, ranges, and arithmetic."
 authors = [{name = "Isaac Riley", email = "isaac.r.riley@proton.me"}]
 readme = "README.md"
@@ -186,5 +186,4 @@ convention = "google"
 ignore_missing_imports = true
 disable_error_code = ["prop-decorator"]
 strict = false
-python_executable = ".venv/bin/python"
 exclude = "(.venv/.*|.cache.*|scratch.*)"

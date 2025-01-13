@@ -7,7 +7,6 @@ output:
 
 skip_output:
   - empty_summary
-  
 
 pre-commit:
 
@@ -25,13 +24,3 @@ pre-commit:
       tags: check lint
       glob: "*.py"
       run: ruff format {staged_files}
-    imports:
-      tags: check lint
-      run: python scripts/check_imports.py
-    test-structure:
-      tags: check lint
-      run: python scripts/check_test_structure.py
-      
-  scripts:
-    "scripts/check_imports.py":
-      runner: python

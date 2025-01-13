@@ -26,8 +26,6 @@ plugins:
             show_submodules: false
             members: true
             group_by_category: true
-  - minify:
-      enabled: true
 
 theme:
   name: material

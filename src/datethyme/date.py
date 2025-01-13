@@ -1,5 +1,5 @@
+import datetime
 import re
-from datetime import date
 from typing import Any, Literal, Self, Union
 
 import deal
@@ -26,7 +26,9 @@ WeekdayLiteral = Literal[
 
 
 class DateValidationError(TypeError):
-    pass
+    @classmethod
+    def from_value(cls, value: str | dict | list | tuple) -> Self:
+        return cls(f"Invalid value for conversion to Date: `{value}` ({value.__class__.__name__}).")
 
 
 class Date(BaseModel):
@@ -37,14 +39,14 @@ class Date(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    year: int = Field(ge=1970, le=2100, frozen=True)
-    month: int = Field(ge=1, le=12, frozen=True)
-    day: int = Field(ge=1, le=31, frozen=True)
+    year: int = Field(ge=0, le=2100, frozen=True)
+    month: int = Field(ge=0, le=12, frozen=True)
+    day: int = Field(ge=0, le=31, frozen=True)
 
     @model_validator(mode="before")
     @classmethod
     @deal.has()
-    @deal.raises(DateValidationError, AssertionError, TypeError)
+    @deal.raises(DateValidationError)
     def validate_date(cls, raw_date: str | dict | list | tuple) -> dict[str, str | int]:
         MAX_DAYS = {
             1: 31,
@@ -60,23 +62,28 @@ class Date(BaseModel):
             11: 30,
             12: 31,
         }
+        outdict = {}
         if isinstance(raw_date, dict):
             outdict = raw_date
-        elif isinstance(raw_date, str):
-            result = re.search(DATE_REGEX, raw_date.strip())
-            if result:
-                year, month, day = map(int, result.groups())
-                outdict = {"year": year, "month": month, "day": day}
-            else:
-                raise DateValidationError(f"Invalid string for conversion to Date: '{raw_date}'.")
-        elif isinstance(raw_date, list | tuple):
-            assert len(raw_date) == 3, "Wrong number of arguments to Date (expected 3): {raw_date}"
+        elif isinstance(raw_date, str) and (result := re.search(DATE_REGEX, raw_date.strip())):
+            year, month, day = map(int, result.groups())
+            outdict = {"year": year, "month": month, "day": day}
+        elif isinstance(raw_date, list | tuple) and len(raw_date) == 3:
             outdict = dict(zip(("year", "month", "day"), map(int, raw_date)))
         else:
-            raise DateValidationError(f"Invalid value for conversion to Date: '{raw_date}'.")
-        if not (outdict["month"] in MAX_DAYS) and (0 < outdict["day"] <= MAX_DAYS[outdict["month"]]):
-            raise DateValidationError(f"Invalid month or number of days for month: {outdict}")
-        return outdict
+            raise DateValidationError.from_value(raw_date)
+
+        if tuple(outdict.values()) == (0, 0, 0):
+            return outdict
+        if (
+            outdict
+            and (outdict["month"] in MAX_DAYS)
+            and (0 < outdict["day"] <= MAX_DAYS[outdict["month"]])
+            and all((outdict["year"] > 1970, outdict["month"] > 0, outdict["day"] > 0))
+        ):
+            return outdict
+
+        raise DateValidationError.from_value(raw_date)
 
     @model_serializer
     @deal.has()
@@ -94,7 +101,10 @@ class Date(BaseModel):
 
     @deal.has()
     def __add__(self, days: int) -> "Date":
-        d = date.fromordinal(self.ordinal + int(days))
+        """
+        Create a new date `days` later than `self`.
+        """
+        d = datetime.date.fromordinal(self.ordinal + int(days))
         return Date(year=d.year, month=d.month, day=d.day)
 
     @deal.has()
@@ -102,39 +112,38 @@ class Date(BaseModel):
         return Date.from_ordinal(self.ordinal - int(days))
 
     @deal.pure
-    def __eq__(self, __other: object) -> bool:
-        if not isinstance(__other, date | Date):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, datetime.date | Date):
             return False
         return (self.year, self.month, self.day) == (
-            __other.year,
-            __other.month,
-            __other.day,
+            other.year,
+            other.month,
+            other.day,
         )
 
     @deal.pure
-    def __lt__(self, __other: Any) -> bool:
-        if isinstance(__other, NoneDate):
-            # print("nonedate")
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, NoneDate):
             return False
-        return self.__int__() < int(__other)
+        return self.__int__() < int(other)
 
     @deal.pure
-    def __gt__(self, __other: Any) -> bool:
-        if isinstance(__other, NoneDate):
+    def __gt__(self, other: Any) -> bool:
+        if isinstance(other, NoneDate):
             return False
-        return self.__int__() > int(__other)
+        return self.__int__() > int(other)
 
     @deal.pure
-    def __le__(self, __other: Any) -> bool:
-        if isinstance(__other, NoneDate):
+    def __le__(self, other: Any) -> bool:
+        if isinstance(other, NoneDate):
             return False
-        return self.__int__() <= int(__other)
+        return self.__int__() <= int(other)
 
     @deal.pure
-    def __ge__(self, __other: Any) -> bool:
-        if isinstance(__other, NoneDate):
+    def __ge__(self, other: Any) -> bool:
+        if isinstance(other, NoneDate):
             return False
-        return self.__int__() >= int(__other)
+        return self.__int__() >= int(other)
 
     @deal.pure
     def __int__(self) -> int:
@@ -146,18 +155,18 @@ class Date(BaseModel):
 
     @property
     # @deal.pure
-    def _date(self) -> date:
-        return date(self.year, self.month, self.day)
+    def stdlib(self) -> datetime.date:
+        return datetime.date(self.year, self.month, self.day)
 
     @property
     @deal.pure
     def ordinal(self) -> int:
-        return self._date.toordinal()
+        return self.stdlib.toordinal()
 
     @property
     @deal.pure
     def weekday_ordinal(self) -> int:
-        return self._date.weekday()
+        return self.stdlib.weekday()
 
     @property
     @deal.pure
@@ -175,30 +184,34 @@ class Date(BaseModel):
 
     @classmethod
     def parse(cls, date_string: str) -> Self:
+        """
+        Alias for `model_validate`, but expects a string.
+        """
         return cls.model_validate(date_string)
-    
+
     @classmethod
-    def if_valid(cls, date_string: str) -> Self | None:
+    def if_valid(cls, date_string: str) -> Self | "NoneDate":
         """
         Parse a string and return an instance of Date if possible; otherwise None.
         """
         try:
             return cls.model_validate(date_string)
-        except DateValidationError:
-            return None
-        finally:
-            return None
+        except Exception:
+            return cls.none()
 
     @classmethod
     @deal.has("time")
     def today(cls) -> "Date":
-        d = date.today()
+        """
+        Return todays date, using datetime.date.today() from the Python standard library.
+        """
+        d = datetime.date.today()
         return cls(year=d.year, month=d.month, day=d.day)
-    
+
     @classmethod
     @deal.pure
     def from_ordinal(cls, ord: int) -> "Date":
-        d = date.fromordinal(ord)
+        d = datetime.date.fromordinal(ord)
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
@@ -208,8 +221,8 @@ class Date(BaseModel):
 
     @staticmethod
     @deal.pure
-    def nonedate() -> "NoneDate":
-        return NoneDate()
+    def none() -> "NoneDate":
+        return NONEDATE
 
     @deal.pure
     def days_to(self, date2: "Date") -> int:
@@ -293,36 +306,71 @@ class NoneDate(Date):
 
     @deal.pure
     def __init__(self) -> None:
-        super().__init__(year=1970, month=1, day=1)
+        super().__init__(year=0, month=0, day=0)
 
     @deal.pure
     def __str__(self) -> str:
-        return "NoneDate"
+        return self.__class__.__name__
 
     @deal.pure
     def __repr__(self) -> str:
         return self.__str__()
 
     @deal.pure
+    def __add__(self, _: Any) -> Self:
+        """
+        Simply returns itself: nt + 42 == nt
+        """
+        return self
+
+    @deal.pure
+    def __sub__(self, _: Any) -> Self:
+        """
+        Simply returns itself: nt - 42 == nt
+        """
+        return self
+
+    @deal.pure
     def __bool__(self) -> bool:
+        """
+        False in all cases.
+        """
         return False
 
     @deal.pure
-    def __eq__(self, __other: object) -> bool:
-        return isinstance(__other, NoneDate)
+    def __eq__(self, other: object) -> bool:
+        """
+        NoneDate is only equal to instances of NoneDate.
+        """
+        return isinstance(other, NoneDate)
 
     @deal.pure
-    def __lt__(self, __other: object) -> bool:
+    def __lt__(self, other: object) -> bool:
+        """
+        False in all cases.
+        """
         return False
 
     @deal.pure
-    def __gt__(self, __other: object) -> bool:
+    def __gt__(self, other: object) -> bool:
+        """
+        False in all cases.
+        """
         return False
 
     @deal.pure
-    def __le__(self, __other: object) -> bool:
+    def __le__(self, other: object) -> bool:
+        """
+        False in all cases.
+        """
         return False
 
     @deal.pure
-    def __ge__(self, __other: object) -> bool:
+    def __ge__(self, other: object) -> bool:
+        """
+        False in all cases.
+        """
         return False
+
+
+NONEDATE = NoneDate()

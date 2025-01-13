@@ -6,12 +6,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_valid
 
 
 class TimeValidationError(TypeError):
-    pass
+    @classmethod
+    def from_value(cls, value: str | dict | list | tuple) -> Self:
+        return cls(f"Invalid value for conversion to Time: `{value}` ({value.__class__.__name__}).")
 
 
 class Time(BaseModel):
     """Bespoke immutable date class designed to simplify working with times,
-        in particular input parsing, time calculations, and ranges."""
+    in particular input parsing, time calculations, and ranges."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -24,22 +26,30 @@ class Time(BaseModel):
     @classmethod
     @deal.has()
     @deal.raises(TimeValidationError)
-    def validate_date(cls, raw_time: str | dict | list | tuple) -> dict[str, str | int]:
+    def validate_time(cls, raw_time: str | dict | list | tuple) -> dict[str, str | int | float]:
+        if not raw_time:
+            raise TimeValidationError.from_value(raw_time)
+        outdict = {}
         if isinstance(raw_time, dict):
-            return raw_time
+            outdict = raw_time
         if isinstance(raw_time, str):
-            substrings = raw_time.split(":")
-            if len(substrings) == 2:
-                return dict(zip(("hour", "minute"), map(int, substrings)))
-            if len(substrings) == 3:
-                return dict(zip(("hour", "minute", "second"), map(float, substrings)))
-        if isinstance(raw_time, list | tuple):
-            if 0 < len(raw_time) < 3:
-                hour = int(raw_time[0])
-                minute = int(raw_time[1]) if (len(raw_time) == 2) else 0
-                return {"hour": hour, "minute": minute}
+            substrings = raw_time.split(":") if raw_time else []
+            if 0 < len(substrings) < 4:
+                outdict = dict(zip(("hour", "minute", "second"), map(float, substrings)))
+        if isinstance(raw_time, list | tuple) and (0 < len(raw_time) < 4):
+            outdict = dict(zip(("hour", "minute", "second"), raw_time))
 
-        raise TimeValidationError(f"Invalid value for conversion to Date: '{raw_time}'.")
+        if (tuple(outdict.values()) == (-1, -1, -1.0)) or all(
+            (
+                outdict,
+                0 <= outdict["hour"] <= 24,
+                0 <= outdict.get("minute", 0) <= 60,
+                0.0 <= outdict.get("second", 0.0) <= 60.0,
+            )
+        ):
+            return outdict
+
+        raise TimeValidationError.from_value(raw_time)
 
     @model_serializer
     @deal.pure
@@ -49,7 +59,7 @@ class Time(BaseModel):
     @deal.pure
     def __str__(self) -> str:
         if self.second:
-            return f"{self.hour:0>2}:{self.minute:0>2}:{self.second:.3f}"
+            return f"{self.hour:0>2}:{self.minute:0>2}:{self.second:06.3f}"
         return f"{self.hour:0>2}:{self.minute:0>2}"
 
     @deal.pure
@@ -109,6 +119,16 @@ class Time(BaseModel):
         return cls.model_validate(time_string)
 
     @classmethod
+    def if_valid(cls, time_string: str) -> Self | "NoneTime":
+        """
+        Parse a string and return an instance of Time if possible; otherwise None.
+        """
+        try:
+            return cls.model_validate(time_string)
+        except Exception:
+            return cls.none()
+
+    @classmethod
     @deal.has("time")
     def now(cls) -> "Time":
         time_now = datetime.now()
@@ -122,7 +142,7 @@ class Time(BaseModel):
 
     @staticmethod
     @deal.pure
-    def nonetime() -> "NoneTime":
+    def none() -> "NoneTime":
         return NONETIME
 
     @deal.pure
@@ -145,23 +165,28 @@ class NoneTime(Time):
 
     hour: int = Field(default=-1, frozen=True)
     minute: int = Field(default=-1, frozen=True)
+    second: float = Field(default=-1.0, frozen=True)
     isblank: bool = Field(default=True, frozen=True)
 
     @deal.pure
+    def __init__(self) -> None:
+        super().__init__(hour=-1, minute=-1, second=-1.0)
+
+    @deal.pure
     def __str__(self) -> str:
-        return "NoneTime"
+        return self.__class__.__name__
 
     @deal.pure
     def __repr__(self) -> str:
         return self.__str__()
 
     @deal.pure
-    def __add__(self, _: Any) -> "NoneTime":
-        return NoneTime()
+    def __add__(self, _: Any) -> Self:
+        return self
 
     @deal.pure
-    def __sub__(self, _: Any) -> "NoneTime":
-        return NoneTime()
+    def __sub__(self, _: Any) -> Self:
+        return self
 
     @deal.pure
     def __bool__(self) -> bool:

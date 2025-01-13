@@ -1,33 +1,45 @@
 import datetime
 import re
-from hypothesis import given
-from hypothesis import strategies as st
 
-from pydantic import ValidationError
 import pytest
-from datethyme import Date, NoneDate, DateValidationError
+
+from datethyme import Date, DateValidationError, NoneDate
 
 
 class TestDate:
-    def test_validation(self):
-        d = Date(year=2025, month=4, day=25)
-        assert d.model_dump() == "2025-04-25"
-        assert repr(d) == "Date(2025-04-25)"
+    date = Date(year=2025, month=4, day=25)
+    nonedate = Date.none()
 
+    def test_parse(self):
+        assert self.date == Date.parse("2025-04-25") == Date.parse("2025-4-25")
+
+    def test_representation(self):
+        assert self.date.model_dump() == "2025-04-25"
+        assert repr(self.date) == "Date(2025-04-25)"
+
+    def test_validation(self):
         assert (
-            d
+            self.date
             == Date.model_validate((2025, 4, 25))
             == Date.model_validate([2025, 4, 25])
-            == Date.model_validate(d)
+            == Date.model_validate(self.date)
             == Date.model_validate("2025-04-25")
             == Date.model_validate("2025-4-25")
         )
+
+    def test_if_valid(self):
+        assert Date.if_valid("") == self.nonedate
+        assert Date.if_valid("nonsense") == self.nonedate
+        assert Date.if_valid(None) == self.nonedate
+        assert Date.if_valid((1, 2, 3)) == self.nonedate
+        assert Date.if_valid("2025-04-25") == self.date
+        assert Date.if_valid("2025-4-25") == self.date
 
     def test_days_to(self):
         d = Date(year=2025, month=4, day=25)
         assert d.days_to(Date(year=2026, month=1, day=15)) == 265
 
-        assert d._date == datetime.date(2025, 4, 25)
+        assert d.stdlib == datetime.date(2025, 4, 25)
         assert d.weekday == "fri"
         assert d.pretty() == "Friday, April 25th, 2025"
 
@@ -98,33 +110,45 @@ class TestDate:
         assert not (Date(year=2020, month=12, day=30) == Date(year=2020, month=12, day=2))
 
     def test_date_validation(self):
-        # with pytest.raises(ValidationError, match=r"Invalid args for conversion to Date"):
-        #     _d = Date.model_validate("2025-13")
         assert Date.model_validate(Date(year=2020, month=12, day=20)) == Date(
             year=2020, month=12, day=20
         )
 
-        with pytest.raises(DateValidationError, match=re.compile(r"Invalid string for conversion to Date: '2025-13-05'.")):
-            _d = Date.model_validate("2025-13-05")
-
-        with pytest.raises(DateValidationError, match=re.compile(r"Invalid string for conversion to Date: '2025-05-32'.")):
-            _d = Date.model_validate("2025-05-32")
+        with pytest.raises(
+            DateValidationError,
+            match=re.compile(r"Invalid value for conversion to Date: `2025-13` \(str\)."),
+        ):
+            Date.model_validate("2025-13")
 
         with pytest.raises(
             DateValidationError,
-            match=r"Invalid string for conversion to Date: '2025-13'.",
+            match=re.compile(r"Invalid value for conversion to Date: `2025-13-05` \(str\)."),
+        ):
+            Date.model_validate("2025-13-05")
+
+        with pytest.raises(
+            DateValidationError,
+            match=re.compile(r"Invalid value for conversion to Date: `2025-05-32` \(str\)."),
+        ):
+            Date.model_validate("2025-05-32")
+
+        with pytest.raises(
+            DateValidationError,
+            match=re.compile(r"Invalid value for conversion to Date: `2025-13` \(str\)."),
         ):
             Date.model_validate("2025-13")
 
         with pytest.raises(
             TypeError,
-            match=r"BaseModel.model_validate\(\) takes 2 positional arguments but 4 were given",
+            match=re.compile(
+                r"BaseModel.model_validate\(\) takes 2 positional arguments but 4 were given"
+            ),
         ):
             Date.model_validate(2020, 12, 20)
 
         with pytest.raises(
             DateValidationError,
-            match=r"Invalid value for conversion to Date: 'None'.",
+            match=re.compile(r"Invalid value for conversion to Date: `None` \(NoneType\)."),
         ):
             Date.model_validate(None)
 
@@ -134,17 +158,18 @@ class TestDate:
 
 
 class TestNoneDate:
+    nonedate = Date.none()
+    date = Date(year=2025, month=4, day=25)
+
     def test_validation(self):
-        nd = Date.nonedate()
-        d = Date(year=2025, month=4, day=25)
+        _ = Date.none()
 
     def test_typing(self):
-        nd = Date.nonedate()
+        nd = Date.none()
         d = Date(year=2025, month=4, day=25)
 
         assert isinstance(nd, NoneDate)
         assert not nd
-
 
         assert not (nd < d)
         assert not (nd > d)
@@ -177,6 +202,9 @@ class TestNoneDate:
         assert not d.__eq__(nd)
 
     def test_string_and_repr(self):
-        nd = Date.nonedate()
-        d = Date(year=2025, month=4, day=25)
+        nd = Date.none()
         assert str(nd) == repr(nd) == "NoneDate"
+
+    def test_arithmetic(self):
+        assert (self.nonedate + 42) == self.nonedate
+        assert (self.nonedate - 42) == self.nonedate

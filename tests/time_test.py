@@ -1,21 +1,26 @@
 import datetime
 import re
-import pytest
-from pydantic import ValidationError
 
-from datethyme import Time, NoneTime, TimeValidationError
+import pytest
+
+from datethyme import NoneTime, Time, TimeValidationError
 
 
 class TestTime:
-    def test_validation(self):
+    time = Time(hour=5, minute=36)
+    nonetime = Time.none()
+
+    def test_parse(self):
+        assert (
+            self.time
+            == Time.parse("5:36")
+            == Time.parse("05:36")
+            == Time.parse("5:36:00")
+            == Time.parse("5:36:00.000")
+        )
+
+    def test_representation(self):
         t = Time(hour=5, minute=36)
-
-        assert t
-
-        assert (t + 102) == Time(hour=7, minute=18)
-        assert (t - 123) == Time(hour=3, minute=33)
-        assert Time.from_minutes(666) == Time(hour=11, minute=6)
-
         assert (
             Time(hour=5, minute=36)
             == Time.model_validate("5:36")
@@ -24,6 +29,14 @@ class TestTime:
             == Time.model_validate("05:36:00.000")
             == Time.model_validate(t)
         )
+
+    def test_validation(self):
+        t = Time(hour=5, minute=36)
+
+        assert t
+        assert (t + 102) == Time(hour=7, minute=18)
+        assert (t - 123) == Time(hour=3, minute=33)
+        assert Time.from_minutes(666) == Time(hour=11, minute=6)
 
         assert (
             Time(hour=5)
@@ -37,6 +50,8 @@ class TestTime:
             == Time.model_validate("05:00:00")
         )
 
+        assert Time.model_validate("12")
+
     def test_hash(self):
         t = Time(hour=5, minute=36)
         assert hash(t) == hash(Time(hour=5, minute=36))
@@ -49,36 +64,40 @@ class TestTime:
         t = Time(hour=5, minute=36)
         assert repr(t) == "Time(05:36)"
 
+        assert repr(Time.model_validate("6:03:49")) == "Time(06:03:49.000)"
+        assert repr(Time.model_validate("23:00:05.112003")) == "Time(23:00:05.112)"
+
+    def test_if_valid(self):
+        assert Time.if_valid("") == self.nonetime
+        assert Time.if_valid("nonsense") == self.nonetime
+        assert Time.if_valid(None) == self.nonetime
+        assert Time.if_valid((1, 2, 72)) == self.nonetime
+        assert Time.if_valid("5:36") == self.time
+        assert Time.if_valid("05:36") == self.time
+
     def test_timespans(self):
         t = Time(hour=5, minute=36)
         assert t.minutes_to(Time(hour=23, minute=56)) == 1100
         assert t.minutes_from(Time(hour=3, minute=23)) == 133
 
     def test_validation_error(self):
+        with pytest.raises(
+            TimeValidationError,
+            match=re.compile(r"Invalid value for conversion to Time: `\[\]` \(list\)\."),
+        ):
+            Time.model_validate([])
 
         with pytest.raises(
             TimeValidationError,
-            match=re.compile(r"Invalid value for conversion to Date: '12'\."),
+            match=re.compile(r"Invalid value for conversion to Time: `\(1, 2, 72\)` \(tuple\)\."),
         ):
-            _d = Time.model_validate("12")
+            Time.model_validate((1, 2, 72))
 
         with pytest.raises(
             TimeValidationError,
-            match=re.compile(r"Invalid value for conversion to Date: '\[\]'\."),
+            match=re.compile(r"Invalid value for conversion to Time: `None` \(NoneType\)\."),
         ):
-            _d = Time.model_validate([])
-
-        with pytest.raises(
-            TimeValidationError,
-            match=re.compile(r"Invalid value for conversion to Date: '\(1, 2, 3\)'\."),
-        ):
-            _d = Time.model_validate((1, 2, 3))
-
-        with pytest.raises(
-            TimeValidationError,
-            match=re.compile(r"Invalid value for conversion to Date: 'None'\."),
-        ):
-            _d = Time.model_validate(None)
+            Time.model_validate(None)
 
     def test_comparisons(self):
         assert Time(hour=13, minute=47) > Time(hour=13, minute=46)
@@ -117,10 +136,11 @@ class TestTime:
 
 
 class TestNoneTime:
-    def test_nonetime(self):
-        nt = Time.nonetime()
-        # nt2 = Time.model_validate("None")
-        # nt3 = Time.model_validate("null")
+    nonetime = Time.none()
+    time = Time(hour=5, minute=36)
+
+    def test_none(self):
+        nt = Time.none()
         t = Time(hour=5, minute=36)
 
         assert isinstance(nt, NoneTime)
@@ -162,3 +182,7 @@ class TestNoneTime:
         assert not t.__eq__(nt)
 
         assert str(nt) == repr(nt) == "NoneTime"
+
+    def test_arithmetic(self):
+        assert (self.nonetime + 42) == self.nonetime
+        assert (self.nonetime - 42) == self.nonetime
