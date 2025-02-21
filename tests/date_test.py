@@ -44,12 +44,11 @@ class TestDate:
         assert Date.if_valid("2025-4-25") == self.date
 
     def test_days_to(self):
-        d = Date(year=2025, month=4, day=25)
-        assert d.days_to(Date(year=2026, month=1, day=15)) == 265
+        assert self.date.days_to(Date(year=2026, month=1, day=15)) == 265
 
-        assert d.stdlib == datetime.date(2025, 4, 25)
-        assert d.weekday == "fri"
-        assert d.prose == "Friday, April 25th, 2025"
+        assert self.date.stdlib == datetime.date(2025, 4, 25)
+        assert self.date.weekday == "fri"
+        assert self.date.prose == "Friday, April 25th, 2025"
 
     def test_formatting(self):
         assert Date(year=2025, month=4, day=3).prose == "Thursday, April 3rd, 2025"
@@ -170,48 +169,47 @@ class TestNoneDate:
     date = Date(year=2025, month=4, day=25)
 
     def test_validation(self):
-        _ = Date.none()
+        assert self.nonedate == NoneDate() == Date.none()
+        assert self.nonedate.year is None
+        assert self.nonedate.month is None
+        assert self.nonedate.day is None
 
     def test_typing(self):
-        nd = Date.none()
-        d = Date(year=2025, month=4, day=25)
+        assert isinstance(self.nonedate, NoneDate)
+        assert not self.nonedate
 
-        assert isinstance(nd, NoneDate)
-        assert not nd
+        assert not (self.nonedate < self.date)
+        assert not (self.nonedate > self.date)
+        assert not (self.nonedate <= self.date)
+        assert not (self.nonedate >= self.date)
+        assert not (self.nonedate == self.date)
 
-        assert not (nd < d)
-        assert not (nd > d)
-        assert not (nd <= d)
-        assert not (nd >= d)
-        assert not (nd == d)
+        assert not (self.nonedate < self.nonedate)
+        assert not (self.nonedate > self.nonedate)
+        assert not (self.nonedate <= self.nonedate)
+        assert not (self.nonedate >= self.nonedate)
+        assert self.nonedate == self.nonedate
 
-        assert not (nd < nd)
-        assert not (nd > nd)
-        assert not (nd <= nd)
-        assert not (nd >= nd)
-        assert nd == nd
+        assert not self.nonedate.__lt__(self.date)
+        assert not self.nonedate.__gt__(self.date)
+        assert not self.nonedate.__le__(self.date)
+        assert not self.nonedate.__ge__(self.date)
+        assert not self.nonedate.__eq__(self.date)
 
-        assert not nd.__lt__(d)
-        assert not nd.__gt__(d)
-        assert not nd.__le__(d)
-        assert not nd.__ge__(d)
-        assert not nd.__eq__(d)
+        assert not (self.date < self.nonedate)
+        assert not (self.date > self.nonedate)
+        assert not (self.date <= self.nonedate)
+        assert not (self.date >= self.nonedate)
+        assert not (self.date == self.nonedate)
 
-        assert not (d < nd)
-        assert not (d > nd)
-        assert not (d <= nd)
-        assert not (d >= nd)
-        assert not (d == nd)
-
-        assert not d.__lt__(nd)
-        assert not d.__gt__(nd)
-        assert not d.__le__(nd)
-        assert not d.__ge__(nd)
-        assert not d.__eq__(nd)
+        assert not self.date.__lt__(self.nonedate)
+        assert not self.date.__gt__(self.nonedate)
+        assert not self.date.__le__(self.nonedate)
+        assert not self.date.__ge__(self.nonedate)
+        assert not self.date.__eq__(self.nonedate)
 
     def test_string_and_repr(self):
-        nd = Date.none()
-        assert str(nd) == repr(nd) == "NoneDate"
+        assert str(self.nonedate) == repr(self.nonedate) == "NoneDate"
 
     def test_arithmetic(self):
         assert (self.nonedate + 42) == self.nonedate
