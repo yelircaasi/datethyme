@@ -2,7 +2,7 @@
   description = "An flake to use a Python poetry project in an FHS environment when poetry2nix is uncooperative";
   inputs = {
     nixpkgs = {
-      url = "github:nixos/nixpkgs/f7542cb59c3215123304811023035d4470751b2f";
+      url = "github:nixos/nixpkgs/908514a0885f889432825e9ac71842ca444e8bd5";
     };
 
     flake-utils = {
@@ -10,25 +10,25 @@
     };
 
     pyproject-nix = {
-      url = "github:pyproject-nix/pyproject.nix/64fedcac9fb75016f8f421a5a5587352d6482df6";
+      url = "github:pyproject-nix/pyproject.nix/e09c10c24ebb955125fda449939bfba664c467fd";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     uv2nix = {
-      url = "github:pyproject-nix/uv2nix/1daa3dd83abcfa95c08d6b3847e672bd90e0c9d8";
+      url = "github:pyproject-nix/uv2nix/582024dc64663e9f88d467c2f7f7b20d278349de";
       inputs.pyproject-nix.follows = "pyproject-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     pyproject-build-systems = {
-      url = "github:pyproject-nix/build-system-pkgs/68b4c6dae0c47974bda803cf4e87921776f6081d";
+      url = "github:pyproject-nix/build-system-pkgs/7dba6dbc73120e15b558754c26024f6c93015dd7";
       inputs.pyproject-nix.follows = "pyproject-nix";
       inputs.uv2nix.follows = "uv2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     poetry2nix = {
-      url = "github:nix-community/poetry2nix/4af430dfed3cb579de2e6e304076647bbea60959";
+      url = "github:nix-community/poetry2nix/ce2369db77f45688172384bbeb962bc6c2ea6f94";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
