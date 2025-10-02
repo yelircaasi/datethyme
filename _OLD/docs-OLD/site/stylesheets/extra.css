@@ -1,0 +1,44 @@
+:root > * {
+    --md-code-hl-string-color: #0FF1CE;
+
+    /* --md-code-fg-color
+    --md-code-bg-color
+    --md-code-hl-color
+
+    --md-code-hl-number-color
+    --md-code-hl-special-color
+    --md-code-hl-function-color
+    --md-code-hl-constant-color
+    --md-code-hl-keyword-color
+    --md-code-hl-string-color
+    --md-code-hl-name-color
+    --md-code-hl-operator-color
+    --md-code-hl-punctuation-color
+    --md-code-hl-comment-color
+    --md-code-hl-generic-color
+    --md-code-hl-variable-color */
+  }
+
+.highlight .k {
+    color: #555357;
+}
+
+.highlight .o {
+  color: #77EE77;
+}
+
+.highlight .kn {
+  color: #116311;
+}
+
+.highlight .p {
+  color: #718132;
+}
+
+.highlight .n {
+  color: #076a6e;
+}
+
+.highlight .nn {
+  color: #3459a8;
+}

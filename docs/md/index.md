@@ -1,6 +1,6 @@
-# datethyme
+# hello-world Documentation
 
-Ergonomic date and time types built on Pydantic and datetime.
+Sample project overengineered to print 'Hello, world!' to the console.
 
 ## Installation
 
@@ -11,9 +11,7 @@ Coming soon
 Quality and testing is an important concern. Before making a commit, be sure to set up `lefthook`. The following commands should suffice, provided that Python and Poetry are installed.
 
 ```sh
-poetry shell
-poetry lock
-poetry install
+uv lock
 lefthook install
 ```
 

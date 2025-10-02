@@ -1,15 +1,19 @@
 [project]
 name = "datethyme"
-version = "0.4.0"
+version = "0.5.0"
 description = "A savory approach to date and time, built on Pydantic and datetime, with an emphasis on input validation and date/time arithmetic."
-authors = [{name = "Isaac Riley", email = "isaac.r.riley@proton.me"}]
+authors = [{name = "Isaac Riley", email = "yelircaasi@proton.me"}]
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.11,<3.15"
 dependencies = [
-    "pydantic         >= 2.8  ",
+    "pydantic         >= 2.11 ",
     "deal             >  4.24 ",
     "multipledispatch >= 1    ",
+    "loguru           >= 0.7.3",
 ]
+
+[project.scripts]
+datethyme = "datethyme.__main__:main"
 
 [build-system]
 requires = ["uv_build>=0.7.5,<0.8.0"]
@@ -17,29 +21,16 @@ build-backend = "uv_build"
 #requires = ["hatchling"]
 #build-backend = "hatchling.build"
 
-[project.optional-dependencies]
-dev = [
-    "deply       >= 0.5   ",
-    "modulegraph >= 0.19  ",
-    "snakefood3  >= 0.0.7 ",
-    "grimp       >= 3.5   ",
-    "pyflame     >= 0.3   ",
-]
-util = [
-    "ipython       >= 8.31   ",
-    "lefthook      >= 1.10   ",
-    "semver        >= 3.0    ",
-    "cyclonedx-bom >= 5.1    ",
-    "tomli         >= 2.0    ",
-    "pydeps        >= 1.12   ",
-    "rust-just     >= 1.38   ",
-    "ruff          >= 0.9    ",
-    "ty            >= 0.0.1a5",
-    "scalene       >= 1.5.49 ",
-    "bandit        >= 1.8    ",
-]
+[tool.uv.build-backend]
+module-name = "datethyme"
+
+[dependency-groups]
 test = [
     "pytest           >= 8.3  ",
+    "hypothesis       >  6    ",
+    # "tox              >  4.23 ",
+    "pytest-cov       >= 6.0  ",
+    "coverage         >  7.6  ",
     "pytest-mock      >= 3.14 ",
     "pytest-testmon   >  2.1  ",
     "pytest-cov       >= 6.0  ",
@@ -54,22 +45,108 @@ docs = [
     "mkdocstrings        >= 0.27 ",
     "mkdocstrings-python >= 1.13 ",
     "mkdocs-material     <  9.5  ",
+    "pygments            >= 2.19 ",
+]
+dev = [
+    "ipython           >= 8.31  ",
+    "deply             >= 0.5   ",
+    "grimp             >= 3.5   ",
+    "snakefood3        >= 0.0.7 ",
+    "pyflame           >= 0.3   ",
+    "scalene           >= 1.5.49",
+    "semver            >= 3.0   ",
+    "z3c.checkversions >= 3.0   ",
+]
+cli-utils = [
+    "bandit          >= 1.8    ",
+    "cyclonedx-bom   >= 5.1    ",
+    "google-yamlfmt  >= 0.16   ",
+    "lefthook        >= 1.10   ",
+    "mdformat        >= 0.7    ",
+    "mdformat_mkdocs >= 4.3.0  ",
+    "pydeps          >= 1.12   ",
+    "ruff            >= 0.9    ",
+    "rust-just       >= 1.38   ",
+    "scalene         >= 1.5.49 ",
+    "semver          >= 3.0    ",
+    "tomli           >= 2.0    ",
+    "ty              >= 0.0.1a5",
+    "vulture         >= 2.14   ",
+    "yamllint        >= 1.37   ",
+]
+
+[tool.bandit]
+targets = ["src/datethyme", "codeqa/scripts/"]
+exclude_dirs = []
+skips = []
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_scheme = "semver"
+version_provider = "uv"
+update_changelog_on_bump = true
+style = [
+    ["qmark", "fg:#ff9d00 bold"],
+    ["question", "bold"],
+    ["answer", "fg:#ff9d00 bold"],
+    ["pointer", "fg:#ff9d00 bold"],
+    ["highlighted", "fg:#ff9d00 bold"],
+    ["selected", "fg:#cc5454"],
+    ["separator", "fg:#cc5454"],
+    ["instruction", ""],
+    ["text", ""],
+    ["disabled", "fg:#858585 italic"],
+]
+
+[tool.coverage.run]
+branch = true
+omit = ["src/datethyme/__main__.py"]
+data_file = ".cache/coverage"
+source = ["datethyme"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
+fail_under = 0
+
+[tool.coverage.html]
+directory = "codeqa/coverage/html"
+
+[tool.mypy]
+ignore_missing_imports = true
+disable_error_code = [
+    "prop-decorator",
+    "no-redef",
+]
+strict = false
+exclude = "(.venv/.*|.cache.*|scratch.*)"
+
+[tool.pydeps]
+max_bacon = 2
+no_show = true
+verbose = 0
+pylib = false
+exclude = [
+    "os",
+    "re",
+    "sys",
+    "collections",
+    "__future__",
 ]
 
 [tool.pytest.ini_options]
 cache_dir = ".cache/pytest_cache"
-testpaths = ["./tests"]
-addopts = "--ignore=data,src"
+testpaths = ["tests", "codeqa/scripts/"]
+addopts = "--ignore=_data"
 markers = [
     "pure: no IO or side effects (refers to the test itself)",
     "read: requires a read operation",
     "write: requires a write operation",
 ]
-
-[tool.coverage.run]
-omit = ["src/datethyme/__main__.py"]
-data_file = ".cache/coverage"
-
 
 [tool.ruff]
 include = ["pyproject.toml", "*.py"]
@@ -184,12 +261,122 @@ suppress-none-returning = true
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.mypy]
-ignore_missing_imports = true
-disable_error_code = [
-    "prop-decorator",
-    "no-redef",
-]
-strict = false
-exclude = "(.venv/.*|.cache.*|scratch.*)"
+[tool.scripts.check_imports]
+primitive_modules = ["utils"]  # the utils module may not import from any other module in the project (external imports ok)
+external_allowed_everywhere = []
+internal_allowed_everywhere = []
 
+[tool.scripts.check_imports.disallowed.internal]  # for a given module, allow all internal imports except those explicitly named
+utils = ["utils"]  # don’t let the project’s root module import directly from the utils module
+
+[tool.scripts.check_imports.disallowed.external]  # for a given module, allow all internal imports except those explicitly named
+utils = ["pydantic"]  # don’t let the utils module import from pydantic
+
+[tool.scripts.check_imports.allowed.internal]  # for a given module, disallow all imports except those explicitly named and those allowed everywhere
+
+[tool.scripts.check_imports.allowed.external]  # for a given module, disallow all imports except those explicitly named and those allowed everywhere
+utils = ["deal"]
+
+[tool.scripts.check_method_order]
+init = 0
+abstract_property = 0.0409
+property = 0.041
+abstract_private_property = 0.042
+private_property = 0.043
+abstract_dunder = 0.999
+dunder = 1
+abstract_classmethod = 1.999
+classmethod = 2
+final = 3.9
+abstract = 3.999
+normal = 4
+abstract_static = 4.4999
+static = 4.5
+abstract_private = 4.999
+private = 5
+mangled = 6
+
+# init = 0
+# abstract_property = 0.0401
+# property = 0.041
+# abstract_private_property = 0.042
+# private_property = 0.003
+# abstract_dunder = 0.8
+# abstract_classmethod = 0.81
+# abstract_static = 0.82
+# abstract = 0.9
+# abstract_private = 0.91
+# dunder = 1
+# classmethod = 2
+# static = 3.5
+# final = 3.9
+# normal = 4
+# private = 5
+# mangled = 6
+
+[tool.scripts.check_method_order.regex]
+"@model_validator|model_validate" = 0
+"_pydantic_" = 0.01
+" adapter(" = 0.011
+"@field_validator" = 0.1
+"model_serializ|model_dump" = 0.00001
+"@field_serializer" = 0.3
+"__call__" = 0.300001
+"check_.+" = 9
+" read[^ ]+(" = 3.98
+" write[^ ]+(" = 3.99
+"[^_][a-z_]+_hook$" = 9
+
+[tool.scripts.check_structure]
+checks = [
+    "tests",
+    "mkdocs",
+]
+module_root_dir = "src/datethyme"
+
+[tool.scripts.check_structure.docs]
+allow_additional = "index"
+file_per_class = "_datethyme|_null|_scheduling"
+file_per_directory = ""
+ignore = "_abcs|exceptions|:_[A-Z]"
+keep_double_underscore = true
+md_dir = "docs/md"
+
+[tool.scripts.check_structure.tests]
+allow_additional = "__edgecases|__error"
+file_per_class = "_datethyme|_null|_scheduling"
+file_per_directory = ""
+function_for_class = ""
+ignore = "_abcs|:test__[A-Z]|__init__$|exceptions|Abstract[RS]|Optional|__get_pydantic_core_schema__"
+keep_double_underscore = true
+unit_dir = "tests/unit"
+use_filename_suffix = true
+
+[tool.tomlsort]
+all = false
+in_place = true
+no_comments = false
+no_header_comments = false
+no_footer_comments = false
+no_inline_comments = false
+no_block_comments = false
+no_sort_tables = true
+sort_first = ["key1", "key2"]
+sort_table_keys = false
+sort_inline_tables = false
+sort_inline_arrays = false
+spaces_before_inline_comment = 2
+spaces_indent_inline_array = 4
+trailing_comma_inline_array = true
+check = false
+ignore_case = false
+
+[tool.vulture]
+exclude = []
+ignore_decorators = ["@app.route", "@require_*"]
+ignore_names = ["visit_*", "do_*"]
+make_whitelist = false
+min_confidence = 60
+paths = ["codeqa/scripts/", "src/"]
+sort_by_size = true
+verbose = false

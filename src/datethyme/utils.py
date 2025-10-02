@@ -6,6 +6,14 @@ import deal
 from .exceptions import DateValidationError, TimeValidationError
 
 
+def assert_xor(a: bool | object | str | None, b: bool | object | str | None) -> bool:
+    if not (bool(a) ^ bool(b)):
+        raise ValueError
+    if a:
+        return True
+    return False
+
+
 def transfer_case(reference: str, candidate: str) -> str:
     if reference.istitle():
         return candidate.title()
