@@ -1,4 +1,8 @@
 """
+Next step: go from AbstractRange[T] to BaseRange[T] and implement everything common
+    that can be implemented in a generic manner; leave the rest to the respective subclasses.
+
+Do the same for AbstractSpan[T] -> BaseSpan[T] and AbstractPartition[T] -> BasePartition[T]
 TODO: add x_to_next and x_from_last methods for all time-related objects
 
 add add_x and maybe also subtract_x for time increments
@@ -10,7 +14,6 @@ add next_second, last_second, next_minute, ... to time classes
 add representation as 12-hour time and .format(...) for DateTime and Time analogous to Date.format()
 """
 
-from contextlib import AbstractContextManager
 import datetime as DATETIME
 import re
 from collections.abc import Iterator
@@ -980,7 +983,7 @@ class Date(BaseModel):
     def __sub__(self, subtrahend: int) -> "Date":  # pyright: ignore
         return Date.from_ordinal(self.ordinal - int(subtrahend))
 
-    @dispatch(OptionalDate)
+    @dispatch("Date")
     def __sub__(self, subtrahend: "Date") -> int:  # type: ignore
         if not subtrahend:
             raise TypeError("Date or int required for method __sub__ of Date.")
@@ -1161,7 +1164,7 @@ class Date(BaseModel):
 
         if not inclusive:
             if not reverse:
-                date2 -= 1
+                date2 += (-1)
             else:
                 date1 += 1
 
@@ -1277,7 +1280,7 @@ class Time(BaseModel):
             raise TypeError
         return TimeDelta(self.to_seconds() - subtrahend.to_seconds())
 
-    @dispatch((int, float))
+    @dispatch(int | float)
     def __sub__(self, mins: int | float) -> "Time":
         return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
 
@@ -1286,8 +1289,8 @@ class Time(BaseModel):
         if isinstance(other, NoneTime):
             return False
         if isinstance(other, Time):
-            return self.to_seconds(places=self.decimal_accuracy) == other.to_seconds(
-                places=self.decimal_accuracy
+            return self.to_seconds(places=self.decimal_places) == other.to_seconds(
+                places=self.decimal_places
             )
         return False
 
@@ -1511,14 +1514,14 @@ class Time(BaseModel):
 
     def add_hours_wraparound(self, n: int | float) -> tuple["Time", int]:
         days, hours = divmod(self.to_hours() + n, 24)
-        return (self.from_hours(hours), days)
+        return (self.from_hours(hours), int(days))
 
     def add_minutes_wraparound(self, n: int | float) -> tuple["Time", int]:
-        days, minutes = divmod(self.to_minutes() + n, 1440)
+        days, minutes = divmod(int(self.to_minutes() + n), 1440)
         return (self.from_minutes(minutes), days)
 
     def add_seconds_wraparound(self, n: int | float) -> tuple["Time", int]:
-        days, seconds = divmod(self.to_seconds() + n, 86400)
+        days, seconds = divmod(int(self.to_seconds() + n), 86400)
         return (self.from_seconds(seconds), days)
 
     def add_hours_bounded(self, n: int | float) -> "Time":
@@ -1840,7 +1843,7 @@ class TimeSpan(AbstractSpan[Time]):
         return None
 
     def hull(
-        self, other: "TimeSpan", strict: bool = False
+        self, other: "Time | AbstractSpan[Time]", strict: bool = False
     ) -> "TimeSpan":  # alias outer, union, cover
         return TimeSpan(min(self.start, other.start), max(self.end, other.end))
 
