@@ -1,6 +1,6 @@
 import pytest
 
-from datethyme import TimePartition, TimeSpan, Time
+from datethyme import Time, TimePartition, TimeSpan
 
 REPLACE_ME = 99
 
@@ -774,4 +774,3 @@ class TestTimePartition:
     def test_span(): ...
 
     def test_span_containing(): ...
-

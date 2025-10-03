@@ -33,7 +33,6 @@ from datethyme import (
     # utils,
 )
 
-
 nonedate = NoneDate()
 nonedatetime = NoneDateTime()
 nonetime = NoneTime()

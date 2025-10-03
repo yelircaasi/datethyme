@@ -58,5 +58,5 @@ priority = 2
 
 [formatter.shell]
 command = "shfmt"
-includes = ["*.sh", "*.bash", "*.envrc", "*.envrc.*", "*justfmt"]
+includes = ["*.sh", "*.bash", "*.envrc", "*.envrc.*"]
 options = ["--simplify", "--write", "--indent", "2"]

@@ -10,10 +10,10 @@ add next_second, last_second, next_minute, ... to time classes
 add representation as 12-hour time and .format(...) for DateTime and Time analogous to Date.format()
 """
 
+from contextlib import AbstractContextManager
 import datetime as DATETIME
 import re
 from collections.abc import Iterator
-from functools import singledispatchmethod
 from math import floor
 from typing import Any, Self, Union
 
@@ -28,13 +28,13 @@ from pydantic import (
     model_validator,
 )
 
-from ._abcs import (
-    AbstractDate,
-    AbstractRange,
-    AbstractSpan,
-    AbstractTime,
-    OptionalDate,
-)
+# from ._abcs import (
+#     AbstractDate,
+#     AbstractRange,
+#     AbstractSpan,
+#     AbstractTime,
+#     OptionalDate,
+# )
 from ._null import NONE_DATE, NONE_TIME, NoneDate, NoneTime
 from .exceptions import (
     DateTimeValidationError,
@@ -51,10 +51,822 @@ from .utils import (
 
 FROZEN = True
 
+
+
+
+
+# ==============================================================================================================
+# ABCs
+# ==============================================================================================================
+
+
+
+
+from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable, Iterator
+from itertools import pairwise
+from typing import Any, Literal, Self, TypeVar, cast
+
+from ._scheduling_utils import (
+    apply_pairwise,
+    earliest_start,
+    get_relative_lengths,
+    latest_end,
+    snap_back,
+    snap_forward,
+    split_gap_equal,
+    split_gap_inverse_proportional,
+    split_gap_proportional,
+    split_overlap_equal,
+    split_overlap_inverse_proportional,
+    split_overlap_proportional,
+    stack_backward,
+    stack_forward,
+    stack_from_middle,
+)
+from .utils import (
+    assert_xor,
+)
+
+
+from typing import Protocol, Self, TypeVar
+
+
+class DeltaProtocol(Protocol):
+    hours: float
+    minutes: float
+    seconds: float
+
+
+# class AtomProtocol(Protocol):
+#     def __bool__(self) -> bool: ...
+#     def __eq__(self, other) -> bool: ...
+#     def __lt__(self, other) -> bool: ...
+#     def __le__(self, other) -> bool: ...
+#     def __gt__(self, other) -> bool: ...
+#     def __ge__(self, other) -> bool: ...
+#     def __hash__(self) -> int: ...
+#     def __repr__(self) -> str: ...
+#     def __str__(self) -> str: ...
+
+#     @classmethod
+#     def parse(cls, str) -> Self: ...
+
+
+# class TimeProtocol(AtomProtocol, Protocol):
+#     hour: int
+#     minute: int
+#     second: float
+
+#     def to(self, __other, name: str | None = None) -> "SpanProtocol": ...
+#     def span(self, __other, name: str | None = None) -> "SpanProtocol": ...
+
+#     @property
+#     def ordinal(self) -> float: ...
+
+#     @classmethod
+#     def from_ordinal(cls, ordinal: float) -> Self: ...
+
+#     def minutes_to(self, other) -> float: ...
+
+#     def minutes_from(self, other) -> float: ...
+
+#     def add_minutes(self, mins: float) -> Self: ...
+
+#     def round_hours(self) -> "TimeProtocol": ...
+
+#     def round_minutes(self) -> "TimeProtocol": ...
+
+#     def round_seconds(self) -> "TimeProtocol": ...
+
+
+# T = TypeVar("T", bound=TimeProtocol)
+
+
+# class SpanProtocol[T: TimeProtocol](Protocol):
+#     @property
+#     def start(self) -> T: ...
+#     @property
+#     def end(self) -> T: ...
+#     @property
+#     def midpoint(self) -> T: ...
+    
+#     def __init__(self, start: T, end: T) -> None: ...
+#     def __bool__(self) -> bool: ...
+#     def snap_start_to(self, new_start: T) -> "AbstractSpan[T]": ...
+#     def snap_end_to(self, new_end: T) -> "AbstractSpan[T]": ...
+#     def shift_start_rigid(self, new_start: T) -> "AbstractSpan[T]": ...
+#     def shift_end_rigid(self, new_end: T) -> "AbstractSpan[T]": ...
+#     def split(self, cut_point: T) -> "tuple[AbstractSpan[T], AbstractSpan[T]]": ...
+#     def interior_point(self, alpha: float) -> T: ...
+#     def contains(self, other) -> bool: ...
+
+#     def round_hours(self, round_to: int) -> "AbstractSpan[T]": ...
+
+#     def round_minutes(self, round_to: int) -> "AbstractSpan[T]": ...
+
+#     def round_seconds(self, round_to: float) -> "AbstractSpan[T]": ...
+
+#     @property
+#     def minutes(self) -> float: ...
+
+
+TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
+
+
+# class OptionalDate(ABC):
+#     year: int | None
+#     month: int | None
+#     day: int | None
+
+#     @abstractmethod
+#     def __lt__(self, other: Any) -> bool: ...
+
+
+# class OptionalTime(ABC):
+#     hour: int | None
+#     minute: int | None
+#     second: float | None
+
+#     @abstractmethod
+#     def __lt__(self, other: Any) -> bool: ...
+
+
+# class OptionalDateTime(ABC):
+#     year: int | None
+#     month: int | None
+#     day: int | None
+#     hour: int | None
+#     minute: int | None
+#     second: float | None
+
+#     @abstractmethod
+#     def __lt__(self, other: Any) -> bool: ...
+
+
+# Atom = TypeVar("Atom", bound=AtomProtocol)
+# TT = TypeVar("TT", bound=TimeProtocol)
+PairCallback = Callable[
+    [tuple["AbstractSpan", "AbstractSpan"]],
+    tuple["AbstractSpan", "AbstractSpan"],
+]
+
+
+# class AbstractTime(ABC):
+#     """
+#     Defines the common interface that both Time and DateTime are required to implement.
+#     """
+
+#     hour: int
+#     minute: int
+#     second: float
+
+
+# class AbstractDate(ABC):
+#     year: int
+#     month: int
+#     day: float
+
+
+class AbstractRange[Atom: Time | Date | DateTime](ABC):
+    start: Atom
+    stop: Atom
+    step: int
+    inclusive: bool
+    _current: Atom
+
+    @abstractmethod
+    def __init__(self, start: Atom, stop: Atom, step: int = 1, inclusive: bool = True) -> None: ...
+
+    @property
+    @abstractmethod
+    def last(self) -> Atom: ...
+
+    @abstractmethod
+    def __len__(self) -> int: ...
+
+    @abstractmethod
+    def __contains__(self, item: Atom) -> bool: ...
+
+    @abstractmethod
+    def __reversed__(self) -> Iterable[Atom]: ...
+
+    @abstractmethod
+    def __getitem__(self, idx): ...
+
+    def __iter__(self) -> Iterator[Atom]:
+        self._restart()
+        return self
+
+    def __next__(self) -> Atom:
+        if self._current < self.stop:
+            self._increment()
+            return self._current
+        else:
+            raise StopIteration
+
+    def __eq__(self, other) -> bool:
+        return all(
+            (
+                self.start == other.start,
+                self.stop == other.stop,
+                self.step == other.step,
+                self.inclusive == other.inclusive,
+            )
+        )
+
+    def __hash__(self) -> int:
+        return hash((hash(self.start), hash(self.stop), self.step, self.inclusive))
+
+    @abstractmethod
+    def index(self, item: Atom) -> int: ...
+
+    def filtered(self, predicate: Callable[[Atom], bool]) -> Iterator[Atom]:
+        """
+        Generic filtered iterator.
+        """
+        for atom in self:
+            if predicate(atom):
+                yield atom
+
+    @abstractmethod
+    def _increment(self) -> None: ...
+
+    def _restart(self) -> None:
+        self._current = self.start
+
+    # @property
+    # @abstractmethod
+    # def string_list(self) -> list[str]: ...
+
+
+class AbstractSpan[Atom: Time | DateTime](ABC):
+    @property
+    def start(self) -> Atom: ...
+    @property
+    def end(self) -> Atom: ...
+
+    def midpoint(self) -> Atom:  # type: ignore
+        return self.interior_point(0.5)
+
+    @abstractmethod
+    def __init__(self, start: Atom, end: Atom) -> None: ...
+
+    @property
+    def name(self) -> str:
+        return "TODO"
+
+    @property
+    @abstractmethod
+    def days(self) -> float: ...
+
+    @property
+    @abstractmethod
+    def hours(self) -> float: ...
+
+    @property
+    @abstractmethod
+    def minutes(self) -> float: ...
+
+    @property
+    @abstractmethod
+    def seconds(self) -> float: ...
+
+    @property
+    def span(self) -> "AbstractSpan[Atom]":
+        return self
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, AbstractSpan):
+            return (self.start == other.start) and (self.end == other.end)
+        return False
+
+    def __contains__(self, other) -> bool:
+        return self.contains(other)
+
+    def __bool__(self) -> bool:
+        return self.end > self.start
+    
+    @abstractmethod
+    def round_hours(self, round_to: int) -> "AbstractSpan[Atom]": ...
+
+    @abstractmethod
+    def round_minutes(self, round_to: int) -> "AbstractSpan[Atom]": ...
+
+    @abstractmethod
+    def round_seconds(self, round_to: float) -> "AbstractSpan[Atom]": ...
+
+    @abstractmethod
+    def intersection(self, other, strict: bool = False) -> "AbstractSpan[Atom]": ...
+
+    # alias inner
+
+    @abstractmethod
+    def hull(self, other: "Atom | AbstractSpan[Atom]", strict: bool = False) -> "AbstractSpan[Atom]": ...
+
+    # alias outer, union, cover
+
+    # def union(self, other, strict: bool = False): ...
+
+    @abstractmethod
+    def gap(self, other: "Atom | AbstractSpan[Atom]", strict: bool = False) -> "AbstractSpan[Atom]": ...
+
+    # alias end_to_start
+
+    @abstractmethod
+    def overlap(self, other: "AbstractSpan[Atom]", strict: bool = False) -> "AbstractSpan[Atom] | None": ...
+
+    # alias end_to_start
+
+    @abstractmethod
+    def snap_start_to(self, new_start: Atom) -> "AbstractSpan[Atom]": ...
+
+    @abstractmethod
+    def split(self, cut_point: Atom) -> tuple["AbstractSpan[Atom]", "AbstractSpan[Atom]"]: ...
+
+    @abstractmethod
+    def snap_end_to(self, new_end: Atom) -> "AbstractSpan[Atom]": ...
+
+    @abstractmethod
+    def shift_start_rigid(self, new_start: Atom) -> "AbstractSpan[Atom]": ...
+
+    @abstractmethod
+    def shift_end_rigid(self, new_end: Atom) -> "AbstractSpan[Atom]":
+        raise NotImplementedError
+
+    @abstractmethod
+    def interior_point(self, alpha: float) -> Atom:
+        raise NotImplementedError
+
+    @abstractmethod  # use dispatch: str | AbstractSpan | AbstractTime
+    def contains(self, other, include_start: bool = True, include_end: bool = False) -> bool: ...
+
+
+
+    
+    # @abstractmethod
+    # @dispatch(str)
+    # def contains(self, other: Atom, include_start: bool = True, include_end: bool = False) -> bool: ...
+
+    @abstractmethod
+    def affine_transform(
+        self,
+        scale_factor: float,
+        new_start: Atom | None = None,
+        new_end: Atom | None = None,
+        min_minutes: int | float = 5,
+    ) -> "AbstractSpan[Atom]":
+        raise NotImplementedError
+        # new_length = scale_factor * self.minutes
+        # if new_start and not new_end:
+        #     result = self.__class__(new_start, new_start.add_minutes(new_length))
+        # elif new_end and not new_start:
+        #     result = self.__class__(new_end.add_minutes(new_length), new_end)
+        # else:
+        #     raise ValueError
+
+        # if result.minutes < min_minutes:
+        #     raise ValueError
+        # return result
+
+
+class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
+    # type AbstractSpan[Atom] = AbstractSpan[Atom]
+    """
+    TODO: add nesting_mode to determine how nested time partitions are resized under different operations
+    """
+
+    def __init__(
+        self,
+        spans: Iterable[AbstractSpan[Atom]],
+        names: Iterable[str | None] | None = None,
+    ):
+        if not self.is_contiguous(spans):
+            raise ValueError
+        self._spans = spans
+        self._names = tuple(names) if names else names
+
+    @property
+    def named_spans(self) -> tuple[tuple[str, AbstractSpan[Atom]], ...]:
+        return tuple(zip(self.names, self._spans))
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        return tuple(map(lambda sp: sp.name, self.spans))
+
+    @property
+    def span(self) -> "AbstractSpan[Atom]":
+        return self.start.to(self.end)  # type: ignore
+
+    @property
+    def spans(self) -> tuple[AbstractSpan[Atom], ...]:
+        return tuple(self._spans)
+
+    @property
+    def start(self) -> Atom:
+        return min(self.starts)
+
+    @property
+    def end(self) -> Atom:
+        return max(self.ends)
+
+    @property
+    def starts(self) -> tuple[Atom, ...]:
+        return tuple(map(lambda s: s.start, self.spans))
+
+    @property
+    def ends(self) -> tuple[Atom, ...]:
+        return tuple(map(lambda t: t.end, self.spans))
+
+    @property
+    def days(self) -> float:
+        return self.span.days
+
+    @property
+    def hours(self) -> float:
+        return self.span.hours
+
+    @property
+    def minutes(self) -> float:
+        return self.span.minutes
+
+    @property
+    def seconds(self) -> float:
+        return self.span.seconds
+
+    def __bool__(self) -> bool:
+        return self.end > self.start  # type: ignore
+
+    def __contains__(self, other) -> bool:
+        return self.contains(other)
+
+    # @classmethod
+    # def from_sequence(
+    #     cls,
+    #     seq: Iterable[AbstractSpan],
+    #     mode,
+    #     round_to: int = 0,
+    # ) -> Self:
+    #     meth = {}[mode]
+    #     return cls(meth(seq))
+
+    @classmethod
+    def from_pipeline(
+        cls,
+        segments: Iterable[AbstractSpan[Atom]],
+        pipeline: Iterable[Callable[[Iterable[AbstractSpan[Atom]]], Iterable[AbstractSpan[Atom]]]],
+        # Callable[[Iterable[AbstractSpan[Atom]]], tuple[AbstractSpan[Atom]]],
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        for step in pipeline:
+            segments = step(segments)
+        return cls.from_partition(segments, names=names)
+
+    @classmethod
+    def from_boundaries(
+        cls,
+        times: Iterable[Atom],
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        names = names or (None,) * (len(times := tuple(times)) - 1)
+        spans = (a.span(b, name=name) for (a, b), name in zip(pairwise(times), names)) # type: ignore
+        return cls(spans=spans, names=names)  # type: ignore
+
+    @classmethod
+    def from_partition(
+        cls,
+        segments: Iterable[AbstractSpan[Atom]],
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        return cls(spans=segments, names=names)
+
+    @classmethod
+    def from_durations(
+        cls,
+        *,
+        durations: Iterable[int | float],
+        start: Atom | None,
+        end: Atom | None,
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        anchor_start = assert_xor(start, end)
+        if anchor_start:
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
+
+    @classmethod
+    def from_deltas(
+        cls,
+        *,
+        durations: Iterable[DeltaProtocol],
+        start: Atom | None,
+        end: Atom | None,
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        anchor_start = assert_xor(start, end)
+        if anchor_start:
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
+
+    @classmethod
+    def from_relative_lengths(
+        cls,
+        start: Atom,
+        end: Atom,
+        segments: Iterable[float],
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        raise NotImplementedError
+    
+    def round_hours(self, round_to: int) -> "AbstractSpan[Atom]": # type: ignore
+        return self.__class__(
+            spans=tuple(span.round_hours(round_to) for span in self.spans),
+            names=tuple(span.name for span in self.spans),
+        )
+
+    def round_minutes(self, round_to: int) -> "AbstractSpan[Atom]":
+        return self.__class__(spans=tuple(span.round_minutes(round_to) for span in self.spans))
+
+    def round_seconds(self, round_to: float) -> "AbstractSpan[Atom]":
+        return self.__class__(span.round_seconds(round_to) for span in self.spans)
+
+
+    @classmethod
+    def from_minutes_and_start(
+        cls,
+        start: Atom,
+        segments: Iterable[float],
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        raise NotImplementedError
+
+    @classmethod
+    def from_minutes_and_end(
+        cls,
+        end: Atom,
+        segments: Iterable[float],
+        names: Iterable[str | None] | None = None,
+    ) -> Self:
+        raise NotImplementedError
+
+    def contains(
+        self,
+        other: AbstractSpan[Atom] | Atom,
+        include_start: bool = True,
+        include_end: bool = False,
+    ) -> bool:
+        return self.span.contains(other)
+
+    def gap(self, other: Atom | AbstractSpan[Atom], strict: bool = False) -> "AbstractSpan":
+        raise NotImplementedError
+
+    def hull(self, other: AbstractSpan[Atom], strict: bool = False) -> "S": # type: ignore
+        return self.span.hull(other)
+
+    def interior_point(self, alpha: float) -> Atom:
+        return self.span.interior_point(alpha)
+
+    def intersection(
+        self, other: AbstractSpan[Atom], strict: bool = False
+    ) -> "AbstractPartition[Atom]":
+        raise NotImplementedError
+        # return self.span.intersection(other)
+
+    def overlap(self, other: AbstractSpan[Atom], strict: bool = False) -> "AbstractPartition[Atom] | None":
+        raise NotImplementedError
+
+    def shift_end_rigid(self, new_end: Atom) -> "AbstractPartition[Atom]":
+        raise NotImplementedError
+
+    def shift_start_rigid(self, new_start: Atom) -> "AbstractPartition[Atom]":
+        raise NotImplementedError
+
+    def snap_end_to(self, new_end: Atom) -> "AbstractPartition[Atom]":
+        raise NotImplementedError
+
+    def snap_start_to(self, new_start: Atom) -> "AbstractPartition[Atom]":
+        raise NotImplementedError
+
+    def split(self, cut_point: Atom) -> "tuple[AbstractPartition[Atom], AbstractPartition[Atom]]":
+        raise NotImplementedError
+
+    def span_containing(self, point: Atom) -> AbstractSpan[Atom] | None:
+        for span in self._spans:
+            if span.contains(point):
+                return span
+        return None
+
+    def insert(
+        self,
+        span_start: Atom | int,
+        new_span: AbstractSpan[Atom],
+        mode: Literal["SQUEEZE", "PUSH_BACK", "PUSH_FORWARD"],
+        split_incumbent: bool = True,
+    ) -> "AbstractPartition[Atom]":
+        raise NotImplementedError
+
+    def index_from_name(self, name: str) -> int | None:
+        raise NotImplementedError
+
+    def index_from_time(self, point: Atom) -> int | None:
+        raise NotImplementedError
+
+    def affine_transform(
+        self,
+        scale_factor: float,
+        new_start: Atom | None = None,
+        new_end: Atom | None = None,
+        min_minutes: int | float = 5,
+    ) -> AbstractSpan[Atom]:
+        new_length = scale_factor * self.minutes
+        if new_start and not new_end:
+            raise NotImplementedError
+            result = self.__class__(new_start, new_start.add_minutes(new_length))
+        elif new_end and not new_start:
+            raise NotImplementedError
+            result = self.__class__(new_end.add_minutes(new_length), new_end)
+        else:
+            raise ValueError
+
+        if result.minutes < min_minutes:
+            raise ValueError
+        return result
+
+    def reordered(
+        self, orderer: Callable[[AbstractSpan[Atom]], int | float | str | Atom]
+    ) -> "AbstractPartition[Atom]":
+        reordered = sorted(self.spans, key=orderer)
+        return self.__class__.from_partition(stack_forward(reordered))
+
+    @staticmethod
+    def eclipse_forward(
+        seq: Iterable[AbstractSpan[Atom]],
+    ) -> tuple[
+        tuple[AbstractSpan[Atom], ...],
+        tuple[AbstractSpan[Atom], ...],
+    ]:
+        if not seq:
+            return tuple(), tuple()
+
+        spans: list[AbstractSpan[Atom]] = [(seq := list(seq))[0]]  # type: ignore
+        rejects: list[AbstractSpan[Atom]] = []  # type: ignore
+        _current = seq[0].end
+
+        for span in seq[1:]:
+            rejected_span, kept_span = span.split(max(_current, span.start))
+            if kept_span:
+                spans.append(kept_span)
+            if rejected_span:
+                rejects.append(rejected_span)
+            _current = max(_current, kept_span.end)
+
+        return tuple(spans), tuple(rejects)
+
+    @staticmethod
+    def eclipse_backward(
+        seq: Iterable[AbstractSpan[Atom]],
+    ) -> tuple[tuple[AbstractSpan[Atom], ...], tuple[AbstractSpan[Atom], ...]]:
+        if not seq:
+            return tuple(), tuple()
+
+        spans: list[AbstractSpan] = [(seq := list(seq))[-1]]
+        rejects: list[AbstractSpan] = []
+        _current = seq[0].end
+
+        for span in seq[-2::-1]:
+            kept_span, rejected_span = span.split(min(_current, span.end))
+            if kept_span:
+                spans.append(kept_span)
+            if rejected_span:
+                rejects.append(rejected_span)
+            _current = min(_current, kept_span.end)
+
+        return tuple(spans), tuple(rejects)
+
+    @staticmethod
+    def resolve_overlaps(
+        seq: Iterable[AbstractSpan[Atom]],
+        mode: Literal["EQUAL", "PROPORTIONAL", "INVERSE"],
+    ) -> tuple[AbstractSpan[Atom], ...]:
+        if mode == "EQUAL":
+            return tuple(apply_pairwise(split_overlap_equal, seq))
+        elif mode == "PROPORTIONAL":
+            return tuple(apply_pairwise(split_overlap_proportional, seq))
+        elif mode == "INVERSE":
+            return tuple(apply_pairwise(split_overlap_inverse_proportional, seq))
+        else:
+            raise ValueError(f"Invalid mode for method 'resolve_overlaps': '{mode}'")
+
+    @staticmethod
+    def resolve_gaps(
+        seq: Iterable[AbstractSpan[Atom]],
+        mode=Literal["EQUAL", "PROPORTIONAL", "INVERSE", "SNAP_FORWARD", "SNAP_BACK"],
+    ) -> tuple[AbstractSpan[Atom], ...]:
+        if mode == "EQUAL":
+            return tuple(apply_pairwise(split_gap_equal, seq))
+        if mode == "PROPORTIONAL":
+            return tuple(apply_pairwise(split_gap_proportional, seq))
+        if mode == "INVERSE":
+            return tuple(apply_pairwise(split_gap_inverse_proportional, seq))
+        if mode == "SNAP_FORWARD":
+            return tuple(apply_pairwise(snap_forward, seq))
+        if mode == "SNAP_BACK":
+            return tuple(apply_pairwise(snap_back, seq))
+        raise ValueError(f"Invalid mode for method 'resolve_gaps': '{mode}'")
+
+    @staticmethod
+    def squeeze(
+        seq: Iterable[AbstractSpan[Atom]],
+        mode: Literal["PROPORTIONAL", "EQUAL"],
+        earliest: Atom | None = None,
+        latest: Atom | None = None,
+        min_minutes: int | float = 5,
+    ) -> tuple[AbstractSpan[Atom], ...]:
+        spans: list[AbstractSpan[Atom]] = []  # type: ignore
+        # earliest: Atom = earliest or earliest_start(seq)
+        # latest: Atom = latest or latest_end(seq)
+        if mode == "PROPORTIONAL":
+            relative_lengths = get_relative_lengths(seq)
+        elif mode == "EQUAL":
+            seq = list(seq)
+            relative_lengths = [x / len(seq) for x in range(len(seq))]
+        else:
+            raise ValueError(f"Invalid mode for method 'squeeze': '{mode}'")
+
+        earliest_: Atom = earliest or earliest_start(seq)
+        latest_: Atom = latest or latest_end(seq)
+        new_total: float = cast(Atom, earliest_).minutes_to(latest_)
+        _current = earliest_
+        squeezed: AbstractSpan[Atom]  # type: ignore
+        for span, rel_length in zip(seq, relative_lengths):
+            spans.append(
+                squeezed := span.affine_transform(
+                    scale_factor=rel_length * new_total,
+                    new_start=_current,
+                    min_minutes=min_minutes,
+                )
+            )
+            _current = squeezed.end
+        return tuple(spans)
+
+    @staticmethod
+    def squeeze_with_rollover(
+        seq: Iterable[AbstractSpan[Atom]],
+        mode: Literal["PROPORTIONAL", "EQUAL"],
+        earliest: Atom | None = None,
+        latest: Atom | None = None,
+        min_minutes: int | float = 5,
+    ) -> tuple[tuple[AbstractSpan[Atom], ...], tuple[AbstractSpan[Atom], ...]]:
+        seq = list(seq)
+        keep_n = (
+            int(len(seq) // min_minutes)
+            if earliest and latest and (len(seq) * min_minutes) > earliest.minutes_to(latest)
+            else len(seq)
+        )
+        return (
+            AbstractPartition.squeeze(
+                seq[:keep_n], mode=mode, earliest=earliest, latest=latest, min_minutes=min_minutes
+            ),
+            tuple(seq[keep_n:]),
+        )
+
+    @staticmethod
+    def stack(
+        seq: Iterable[AbstractSpan[Atom]],
+        mode: Literal["FORWARD", "OUTWARD", "BACKWARD"],
+        anchor=None,
+    ) -> tuple[AbstractSpan[Atom], ...]:
+        lookup: dict[
+            Literal["FORWARD", "OUTWARD", "BACKWARD"],
+            Callable[[Iterable[AbstractSpan[Atom]], Atom | None], Iterable[AbstractSpan[Atom]]],  # type: ignore
+        ] = {
+            "FORWARD": stack_forward,
+            "OUTWARD": stack_from_middle,
+            "BACKWARD": stack_backward,
+        }
+        func = lookup.get(mode)
+        if not func:
+            raise ValueError(f"Invalid mode for method 'stack': '{mode}'")
+        return tuple(func(seq, anchor))
+
+    @staticmethod
+    def is_contiguous(seq: Iterable[AbstractSpan[Atom]]) -> bool:
+        return all(map(lambda pair: pair[0].end == pair[1].start, pairwise(seq)))
+
+    # TO ADD ---------------------------------------------------------------------------------------
+
+    # FROM ABC -------------------------------------------------
+
+
+# ==============================================================================================================
 # --- ELEMENTARY TYPES ---------------------------------------------------------------------------
+# ==============================================================================================================
 
 
-class Date(OptionalDate, BaseModel):
+
+class Date(BaseModel):
     """Bespoke immutable date class designed to simplify working with dates,
     in particular input parsing, date calculations, and ranges.
     """
@@ -129,7 +941,7 @@ class Date(OptionalDate, BaseModel):
     def span(self) -> "DateTimeSpan":
         return self.start >> self.end
 
-    def __and__(self, time: AbstractTime) -> "DateTime":
+    def __and__(self, time: "Time | DateTime") -> "DateTime":
         if isinstance(time, Time):
             return DateTime(
                 year=self.year,
@@ -165,7 +977,7 @@ class Date(OptionalDate, BaseModel):
     # method '__sub__' of 'Date': {type(subtrahend)}")
 
     @dispatch(int)
-    def __sub__(self, subtrahend: int) -> "Date":
+    def __sub__(self, subtrahend: int) -> "Date":  # pyright: ignore
         return Date.from_ordinal(self.ordinal - int(subtrahend))
 
     @dispatch(OptionalDate)
@@ -363,18 +1175,18 @@ class Date(OptionalDate, BaseModel):
             dates.reverse()
 
         return dates
-    
+
     @deal.pure
     def days_to(self, date2: "Date") -> int:
         return date2.ordinal - self.ordinal
-    
+
     @staticmethod
     @deal.pure
     def none() -> "NoneDate":
         return NONE_DATE
 
 
-class Time(AbstractTime, BaseModel):
+class Time(BaseModel):
     """Bespoke immutable date class designed to simplify working with times,
     in particular input parsing, time calculations, and ranges.
     """
@@ -396,6 +1208,14 @@ class Time(AbstractTime, BaseModel):
     @deal.pure
     def serialize_time(self) -> str:
         return str(self)
+    
+    @property
+    def day_start(self) -> "Time":
+        return Time(hour=0)
+    
+    @property
+    def day_end(self) -> "Time":
+        return Time(hour=24)
 
     @property
     def seconds(self) -> float:
@@ -403,7 +1223,7 @@ class Time(AbstractTime, BaseModel):
 
     @property
     def full_hours(self) -> int:
-        return int(self.to_hours // 3600)
+        return int(self.to_hours() // 3600)
 
     @property
     def full_minutes(self) -> int:
@@ -412,7 +1232,7 @@ class Time(AbstractTime, BaseModel):
     @property
     def full_seconds(self) -> int:
         return floor(self.to_seconds())
-    
+
     @property
     def decimal_places(self) -> int:
         return 10
@@ -427,8 +1247,11 @@ class Time(AbstractTime, BaseModel):
             second=self.second,
         )
 
-    def __rshift__(self, other: "Time") -> "TimeSpan":
+    def to(self, other: "Time") -> "TimeSpan":
         return TimeSpan(start=self, end=other)
+
+    def __rshift__(self, other: "Time") -> "TimeSpan":
+        return self.to(other)
 
     @deal.pure
     def __str__(self) -> str:
@@ -448,8 +1271,8 @@ class Time(AbstractTime, BaseModel):
     def __add__(self, mins: int | float) -> "Time":
         return Time.from_minutes(min(1440, max(0, self.to_minutes() + mins)))
 
-    @dispatch(AbstractTime)
-    def __sub__(self, subtrahend: "Time") -> "TimeDelta":
+    @dispatch("Time")
+    def __sub__(self, subtrahend: "Time") -> "TimeDelta":  # pyright: ignore
         if not isinstance(subtrahend, Time):
             raise TypeError
         return TimeDelta(self.to_seconds() - subtrahend.to_seconds())
@@ -463,9 +1286,8 @@ class Time(AbstractTime, BaseModel):
         if isinstance(other, NoneTime):
             return False
         if isinstance(other, Time):
-            return (
-                self.to_seconds(places=self.decimal_accuracy) == 
-                other.to_seconds(places=self.decimal_accuracy)
+            return self.to_seconds(places=self.decimal_accuracy) == other.to_seconds(
+                places=self.decimal_accuracy
             )
         return False
 
@@ -514,7 +1336,7 @@ class Time(AbstractTime, BaseModel):
     def now(cls) -> "Time":
         time_now = DATETIME.datetime.now()
         return cls(hour=time_now.hour, minute=time_now.minute)
-    
+
     @classmethod
     @deal.has()
     def from_hours(cls, hours: int | float, places: int | None = None) -> "Time":
@@ -538,7 +1360,7 @@ class Time(AbstractTime, BaseModel):
             minute=int(minutes),
             second=round(seconds, places) if places else seconds,
         )
-    
+
     @classmethod
     @deal.has()
     def from_seconds(cls, seconds: int | float, places: int | None = None) -> "Time":
@@ -559,51 +1381,55 @@ class Time(AbstractTime, BaseModel):
     @deal.pure
     def end(cls) -> "Time":
         return cls(hour=24)
+    
+    def span(self, other: "Time", name: str | None = None) -> "TimeSpan":
+        raise NotImplementedError
 
     def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> "Time":
         raw_hours = self.to_hours()
-        return self.__class__.from_hours(self._round_to(raw_hours, round_to, round_down))
-    
+        rounded = self._round_to(raw_units=raw_hours, round_to=round_to, round_down=round_down)
+        return self.__class__.from_hours(hours=rounded)
+
     def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> "Time":
         raw_minutes = self.to_minutes()
         return self.__class__.from_minutes(self._round_to(raw_minutes, round_to, round_down))
-    
+
     def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> "Time":
         raw_seconds = self.to_seconds()
         return self.__class__.from_seconds(self._round_to(raw_seconds, round_to, round_down))
-    
+
     def floor_hours(self, increment: int | float = 1) -> "Time":
         new_hours = self._floor(self.to_hours(), increment)
         return self.__class__.from_hours(new_hours)
-    
+
     def floor_minutes(self, increment: int | float = 1) -> "Time":
         new_minutes = self._floor(self.to_minutes(), increment)
         return self.__class__.from_minutes(new_minutes)
-    
+
     def floor_seconds(self, increment: int | float = 1) -> "Time":
         new_seconds = self._floor(self.to_seconds(), increment)
         return self.__class__.from_seconds(new_seconds)
-    
+
     def ceiling_hours(self, increment: int | float = 1) -> "Time":
         new_hours = self._ceiling(self.to_hours(), increment)
         return self.__class__.from_hours(new_hours)
-    
+
     def ceiling_minutes(self, increment: int | float = 1) -> "Time":
         new_minutes = self._ceiling(self.to_minutes(), increment)
         return self.__class__.from_minutes(new_minutes)
-    
+
     def ceiling_seconds(self, increment: int | float = 1) -> "Time":
         new_seconds = self._ceiling(self.to_seconds(), increment)
         return self.__class__.from_seconds(new_seconds)
-    
+
     @deal.pure
     def to_hours(self, places: int | None = None) -> float:
-        raw =  self.hour + self.minute / 60 + self.second / 3600
+        raw = self.hour + self.minute / 60 + self.second / 3600
         return round(raw, places or 1)
 
     @deal.pure
     def to_minutes(self, places: int | None = None) -> float:
-        raw =  60.0 * self.hour + self.minute + self.second / 60.0
+        raw = 60.0 * self.hour + self.minute + self.second / 60.0
         return round(raw, places or 1)
 
     @deal.pure
@@ -718,25 +1544,25 @@ class Time(AbstractTime, BaseModel):
             return self.day_start
 
         return self.from_seconds(total)
-    
+
     @staticmethod
     @deal.pure
     def none() -> "NoneTime":
         return NONE_TIME
 
     @staticmethod
-    def _round_to(self, raw_units: float, round_to: int | float, round_down: bool) -> float:
+    def _round_to(raw_units: float, round_to: int | float, round_down: bool) -> float:
         epsilon = 0.1 * round_to * (0.5 - int(round_down))
         remainder = raw_units % round_to
         coda = round_to * round(remainder / round_to + epsilon)
         return raw_units + coda
-    
+
     @staticmethod
-    def _floor(self, raw_units: float, increment: int | float) -> float:
+    def _floor(raw_units: float, increment: int | float) -> float:
         return raw_units - (raw_units % increment)
-    
+
     @staticmethod
-    def _ceiling(self, raw_units: float, increment: int | float) -> float:
+    def _ceiling(raw_units: float, increment: int | float) -> float:
         remainder = raw_units % increment
         return raw_units - remainder + (increment * bool(remainder))
 
@@ -762,11 +1588,11 @@ class TimeDelta:
         return cls(days * 86400)
 
     @classmethod
-    def from_days(cls, hours: int | float) -> Self:
+    def from_hours(cls, hours: int | float) -> Self:
         return cls(hours * 3600)
 
     @classmethod
-    def from_days(cls, minutes: int | float) -> Self:
+    def from_minutes(cls, minutes: int | float) -> Self:
         return cls(minutes * 60)
 
     @classmethod
@@ -866,6 +1692,11 @@ class DateTime(BaseModel, AbstractTime, AbstractDate):
             minute=t.minute or 0,
             second=t.second or 0.0,
         )
+    
+
+    
+    def span(self, other: "DateTime", name: str | None = None) -> "DateTimeSpan":
+        raise NotImplementedError
 
     def add_days(self, n: int) -> "DateTime":
         return (self.date + n) & self.time
@@ -881,7 +1712,7 @@ class DateTime(BaseModel, AbstractTime, AbstractDate):
     def add_seconds(self, n: int | float) -> "DateTime":
         time, wraps = self.time.add_seconds_wraparound(n)
         return (self.date + wraps) & time
-    
+
     @deal.pure
     def minutes_to(self, datetime2: "Time") -> float:
         t2, t1 = datetime2.to_minutes(), self.to_minutes()
@@ -959,10 +1790,18 @@ class DateTime(BaseModel, AbstractTime, AbstractDate):
 
 
 class TimeSpan(AbstractSpan[Time]):
-    def __init__(self, start: Time, end: Time, name: str | None = None):
-        self.start = start
-        self.end = end
+    def __init__(self, start: DateTime, end: DateTime, name: str | None = None) -> None:
+        self._start = start
+        self._end = end
         self._name = name
+
+    @property
+    def start(self) -> DateTime:
+        return self._start
+
+    @property
+    def end(self) -> DateTime:
+        return self._end
 
     @property
     def name(self) -> str:
@@ -988,11 +1827,9 @@ class TimeSpan(AbstractSpan[Time]):
     def seconds(self) -> float:
         return self.end.to_seconds() - self.start.to_seconds()
 
-    def overlap(
-        self, other: "TimeSpan", strict: bool = False
-    ) -> Union["TimeSpan", None]:
+    def overlap(self, other: AbstractSpan[Time], strict: bool = False) -> "TimeSpan | None":
         raise NotImplementedError
-    
+
     def gap(
         self, other: "TimeSpan", strict: bool = False
     ) -> Union["TimeSpan", None]:  # alias end_to_start
@@ -1024,19 +1861,13 @@ class TimeSpan(AbstractSpan[Time]):
     ) -> "TimeSpan":
         raise NotImplementedError
 
-    def interior_point(self, alpha: float) -> Time:
-        raise NotImplementedError
-
-    def contains(self, other) -> bool:
-        raise NotImplementedError
-
-    def gap(self, other: Time, strict: bool = False) -> "TimeSpan":
+    def contains(self, other, include_start: bool = True, include_end: bool = False) -> bool:
         raise NotImplementedError
 
     def snap_start_to(self, new_start: Time) -> "TimeSpan":
         raise NotImplementedError
 
-    def split(self, point: Time) -> tuple["TimeSpan", "TimeSpan"]:
+    def split(self, cut_point: Time) -> tuple["TimeSpan", "TimeSpan"]:
         raise NotImplementedError
 
     def snap_end_to(self, new_end: Time) -> "TimeSpan":
@@ -1050,16 +1881,39 @@ class TimeSpan(AbstractSpan[Time]):
 
     def interior_point(self, alpha: float) -> Time:
         raise NotImplementedError
-    
-    def subdivide(self, ): # -> "TimePartition":
+
+    def subdivide(
+        self,
+    ):  # -> "TimePartition":
         ...
+
+    def round_hours(self, round_to: int) -> Self:
+        raise NotImplementedError
+
+    def round_minutes(self, round_to: int) -> Self:
+        raise NotImplementedError
+    
+    def round_seconds(self, round_to: float) -> Self:
+        raise NotImplementedError
 
 
 class DateTimeSpan(AbstractSpan[DateTime]):
     def __init__(self, start: DateTime, end: DateTime, name: str | None = None):
-        self.start = start
-        self.end = end
-        self.name = name
+        self._start = start
+        self._end = end
+        self._name = name
+
+    @property
+    def start(self) -> DateTime:
+        return self._start
+
+    @property
+    def end(self) -> DateTime:
+        return self._end
+
+    @property
+    def name(self) -> str:
+        return self._name or "TODO"
 
     @property
     def days(self) -> float:
@@ -1091,8 +1945,8 @@ class DateTimeSpan(AbstractSpan[DateTime]):
         if other.start > self.end:
             return DateTimeSpan(other.end, self.start)
         return None
-    
-    def overlap(self, other: "DateTimeSpan", strict: bool = False) -> Union["DateTimeSpan", None]:
+
+    def overlap(self, other: AbstractSpan[DateTime], strict: bool = False) -> "DateTimeSpan | None":
         raise NotImplementedError
 
     def hull(self, other: "DateTimeSpan", strict: bool = False) -> "DateTimeSpan":
@@ -1121,9 +1975,6 @@ class DateTimeSpan(AbstractSpan[DateTime]):
     def contains(self, other) -> bool:
         raise NotImplementedError
 
-    def gap(self, other: DateTime, strict: bool = False) -> "DateTimeSpan":
-        raise NotImplementedError
-
     def snap_start_to(self, new_start: DateTime) -> "DateTimeSpan":
         raise NotImplementedError
 
@@ -1141,9 +1992,20 @@ class DateTimeSpan(AbstractSpan[DateTime]):
 
     def interior_point(self, alpha: float) -> DateTime:
         raise NotImplementedError
-    
-    def subdivide(self, ): # -> "DateTimePartition":
+
+    def subdivide(
+        self,
+    ):  # -> "DateTimePartition":
         ...
+
+    def round_hours(self, round_to: int) -> Self:
+        raise NotImplementedError
+
+    def round_minutes(self, round_to: int) -> Self:
+        raise NotImplementedError
+    
+    def round_seconds(self, round_to: float) -> Self:
+        raise NotImplementedError
 
 
 # --- RANGE TYPES --------------------------------------------------------------------------------
@@ -1189,7 +2051,7 @@ class DateRange(AbstractRange[Date]):
         return 24 * 60 * 60 * len(self)
 
     @dispatch(int)
-    def __getitem__(self, idx: int) -> Date:
+    def __getitem__(self, idx: int) -> Date:  # pyright: ignore
         if idx < 0:
             idx += len(self)
         d = self.start + idx * self.step
@@ -1198,8 +2060,8 @@ class DateRange(AbstractRange[Date]):
         raise ValueError(f"Index out of range for {self:r!}")
 
     @dispatch(slice)
-    def __getitem__(self, sli: slice):
-        start, stop, step = slice.indices(len(self))
+    def __getitem__(self, sli: slice) -> "DateRange":  # pyright: ignore
+        start, stop, step = sli.indices(len(self))
         return DateRange(
             self.start + start * self.step,
             self.start + stop * self.step,
@@ -1245,10 +2107,10 @@ class DateRange(AbstractRange[Date]):
             raise ValueError(f"{d} is not in {self!r}")
         return len(DateRange(self.start, d, step=self.step, inclusive=False))
 
-    def overlap(self, other: "DateRange", strict: bool = False) -> Union["DateRange", None]:
+    def overlap(self, other: "DateRange", strict: bool = False) -> "DateRange | None":
         raise NotImplementedError
 
-    def gap(self, other: "DateRange", strict: bool = False) -> Union["DateRange", None]:
+    def gap(self, other: "DateRange", strict: bool = False) -> "DateRange| None":
         # alias end_to_start
         if self.start > other.stop:
             return DateRange(other.stop, self.start)
@@ -1262,7 +2124,7 @@ class DateRange(AbstractRange[Date]):
             max((self.stop, other.stop)),
         )
 
-    def intersection(self, other: "DateRange", strict: bool = False) -> Union["DateRange", None]:
+    def intersection(self, other: "DateRange", strict: bool = False) -> "DateRange | None":
         first, second = sorted((self, other), key=lambda d: d.start)
         if first.start <= second.start < first.stop:
             return DateRange(second.start, min((first.stop, second.stop)))
@@ -1451,7 +2313,7 @@ class MinuteRangeDated(AbstractRange[DateTime]):
         return 999  # TODO
 
     @dispatch(int)
-    def __getitem__(self, idx: int) -> DateTime:
+    def __getitem__(self, idx: int) -> DateTime:  # pyright: ignore
         if not isinstance(idx, int):
             return TypeError(f"list indices must be integers or slices, not {type(idx)}")
 
@@ -1462,15 +2324,16 @@ class MinuteRangeDated(AbstractRange[DateTime]):
         return self.start.add_seconds(idx * self.step)
 
     @dispatch(slice)
-    def __getitem__(self, slc: slice, inclusive: bool = True):  # -> "MinuteRangeDated":
+    def __getitem__(self, slc: slice, inclusive: bool = True) -> "MinuteRangeDated":  # pyright: ignore
         """
         Attention! The step in the slice, if provided, is with respect to the
           pre-existing step in `self`. This is accordance with the behavior of
           Python's built-in range().
         """
+        start, stop, step = slc.indices(len(self))
         return MinuteRangeDated(
-            start=self[slc.start],
-            stop=self[slc.stop - int(inclusive)],
+            start=self[start],  # pyright: ignore
+            stop=self[stop - int(inclusive)],  # pyright: ignore
             step=self.step * slc.step,
         )
 
@@ -1552,7 +2415,7 @@ class SecondRangeDated(AbstractRange[DateTime]):
         return round(self.start.seconds_to(self.last) % self.step) + 1
 
     @dispatch(int)
-    def __getitem__(self, idx: int) -> DateTime:
+    def __getitem__(self, idx: int) -> DateTime:  # pyright: ignore
         if not isinstance(idx, int):
             return TypeError(f"list indices must be integers or slices, not {type(idx)}")
 
@@ -1563,15 +2426,16 @@ class SecondRangeDated(AbstractRange[DateTime]):
         return self.start.add_seconds(idx * self.step)
 
     @dispatch(slice)
-    def __getitem__(self, slc: slice, inclusive: bool = True):  # -> "SecondRangeDated":
+    def __getitem__(self, slc: slice, inclusive: bool = True) -> "SecondRangeDated":  # pyright: ignore
         """
         Attention! The step in the slice, if provided, is with respect to the
           pre-existing step in `self`. This is accordance with the behavior of
           Python's built-in range().
         """
+        start, stop, step = slc.indices(len(self))
         return SecondRangeDated(
-            start=self[slc.start],
-            stop=self[slc.stop - int(inclusive)],
+            start=self[start],  # pyright: ignore
+            stop=self[stop - int(inclusive)],  # pyright: ignore
             step=self.step * slc.step,
         )
 
@@ -1605,4 +2469,3 @@ class TimePartition:
 
     def __init__(self):
         pass
-

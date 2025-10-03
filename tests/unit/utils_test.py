@@ -1,28 +1,9 @@
 import pytest
 
-from datethyme import DateTime, DateTimeSpan, Time, TimeSpan
+from datethyme import Time, TimeSpan
 from datethyme.utils import (
-    apply_pairwise,
-    earliest_start,
-    get_relative_lengths,
-    get_total_length,
-    latest_end,
-    most_central_span,
     snap_back,
-    snap_between,
-    snap_forward,
-    split_gap_equal,
-    split_gap_inverse_proportional,
-    split_gap_proportional,
-    split_overlap_equal,
-    split_overlap_inverse_proportional,
-    split_overlap_proportional,
-    stack_backward,
-    stack_forward,
-    stack_from_middle,
     transfer_case,
-    truncate,
-    truncate_nodiscard,
     validate_date,
     validate_time,
 )

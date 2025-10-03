@@ -1,12 +1,23 @@
-from functools import partial
+from collections.abc import Iterable
 from itertools import pairwise
-from typing import Iterable, Union
+from typing import Self, TypeVar, Union
 
-from ._abcs import AbstractPartition
+from ._datethyme import AbstractPartition, AbstractSpan, Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 
-from ._datethyme import DateRange, DateTime, DateTimeSpan, Time, TimeDelta, TimeSpan
+# ==============================================================================================================
+
+
+
+
+
+
+
+# ==============================================================================================================
 
 NestedSpan = Union[TimeSpan, "TimePartition"]
+
+S = TypeVar("S")
+T = TypeVar("T", bound=Time | DateTime | Date)
 
 
 class TimePartition(AbstractPartition[Time]):
@@ -32,26 +43,29 @@ class TimePartition(AbstractPartition[Time]):
     def passes_day_boundary(self) -> bool: ...
 
     def __str__(self):
-        return f"[TODO] " #{repr(self)}"
+        return "[TODO] "  # {repr(self)}"
 
     def __repr__(self):
         for level, event in self.iter_nested():
-            indent = ' ' * level
+            indent = " " * level
             print(f"{indent:<12} {event.start} — {event.name.title()}")
+
         def format_span(span: TimeSpan):
             return f"{span.start} - {span.name}"
-            
+
         return f"TimePartition(\n    {'\n    '.join(map(format_span, self.spans))}\n    {self.end} - <END>\n)"
 
     @classmethod
-    def from_times(self, times: Iterable[Time], names: Iterable[str] | None = None):
+    def from_times(cls, times: Iterable[Time], names: Iterable[str] | None = None):
         n_spans = len(times := tuple(times)) - 1
         if names is None:
-            names = (None, ) * n_spans
+            names = (None,) * n_spans
         if not len(names := tuple(names)) == n_spans:
             return ValueError
-        return self.__init__(
-            spans=(TimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names))
+        return cls.__init__(
+            spans=(
+                TimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names)
+            )
         )
 
 
@@ -66,26 +80,29 @@ class DateTimePartition(AbstractPartition[DateTime]):
     # @property
     # def ends(self):
     #     return tuple(map(lambda t: t.end, self.spans))
-    
+
     # @property
     # def end(self):
     #     return max(self.ends)
-# --------------------------------------------------------------------------------------------------------        
+    # --------------------------------------------------------------------------------------------------------
     @classmethod
-    def from_datetimes(cls, times: Iterable[DateTime], names: Iterable[str] | None = None):
+    def from_datetimes(cls, times: Iterable[DateTime], names: Iterable[str] | None = None) -> Self:
         n_spans = len(times := tuple(times)) - 1
         if names is None:
-            names = (None, ) * n_spans
+            names = (None,) * n_spans
         if not len(names := tuple(names)) == n_spans:
             return ValueError
         return cls(
-            spans=(DateTimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names))
+            spans=(
+                DateTimeSpan(start=a, end=b, name=name)
+                for (a, b), name in zip(pairwise(times), names)
+            )
         )
 
     @property
     def spans(self) -> tuple[DateTimeSpan]:
         return self._spans
-    
+
     @property
     def passes_day_boundary(self) -> bool: ...
 
@@ -93,31 +110,29 @@ class DateTimePartition(AbstractPartition[DateTime]):
     def daterange(self) -> DateRange:
         return DateRange(
             start=self.start.date,
-            end=self.end.date,
+            stop=self.end.date,
         )
 
     def __str__(self):
-        return f"TODO: "#{self}"
+        return "TODO: "  # {self}"
 
     def __repr__(self):
-        
         # change _spans to spans later
         return f"TimePartition(\n    {'\n    '.join(map(self.format_span, self._spans))}\n    {self.end} - <END>\n)"
 
     # def repr_indented(self, span: AbstractPartition[DateTime], indent: int) -> str:
     #     prefix = indent * " "
     #     if isinstance(span, DateTimePartition):
-            
-    #     return ("\n" + (" " * indent)).join(map(partial(self.format_span, indent=indent), span))
-    
-    def format_span(self, span: DateTimeSpan | AbstractPartition[DateTime], indent: int = 0):
-            prefix = indent * " "
-            if isinstance(span, DateTimeSpan):
-                return f"{prefix}{span.start} - {span.name}"
-            elif isinstance(span, DateTimePartition):
-                return repr(DateTimePartition).replace("\n", "\n" + prefix)
-            raise ValueError
 
+    #     return ("\n" + (" " * indent)).join(map(partial(self.format_span, indent=indent), span))
+
+    def format_span(self, span: DateTimeSpan | AbstractPartition[DateTime], indent: int = 0):
+        prefix = indent * " "
+        if isinstance(span, DateTimeSpan):
+            return f"{prefix}{span.start} - {span.name}"
+        elif isinstance(span, DateTimePartition):
+            return repr(DateTimePartition).replace("\n", "\n" + prefix)
+        raise ValueError
 
 
 # dt0 = DateTime(year=2025, month=6, day=15, hour=16)
@@ -132,7 +147,17 @@ class DateTimePartition(AbstractPartition[DateTime]):
 # print(repr(dtp))
 
 
-class Item():
+class SpanContainer[T]:
+    def __init__(self, start: T, end: T, subpartition: Iterable[AbstractSpan[T]]) -> None:
+        self.start: T = start
+        self.end: T = end
+        self.subpartition: tuple[AbstractSpan[T], ...] = tuple(subpartition)
+
+
+class DatePartition: ...
+
+
+class Item:
     def __init__(
         self,
         name: str,
@@ -150,7 +175,7 @@ class Item():
 
     def __repr__(self) -> str:
         return f"Item({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
-    
+
     def __str__(self) -> str:
         return f"Item({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
 
@@ -165,9 +190,8 @@ class Item():
 
 
 class ItemSequence(list[Item]):
-    """
-    
-    """
+    """ """
+
     def __init__(self, items: Iterable[Item]):
         items = list(items)
         if not len(set(items)) == len(items):
@@ -177,26 +201,24 @@ class ItemSequence(list[Item]):
     @property
     def default(self) -> float:
         return sum(map(lambda it: it.default, self))
-    
+
     @property
     def minimum(self) -> float:
         return sum(map(lambda it: it.minimum, self))
-    
+
     @property
     def ideal(self) -> float:
         return sum(map(lambda it: it.ideal, self))
-    
+
     @property
     def maximum(self) -> float:
         return sum(map(lambda it: it.maximum, self))
-    
+
     def __repr__(self) -> str:
         return f"ItemSequence(\n    {'\n    '.join(map(repr, self))}\n)"
-    
+
     def __str__(self) -> str:
         return f"ItemSequence(\n    {'\n    '.join(map(repr, self))}\n)"
-
-    
 
 
 # migrate Entry from consilium?

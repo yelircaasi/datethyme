@@ -17,9 +17,6 @@ alias l := lint
 alias d := docs
 alias tc := test-cov
 alias t := test
-alias cs := check-structure
-alias cmo := check-method-order
-alias ci := check-imports
 alias flame := flamegraph
 alias perf := perf-flamegraph
 

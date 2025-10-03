@@ -1,66 +1,13 @@
 from collections.abc import Callable, Iterable
 from functools import partial
-from typing import Generic, Protocol, Self, TypeVar, cast
+from typing import TypeVar, cast
 
-import deal
+from .protocols import SpanProtocol, TimeProtocol  # type: ignore
 
-
-class _Atomic(Protocol):
-    def __bool__(self) -> bool: ...
-    def __eq__(self, other) -> bool: ...
-    def __lt__(self, other) -> bool: ...
-    def __le__(self, other) -> bool: ...
-    def __gt__(self, other) -> bool: ...
-    def __ge__(self, other) -> bool: ...
-    def __hash__(self) -> int: ...
-    def __repr__(self) -> str: ...
-    def __str__(self) -> str: ...
-
-    @classmethod
-    def parse(cls, str) -> Self: ...
+T = TypeVar("T", bound=TimeProtocol)
 
 
-class _TimeLike(_Atomic, Protocol):
-    hour: int
-    minute: int
-    second: float
-
-    @property
-    def ordinal(self) -> float: ...
-
-    @classmethod
-    def from_ordinal(cls, ordinal: float) -> Self: ...
-
-    def minutes_to(self, other) -> float: ...
-
-    def minutes_from(self, other) -> float: ...
-
-    def add_minutes(self, mins: float) -> Self: ...
-
-
-T = TypeVar("T", bound=_TimeLike)
-
-
-class _SpanLike(Protocol, Generic[T]):
-    start: T
-    end: T
-    midpoint: T
-
-    def __init__(self, start: T, end: T): ...
-    def __bool__(self) -> bool: ...
-    def snap_start_to(self, new_start: T) -> "_SpanLike[T]": ...
-    def snap_end_to(self, new_end: T) -> "_SpanLike[T]": ...
-    def shift_start_rigid(self, new_start: T) -> "_SpanLike[T]": ...
-    def shift_end_rigid(self, new_end: T) -> "_SpanLike[T]": ...
-    def split(self, cut_point: T) -> "tuple[_SpanLike[T], _SpanLike[T]]": ...
-    def interior_point(self, alpha: float) -> T: ...
-    def contains(self, other) -> bool: ...
-
-    @property
-    def minutes(self) -> float: ...
-
-
-Span = TypeVar("Span", bound=_SpanLike)
+Span = TypeVar("Span", bound=SpanProtocol)
 PairCallback = Callable[[Span, Span], tuple[Span, Span]]
 
 
@@ -89,21 +36,21 @@ def snap_between(span: Span, earliest: T | None, latest: T | None) -> Span:
         return cast(Span, span.snap_start_to(earliest).snap_end_to(latest))
 
 
-def earliest_start(seq: Iterable[_SpanLike[T]]) -> T:
+def earliest_start[T: TimeProtocol](seq: Iterable[SpanProtocol[T]]) -> T:
     return min([t.start for t in seq])
 
 
-def latest_end(seq: Iterable[_SpanLike[T]]) -> T:
+def latest_end[T: TimeProtocol](seq: Iterable[SpanProtocol[T]]) -> T:
     return max([t.end for t in seq])
 
 
-def most_central_span(seq: Iterable[Span]) -> Span:
-    def get_midpoint(start: _TimeLike, end: _TimeLike) -> _TimeLike:
+def most_central_span[Span: SpanProtocol](seq: Iterable[Span]) -> Span:
+    def get_midpoint(start: TimeProtocol, end: TimeProtocol) -> TimeProtocol:
         return start.__class__.from_ordinal((start.ordinal + end.ordinal) / 2)
 
-    start: _TimeLike = earliest_start(seq)
-    end: _TimeLike = latest_end(seq)
-    midpoint: _TimeLike = get_midpoint(start, end)
+    start: TimeProtocol = earliest_start(seq)
+    end: TimeProtocol = latest_end(seq)
+    midpoint: TimeProtocol = get_midpoint(start, end)
 
     def get_midpoint_distance(spn: Span) -> int:
         return int(abs(midpoint.minutes_to(spn.midpoint)))
@@ -111,21 +58,21 @@ def most_central_span(seq: Iterable[Span]) -> Span:
     return min(seq, key=get_midpoint_distance)
 
 
-def get_relative_lengths(seq: Iterable[Span]) -> list[float]:
+def get_relative_lengths[Span: SpanProtocol](seq: Iterable[Span]) -> list[float]:
     lengths = [t.minutes for t in seq]
     total = sum(lengths)
     return [x / total for x in lengths]
 
 
-def get_total_length(seq: Iterable[Span]) -> float:
+def get_total_length[Span: SpanProtocol](seq: Iterable[Span]) -> float:
     lengths = [t.minutes for t in seq]
     return sum(lengths)
 
 
-def stack_forward(seq: Iterable[Span], anchor=None) -> list[Span]:
+def stack_forward[Span: SpanProtocol](seq: Iterable[Span], anchor=None) -> list[Span]:
     spans: list[Span] = []
     anchor = anchor or earliest_start(seq)
-    _current: _TimeLike = anchor or earliest_start(seq)
+    _current: TimeProtocol = anchor or earliest_start(seq)
     for span in seq:
         spans.append(shifted := cast(Span, span.shift_start_rigid(_current)))
         _current = shifted.end
@@ -133,10 +80,10 @@ def stack_forward(seq: Iterable[Span], anchor=None) -> list[Span]:
     return spans
 
 
-def stack_backward(seq: Iterable[Span], anchor=None) -> list[Span]:
+def stack_backward[Span: SpanProtocol](seq: Iterable[Span], anchor=None) -> list[Span]:
     spans: list[Span] = []
     anchor = anchor or latest_end(seq)
-    _current: _TimeLike = anchor or earliest_start(seq)
+    _current: TimeProtocol = anchor or earliest_start(seq)
     for span in seq:
         spans.insert(0, shifted := cast(Span, span.shift_end_rigid(_current)))
         _current = shifted.start
@@ -144,7 +91,7 @@ def stack_backward(seq: Iterable[Span], anchor=None) -> list[Span]:
     return spans
 
 
-def stack_from_middle(seq: Iterable[Span], anchor=None) -> list[Span]:
+def stack_from_middle[Span: SpanProtocol](seq: Iterable[Span], anchor=None) -> list[Span]:
     spans: list[Span] = []
     central = most_central_span(seq := list(seq))
     idx = seq.index(central)
@@ -157,8 +104,8 @@ def stack_from_middle(seq: Iterable[Span], anchor=None) -> list[Span]:
     return spans
 
 
-def apply_pairwise(
-    pair_callback: PairCallback,
+def apply_pairwise[Span: SpanProtocol](
+    pair_callback: PairCallback[Span],
     seq: Iterable[Span],
 ) -> list[Span]:
     if not seq:
@@ -168,8 +115,12 @@ def apply_pairwise(
 
     spans: list[Span] = []
 
-    span_a = seq[0]
-    for span_b in seq[1:]:
+    if not (remaining := seq[1:]):
+        raise ValueError("Cannot call `apply_pairwise` on a sequence of length 1.")
+    span_a, span_b = seq[0], seq[1]
+    new_b = span_b
+
+    for span_b in remaining:
         new_a, new_b = pair_callback(span_a, span_b)
         spans.append(new_a)
         span_a = new_b
@@ -250,8 +201,8 @@ def split_gap_inverse_proportional(first: Span, second: Span) -> tuple[Span, Spa
     return new_first, new_second
 
 
-def truncate(
-    seq: Iterable[Span], earliest: _TimeLike, latest: _TimeLike
+def truncate[Span: SpanProtocol](
+    seq: Iterable[Span], earliest: TimeProtocol, latest: TimeProtocol
 ) -> tuple[list[Span], list[Span], list[Span]]:
     before: list[Span] = []
     kept: list[Span] = []
@@ -277,8 +228,8 @@ def truncate(
     return before, kept, after
 
 
-def truncate_nodiscard(
-    seq: Iterable[Span], earliest: _TimeLike, latest: _TimeLike
+def truncate_nodiscard[Span: SpanProtocol](
+    seq: Iterable[Span], earliest: TimeProtocol, latest: TimeProtocol
 ) -> list[Span] | None:
     """
     Truncate a sequence, but return None if truncation causes the

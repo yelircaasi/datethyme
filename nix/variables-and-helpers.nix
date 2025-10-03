@@ -2,7 +2,7 @@
 let
   custom = import ./custom-packages.nix {inherit pkgs;};
 in rec {
-  pythonMinorVersion = "12";
+  pythonMinorVersion = "13";
 
   packageNamePython = "datethyme";
 
@@ -73,9 +73,7 @@ in rec {
         ty
       ]);
     nonPython =
-      (with custom; [
-        justfmt
-      ])
+      (with custom; [])
       ++ (with pkgs; [
         cargo-flamegraph
         flamegraph

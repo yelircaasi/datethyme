@@ -25,14 +25,14 @@ from ._null import (
     NoneDateTime,
     NoneTime,
 )
+from ._scheduling import (
+    DateTimePartition,
+    TimePartition,
+)
 from .exceptions import (
     DateTimeValidationError,
     DateValidationError,
     TimeValidationError,
-)
-from ._scheduling import (
-    DateTimePartition,
-    TimePartition,
 )
 from .utils import (
     DATE_REGEX,
@@ -50,6 +50,7 @@ __all__ = [
     "Date",
     "DateRange",
     "DateTime",
+    "DateTimePartition",
     "DateTimeSpan",
     "DateTimeValidationError",
     "DateValidationError",
@@ -66,8 +67,7 @@ __all__ = [
     "SecondRangeDated",
     "Time",
     "TimeDelta",
+    "TimePartition",
     "TimeSpan",
     "TimeValidationError",
-    "DateTimePartition",
-    "TimePartition",
 ]

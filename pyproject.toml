@@ -261,115 +261,61 @@ suppress-none-returning = true
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.scripts.check_imports]
-primitive_modules = ["utils"]  # the utils module may not import from any other module in the project (external imports ok)
-external_allowed_everywhere = []
-internal_allowed_everywhere = []
+[tool.structlint]
+root_dir = "."
+module_name = "consilium.notes"
+module_root_dir = "src/consilium/notes"
 
-[tool.scripts.check_imports.disallowed.internal]  # for a given module, allow all internal imports except those explicitly named
-utils = ["utils"]  # don’t let the project’s root module import directly from the utils module
-
-[tool.scripts.check_imports.disallowed.external]  # for a given module, allow all internal imports except those explicitly named
-utils = ["pydantic"]  # don’t let the utils module import from pydantic
-
-[tool.scripts.check_imports.allowed.internal]  # for a given module, disallow all imports except those explicitly named and those allowed everywhere
-
-[tool.scripts.check_imports.allowed.external]  # for a given module, disallow all imports except those explicitly named and those allowed everywhere
-utils = ["deal"]
-
-[tool.scripts.check_method_order]
-init = 0
-abstract_property = 0.0409
-property = 0.041
-abstract_private_property = 0.042
-private_property = 0.043
-abstract_dunder = 0.999
-dunder = 1
-abstract_classmethod = 1.999
-classmethod = 2
-final = 3.9
-abstract = 3.999
-normal = 4
-abstract_static = 4.4999
-static = 4.5
-abstract_private = 4.999
-private = 5
-mangled = 6
-
-# init = 0
-# abstract_property = 0.0401
-# property = 0.041
-# abstract_private_property = 0.042
-# private_property = 0.003
-# abstract_dunder = 0.8
-# abstract_classmethod = 0.81
-# abstract_static = 0.82
-# abstract = 0.9
-# abstract_private = 0.91
-# dunder = 1
-# classmethod = 2
-# static = 3.5
-# final = 3.9
-# normal = 4
-# private = 5
-# mangled = 6
-
-[tool.scripts.check_method_order.regex]
-"@model_validator|model_validate" = 0
-"_pydantic_" = 0.01
-" adapter(" = 0.011
-"@field_validator" = 0.1
-"model_serializ|model_dump" = 0.00001
-"@field_serializer" = 0.3
-"__call__" = 0.300001
-"check_.+" = 9
-" read[^ ]+(" = 3.98
-" write[^ ]+(" = 3.99
-"[^_][a-z_]+_hook$" = 9
-
-[tool.scripts.check_structure]
-checks = [
-    "tests",
-    "mkdocs",
-]
-module_root_dir = "src/datethyme"
-
-[tool.scripts.check_structure.docs]
-allow_additional = "index"
-file_per_class = "_datethyme|_null|_scheduling"
-file_per_directory = ""
-ignore = "_abcs|exceptions|:_[A-Z]"
-keep_double_underscore = true
+[tool.structlint.docs]
 md_dir = "docs/md"
+allow_additional = "(?!)"
+ignore = "(?!)"
+order_ignore = "(?!)"
+file_per_directory = "(?!)"
+file_per_class = "(?!)"
+replace_double_underscore = false
 
-[tool.scripts.check_structure.tests]
-allow_additional = "__edgecases|__error"
-file_per_class = "_datethyme|_null|_scheduling"
-file_per_directory = ""
-function_for_class = ""
-ignore = "_abcs|:test__[A-Z]|__init__$|exceptions|Abstract[RS]|Optional|__get_pydantic_core_schema__"
-keep_double_underscore = true
+[tool.structlint.imports]
+internal_allowed_everywhere = []
+external_allowed_everywhere = []
+grimp_cache = ".grimp_cache"
+
+[tool.structlint.imports.internal.allowed]
+datamodels = []
+utils = []
+types = ["datamodels"]
+
+[tool.structlint.imports.internal.disallowed]
+conversion = ["datamodels"]
+
+[tool.structlint.methods.builtins_order]
+init = 0.0
+abstract_property = 1.0
+property = 2.0
+abstract_private_property = 3.0
+private_property = 4.0
+abstract_dunder = 5.0
+dunder = 6.0
+abstract_classmethod = 7.0
+classmethod = 8.0
+abstract = 9.0
+final = 11.0
+abstract_static = 12.0
+static = 13.0
+abstract_private = 14.0
+private = 15.0
+mangled = 16.0
+
+[tool.structlint.tests]
 unit_dir = "tests/unit"
 use_filename_suffix = true
-
-[tool.tomlsort]
-all = false
-in_place = true
-no_comments = false
-no_header_comments = false
-no_footer_comments = false
-no_inline_comments = false
-no_block_comments = false
-no_sort_tables = true
-sort_first = ["key1", "key2"]
-sort_table_keys = false
-sort_inline_tables = false
-sort_inline_arrays = false
-spaces_before_inline_comment = 2
-spaces_indent_inline_array = 4
-trailing_comma_inline_array = true
-check = false
-ignore_case = false
+allow_additional = "_tmp"
+ignore = "(?!)"
+order_ignore = "(?!)"
+file_per_directory = "(?!)"
+file_per_class = "(?!)"
+function_per_class = "(?!)"
+replace_double_underscore = false
 
 [tool.vulture]
 exclude = []

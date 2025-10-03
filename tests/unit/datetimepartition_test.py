@@ -1,10 +1,4 @@
-import pytest
-
-from datethyme import DateTimePartition
-
-
-class TestDateTimePartition:  #TODO: copy and modify from timepartition_test.py
-
+class TestDateTimePartition:  # TODO: copy and modify from timepartition_test.py
     def test_affine_transform(self): ...
 
     def test_contains(self): ...

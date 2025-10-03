@@ -553,7 +553,7 @@ class TimeDelta:
 
     @property
     def full_seconds(self) -> int:
-        return int(floor(self._seconds))
+        return floor(self._seconds)
 
 
 class DateTime(BaseModel, OptionalDateTime):
@@ -1003,26 +1003,26 @@ class DateTimeDayRange(AbstractRange[DateTime]):
         self._current = self.start
 
     def __contains__(self, other: DateTime) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> DateTime:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> DateTime:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_days(1)
@@ -1046,26 +1046,26 @@ class HourRange(AbstractRange[Time]):
         self.inclusive = inclusive
 
     def __contains__(self, other: Time) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> Time:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: Time) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: Time) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> Time:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_hours(1)
@@ -1082,26 +1082,26 @@ class DateTimeHourRange(AbstractRange[DateTime]):
         self._current = self.start
 
     def __contains__(self, other: DateTime) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> DateTime:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> DateTime:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_hours(1)
@@ -1115,26 +1115,26 @@ class MinuteRange(AbstractRange[Time]):
         self.inclusive = inclusive
 
     def __contains__(self, other: Time) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> Time:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: Time) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: Time) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> Time:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_seconds(self.step)
@@ -1149,26 +1149,26 @@ class DateTimeMinuteRange(AbstractRange[DateTime]):
         self._current = self.start
 
     def __contains__(self, other: DateTime) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> DateTime:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> DateTime:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_minutes(self.step)
@@ -1182,26 +1182,26 @@ class SecondRange(AbstractRange[Time]):
         self.inclusive = inclusive
 
     def __contains__(self, other: Time) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> Time:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: Time) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: Time) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> Time:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_seconds(self.step)
@@ -1215,26 +1215,26 @@ class DateTimeSecondRange(AbstractRange[DateTime]):
         self.inclusive = inclusive
 
     def __contains__(self, other: DateTime) -> bool:
-        return False #TODO
+        return False  # TODO
 
     def __len__(self) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def __getitem__(self, idx: int) -> DateTime:
-        return self.start #TODO
+        return self.start  # TODO
 
     def __reversed__(self) -> Self:
         return self
 
     def count(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     def index(self, item: DateTime) -> int:
-        return 999 #TODO
+        return 999  # TODO
 
     @property
     def last(self) -> DateTime:
-        return self.stop #TODO
+        return self.stop  # TODO
 
     def _increment(self) -> None:
         self._current = self._current.add_seconds(self.step)

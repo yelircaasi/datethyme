@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Generic, Literal, Protocol, TypeVar
+from typing import Literal, Protocol, TypeVar
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
@@ -44,7 +44,7 @@ class IntervalType(Protocol):
     end: PointType
 
 
-class AbstractSpan(ABC, Generic[T]):
+class AbstractSpan[T: PointType](ABC):
     start: T
     end: T
 
@@ -80,7 +80,7 @@ class AbstractSpan(ABC, Generic[T]):
     def end_to_end(self, other): ...
 
 
-class AbstractRange(ABC, Generic[T]):
+class AbstractRange[T: PointType](ABC):
     start: T
     stop: T
     step: int

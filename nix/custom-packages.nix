@@ -29,6 +29,4 @@ in {
     mdformat-with-plugins = pkgs.writeShellScriptBin "mdformat" ''
         ${pythonMdformat}/bin/python -m mdformat --extensions mdformat_mkdocs "$@"
     '';
-
-    justfmt = pkgs.writers.writeBashBin "justfmt" ../codeqa/scripts/justfmt.sh;
 }

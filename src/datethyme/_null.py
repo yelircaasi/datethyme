@@ -21,9 +21,9 @@ class NoneDate(OptionalDate, BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    year: None = Field(default=None, frozen=True)
-    month: None = Field(default=None, frozen=True)
-    day: None = Field(default=None, frozen=True)
+    year: int | None = Field(default=None, frozen=True)
+    month: int | None = Field(default=None, frozen=True)
+    day: int | None = Field(default=None, frozen=True)
 
     @deal.pure
     def __init__(self) -> None:
@@ -78,14 +78,14 @@ class NoneDate(OptionalDate, BaseModel):
         return False
 
 
-class NoneTime(OptionalTime, BaseModel):
+class NoneTime(BaseModel, OptionalTime):
     """Empty time for cases where this may be superior to using None."""
 
     model_config = ConfigDict(frozen=True)
 
-    hour: None = Field(default=None, frozen=True)
-    minute: None = Field(default=None, frozen=True)
-    second: None = Field(default=None, frozen=True)
+    hour: int | None = Field(default=None, frozen=True)
+    minute: int | None = Field(default=None, frozen=True)
+    second: float | None = Field(default=None, frozen=True)
 
     @deal.pure
     def __init__(self) -> None:
@@ -151,12 +151,12 @@ class NoneDateTime(BaseModel, OptionalDate):
 
     model_config = ConfigDict(frozen=True)
 
-    year: None = Field(default=None, frozen=True)
-    month: None = Field(default=None, frozen=True)
-    day: None = Field(default=None, frozen=True)
-    hour: None = Field(default=None, frozen=True)
-    minute: None = Field(default=None, frozen=True)
-    second: None = Field(default=None, frozen=True)
+    year: int | None = Field(default=None, frozen=True)
+    month: int | None = Field(default=None, frozen=True)
+    day: int | None = Field(default=None, frozen=True)
+    hour: int | None = Field(default=None, frozen=True)
+    minute: int | None = Field(default=None, frozen=True)
+    second: float | None = Field(default=None, frozen=True)
 
     @deal.pure
     def __bool__(self) -> bool:
