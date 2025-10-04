@@ -1,17 +1,25 @@
 from abc import abstractmethod
 from collections.abc import Callable, Iterable
 from itertools import pairwise
-from typing import Literal, Protocol, Self, TypeVar, Union
+from typing import Iterator, Literal, Protocol, Self, TypeVar, Union
 
-from ._datethyme import AbstractSpan, Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
+from ._datethyme import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ._scheduling_utils import (
     stack_forward,
+    is_contiguous,
 )
 from .utils import (
     assert_xor,
 )
 
+NestedSpan = Union[TimeSpan, "TimePartition"]
+
+S = TypeVar("S")
+T = TypeVar("T", bound=Time | DateTime | Date)
+
+
 # =================================================================================================
+DEFAULT_DATE = Date.parse("1970-01-01")
 
 
 class DeltaProtocol(Protocol):
@@ -20,8 +28,12 @@ class DeltaProtocol(Protocol):
     seconds: float
 
 
-class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
-    # type AbstractSpan[Atom] = AbstractSpan[Atom]
+class PartitionProtocol:
+    ...
+
+
+class DateTimePartition(PartitionProtocol):
+    # type DateTimeSpan = DateTimeSpan
     """
     TODO: add nesting_mode to determine how nested time partitions are
     resized under different operations
@@ -29,16 +41,16 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
 
     def __init__(
         self,
-        spans: Iterable[AbstractSpan[Atom]],
+        spans: Iterable[DateTimeSpan],
         names: Iterable[str | None] | None = None,
     ):
-        if not self.is_contiguous(spans):
+        if not is_contiguous(spans):
             raise ValueError
         self._spans = spans
         self._names = tuple(names) if names else names
 
     @property
-    def named_spans(self) -> tuple[tuple[str, AbstractSpan[Atom]], ...]:
+    def named_spans(self) -> tuple[tuple[str, DateTimeSpan], ...]:
         return tuple(zip(self.names, self._spans))
 
     @property
@@ -46,27 +58,27 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
         return tuple(map(lambda sp: sp.name, self.spans))
 
     @property
-    def span(self) -> "AbstractSpan[Atom]":
+    def span(self) -> "DateTimeSpan":
         return self.start.to(self.end)  # pyright: ignore
 
     @property
-    def spans(self) -> tuple[AbstractSpan[Atom], ...]:
+    def spans(self) -> tuple[DateTimeSpan, ...]:
         return tuple(self._spans)
 
     @property
-    def start(self) -> Atom:
+    def start(self) -> DateTime:
         return min(self.starts)
 
     @property
-    def end(self) -> Atom:
+    def end(self) -> DateTime:
         return max(self.ends)
 
     @property
-    def starts(self) -> tuple[Atom, ...]:
+    def starts(self) -> tuple[DateTime, ...]:
         return tuple(map(lambda s: s.start, self.spans))
 
     @property
-    def ends(self) -> tuple[Atom, ...]:
+    def ends(self) -> tuple[DateTime, ...]:
         return tuple(map(lambda t: t.end, self.spans))
 
     @property
@@ -94,7 +106,7 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
     # @classmethod
     # def from_sequence(
     #     cls,
-    #     seq: Iterable[AbstractSpan],
+    #     seq: Iterable[DateTimeSpan],
     #     mode,
     #     round_to: int = 0,
     # ) -> Self:
@@ -104,9 +116,9 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
     @classmethod
     def from_pipeline(
         cls,
-        segments: Iterable[AbstractSpan[Atom]],
-        pipeline: Iterable[Callable[[Iterable[AbstractSpan[Atom]]], Iterable[AbstractSpan[Atom]]]],
-        # Callable[[Iterable[AbstractSpan[Atom]]], tuple[AbstractSpan[Atom]]],
+        segments: Iterable[DateTimeSpan],
+        pipeline: Iterable[Callable[[Iterable[DateTimeSpan]], Iterable[DateTimeSpan]]],
+        # Callable[[Iterable[DateTimeSpan]], tuple[DateTimeSpan]],
         names: Iterable[str | None] | None = None,
     ) -> Self:
         for step in pipeline:
@@ -116,7 +128,7 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
     @classmethod
     def from_boundaries(
         cls,
-        times: Iterable[Atom],
+        times: Iterable[DateTime],
         names: Iterable[str | None] | None = None,
     ) -> Self:
         names = names or (None,) * (len(times := tuple(times)) - 1)
@@ -126,7 +138,7 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
     @classmethod
     def from_partition(
         cls,
-        segments: Iterable[AbstractSpan[Atom]],
+        segments: Iterable[DateTimeSpan],
         names: Iterable[str | None] | None = None,
     ) -> Self:
         return cls(spans=segments, names=names)
@@ -136,8 +148,8 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
         cls,
         *,
         durations: Iterable[int | float],
-        start: Atom | None,
-        end: Atom | None,
+        start: DateTime | None,
+        end: DateTime | None,
         names: Iterable[str | None] | None = None,
     ) -> Self:
         anchor_start = assert_xor(start, end)
@@ -151,8 +163,8 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
         cls,
         *,
         durations: Iterable[DeltaProtocol],
-        start: Atom | None,
-        end: Atom | None,
+        start: DateTime | None,
+        end: DateTime | None,
         names: Iterable[str | None] | None = None,
     ) -> Self:
         anchor_start = assert_xor(start, end)
@@ -164,29 +176,29 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
     @classmethod
     def from_relative_lengths(
         cls,
-        start: Atom,
-        end: Atom,
+        start: DateTime,
+        end: DateTime,
         segments: Iterable[float],
         names: Iterable[str | None] | None = None,
     ) -> Self:
         raise NotImplementedError
 
-    def round_hours(self, round_to: int) -> "AbstractSpan[Atom]":  # pyright: ignore
+    def round_hours(self, round_to: int) -> Self:
         return self.__class__(
             spans=tuple(span.round_hours(round_to) for span in self.spans),
             names=tuple(span.name for span in self.spans),
         )
 
-    def round_minutes(self, round_to: int) -> "AbstractSpan[Atom]":
+    def round_minutes(self, round_to: int) -> Self:
         return self.__class__(spans=tuple(span.round_minutes(round_to) for span in self.spans))
 
-    def round_seconds(self, round_to: float) -> "AbstractSpan[Atom]":
+    def round_seconds(self, round_to: float) -> Self:
         return self.__class__(span.round_seconds(round_to) for span in self.spans)
 
     @classmethod
     def from_minutes_and_start(
         cls,
-        start: Atom,
+        start: DateTime,
         segments: Iterable[float],
         names: Iterable[str | None] | None = None,
     ) -> Self:
@@ -195,7 +207,7 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
     @classmethod
     def from_minutes_and_end(
         cls,
-        end: Atom,
+        end: DateTime,
         segments: Iterable[float],
         names: Iterable[str | None] | None = None,
     ) -> Self:
@@ -211,36 +223,36 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
         ...
         # return self.span.contains(other)
 
-    def gap(self, other, strict: bool = False) -> "AbstractSpan[Atom] | None": ...
+    def gap(self, other, strict: bool = False) -> "DateTimeSpan | None": ...
 
-    def hull(self, other, strict: bool = False) -> "AbstractSpan[Atom]":
+    def hull(self, other, strict: bool = False) -> "DateTimeSpan":
         return self.span.hull(other)
 
-    def interior_point(self, alpha: float) -> Atom:
+    def interior_point(self, alpha: float) -> DateTime:
         return self.span.interior_point(alpha)
 
-    def intersection(self, other, strict: bool = False) -> "AbstractPartition[Atom] | None":
+    def intersection(self, other, strict: bool = False) -> "DateTimePartition | None":
         ...
         # return self.span.intersection(other)
 
-    def overlap(self, other, strict: bool = False) -> "AbstractPartition[Atom] | None": ...
+    def overlap(self, other, strict: bool = False) -> "DateTimePartition | None": ...
 
-    def shift_end_rigid(self, new_end: Atom) -> "AbstractPartition[Atom]":
+    def shift_end_rigid(self, new_end: DateTime) -> "DateTimePartition":
         raise NotImplementedError
 
-    def shift_start_rigid(self, new_start: Atom) -> "AbstractPartition[Atom]":
+    def shift_start_rigid(self, new_start: DateTime) -> "DateTimePartition":
         raise NotImplementedError
 
-    def snap_end_to(self, new_end: Atom) -> "AbstractPartition[Atom]":
+    def snap_end_to(self, new_end: DateTime) -> "DateTimePartition":
         raise NotImplementedError
 
-    def snap_start_to(self, new_start: Atom) -> "AbstractPartition[Atom]":
+    def snap_start_to(self, new_start: DateTime) -> "DateTimePartition":
         raise NotImplementedError
 
-    def split(self, cut_point: Atom) -> "tuple[AbstractPartition[Atom], AbstractPartition[Atom]]":
+    def split(self, cut_point: DateTime) -> "tuple[DateTimePartition, DateTimePartition]":
         raise NotImplementedError
 
-    def span_containing(self, point: Atom) -> AbstractSpan[Atom] | None:
+    def span_containing(self, point: DateTime) -> DateTimeSpan | None:
         for span in self._spans:
             if span.contains(point):
                 return span
@@ -248,32 +260,30 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
 
     def insert(
         self,
-        span_start: Atom | int,
-        new_span: AbstractSpan[Atom],
+        span_start: DateTime | int,
+        new_span: DateTimeSpan,
         mode: Literal["SQUEEZE", "PUSH_BACK", "PUSH_FORWARD"],
         split_incumbent: bool = True,
-    ) -> "AbstractPartition[Atom]":
+    ) -> "DateTimePartition":
         raise NotImplementedError
 
     def index_from_name(self, name: str) -> int | None:
         raise NotImplementedError
 
-    def index_from_time(self, point: Atom) -> int | None:
+    def index_from_time(self, point: DateTime) -> int | None:
         raise NotImplementedError
 
     def affine_transform(
         self,
         scale_factor: float,
-        new_start: Atom | None = None,
-        new_end: Atom | None = None,
+        new_start: DateTime | None = None,
+        new_end: DateTime | None = None,
         min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]:
+    ) -> Self:
         new_length = scale_factor * self.minutes
         if new_start and not new_end:
-            raise NotImplementedError
             result = self.__class__(new_start, new_start.add_minutes(new_length))
         elif new_end and not new_start:
-            raise NotImplementedError
             result = self.__class__(new_end.add_minutes(new_length), new_end)
         else:
             raise ValueError
@@ -283,79 +293,38 @@ class AbstractPartition[Atom: Time | DateTime](AbstractSpan[Atom]):
         return result
 
     def reordered(
-        self, orderer: Callable[[AbstractSpan[Atom]], int | float | str | Atom]
-    ) -> "AbstractPartition[Atom]":
-        reordered: list[AbstractSpan] = sorted(self.spans, key=orderer)
+        self, orderer: Callable[[DateTimeSpan], int | float | str | DateTime]
+    ) -> Self:
+        reordered = sorted(self.spans, key=orderer)
         return self.__class__.from_partition(stack_forward(reordered))
 
-    # TO ADD ------------------------------------------------------------------------------------
-
-    # FROM ABC -------------------------------------------------
+    # FROM TimePartition -------------------------------------------------
 
 
-# ================================================================================================
-
-NestedSpan = Union[TimeSpan, "TimePartition"]
-
-S = TypeVar("S")
-T = TypeVar("T", bound=Time | DateTime | Date)
-
-
-class TimePartition(AbstractPartition[Time]):
-    """
-    A contiguous sequence of TimeSpan objects or TimePartition objects (recursive),
-      useful for scheduling.
-
-    intuitively:
-        resolve_overlaps(seq, mode=EQUAL|PROPORTIONAL|INVERSE|ECLIPSE|SHIFT)
-        resolve_gaps(seq, mode=EQUAL|PROPORTIONAL|INVERSE|SNAP_FORWARD|SNAP_BACK|SHIFT_FORWARD|
-          SHIFT_BACK)
-        squeeze(seq, mode=PROPORTIONAL|EQUAL, earliest=None, latest=None)
-        stack(seq, mode=forward|middle|backward, anchor=None)
-        truncate(seq, earliest: Time, latest: Time)
-
-        truncate_preserve -> return (before, truncated, after)
-
-    both can be procrustean or not
-
-    """
 
     @property
     def passes_day_boundary(self) -> bool: ...
 
-    def __str__(self):
-        return "[TODO] "  # {repr(self)}"
-
-    def __repr__(self):
-        for level, event in self.iter_nested():
-            indent = " " * level
-            print(f"{indent:<12} {event.start} — {event.name.title()}")
-
-        def format_span(span: TimeSpan):
-            return f"{span.start} - {span.name}"
-
-        return f"TimePartition(\n    {'\n    '.join(map(format_span, self.spans))}\n    {self.end} - <END>\n)"
-
     @classmethod
     def from_times(
-        cls, times: Iterable[Time], names: Iterable[str] | None = None
-    ) -> "TimePartition":
+        cls, times: Iterable[Time], names: Iterable[str | None] | None = None
+    ) -> "DateTimePartition":
         n_spans = len(times := tuple(times)) - 1
         if names is None:
             names = (None,) * n_spans
         if not len(names := tuple(names)) == n_spans:
             raise ValueError
-        return TimePartition(
+        return DateTimePartition(
             spans=(
                 TimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names)
             )
         )
 
 
-# DEV ONLY ----------------------------------------------------------------------------------------
-# class DateTimePartition():
-class DateTimePartition(AbstractPartition[DateTime]):
-    # spans: Iterable[AbstractSpan[DateTime]]
+    # DEV ONLY ----------------------------------------------------------------------------------------
+    # class DateTimePartition():
+
+    # spans: Iterable[DateTimeSpan]
     # def __init__(self, spans, names: Iterable[str] | None = None):
     #     self._spans = tuple(spans)
     #     self._names = tuple(names) if names else names
@@ -385,18 +354,14 @@ class DateTimePartition(AbstractPartition[DateTime]):
         )
 
     @property
-    def spans(self) -> tuple[DateTimeSpan]:
-        return self._spans
-
-    @property
-    def passes_day_boundary(self) -> bool: ...
-
-    @property
     def daterange(self) -> DateRange:
         return DateRange(
             start=self.start.date,
             stop=self.end.date,
         )
+    
+    def iter_nested(self) -> Iterator[tuple[int, DateTimeSpan]]:
+        raise NotImplementedError
 
     def __str__(self):
         return "TODO: "  # {self}"
@@ -409,19 +374,53 @@ class DateTimePartition(AbstractPartition[DateTime]):
             f"\n    {self.end} - <END>\n)"
         )
 
-    # def repr_indented(self, span: AbstractPartition[DateTime], indent: int) -> str:
+    def ALT__repr__(self):
+        for level, event in self.iter_nested():
+            indent = " " * level
+            print(f"{indent:<12} {event.start} — {event.name.title()}")
+
+        def format_span(span: TimeSpan):
+            return f"{span.start} - {span.name}"
+
+        return f"TimePartition(\n    {'\n    '.join(map(format_span, self.spans))}\n    {self.end} - <END>\n)"
+
+    # def repr_indented(self, span: DateTimePartition, indent: int) -> str:
     #     prefix = indent * " "
     #     if isinstance(span, DateTimePartition):
 
     #     return ("\n" + (" " * indent)).join(map(partial(self.format_span, indent=indent), span))
 
-    def format_span(self, span: DateTimeSpan | AbstractPartition[DateTime], indent: int = 0):
+    def format_span(self, span: "DateTimeSpan | DateTimePartition", indent: int = 0):
         prefix = indent * " "
         if isinstance(span, DateTimeSpan):
             return f"{prefix}{span.start} - {span.name}"
         elif isinstance(span, DateTimePartition):
             return repr(DateTimePartition).replace("\n", "\n" + prefix)
         raise ValueError
+
+
+# ================================================================================================
+
+
+
+class TimePartition(PartitionProtocol):
+    """
+    A contiguous sequence of TimeSpan objects or TimePartition objects (recursive),
+      useful for scheduling.
+
+    intuitively:
+        resolve_overlaps(seq, mode=EQUAL|PROPORTIONAL|INVERSE|ECLIPSE|SHIFT)
+        resolve_gaps(seq, mode=EQUAL|PROPORTIONAL|INVERSE|SNAP_FORWARD|SNAP_BACK|SHIFT_FORWARD|
+          SHIFT_BACK)
+        squeeze(seq, mode=PROPORTIONAL|EQUAL, earliest=None, latest=None)
+        stack(seq, mode=forward|middle|backward, anchor=None)
+        truncate(seq, earliest: Time, latest: Time)
+
+        truncate_preserve -> return (before, truncated, after)
+
+    both can be procrustean or not
+
+    """
 
 
 # dt0 = DateTime(year=2025, month=6, day=15, hour=16)
@@ -437,16 +436,16 @@ class DateTimePartition(AbstractPartition[DateTime]):
 
 
 # class SpanContainer[T]:
-#     def __init__(self, start: T, end: T, subpartition: Iterable[AbstractSpan[T]]) -> None:
+#     def __init__(self, start: T, end: T, subpartition: Iterable[SpanProtocol[T]]) -> None:
 #         self.start: T = start
 #         self.end: T = end
-#         self.subpartition: tuple[AbstractSpan[T], ...] = tuple(subpartition)
+#         self.subpartition: tuple[SpanProtocol[T], ...] = tuple(subpartition)
 
 
 class DatePartition: ...
 
 
-class Item:
+class ScheduleItem:
     def __init__(
         self,
         name: str,
@@ -463,13 +462,13 @@ class Item:
         self.maximum = max(default, maximum or default, self.ideal)
 
     def __repr__(self) -> str:
-        return f"Item({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
+        return f"ScheduleItem({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
 
     def __str__(self) -> str:
-        return f"Item({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
+        return f"ScheduleItem({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
 
-    def rescaled(self, scale_factor: float) -> "Item":
-        return Item(
+    def rescaled(self, scale_factor: float) -> "ScheduleItem":
+        return ScheduleItem(
             self.name,
             self.default * scale_factor,
             minimum=self.minimum * scale_factor,
@@ -478,10 +477,10 @@ class Item:
         )
 
 
-class ItemSequence(list[Item]):
+class ScheduleItems(list[ScheduleItem]):
     """ """
 
-    def __init__(self, items: Iterable[Item]):
+    def __init__(self, items: Iterable[ScheduleItem]):
         items = list(items)
         if not len(set(items)) == len(items):
             raise ValueError("Item names must be unique.")

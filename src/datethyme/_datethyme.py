@@ -45,6 +45,7 @@ from .exceptions import (
     DateValidationError,
     TimeValidationError,
 )
+from .protocols import SpanProtocol, TimeProtocol # pyright: ignore
 from .utils import (
     DATE_TIME_REGEX,
     WeekdayLiteral,
@@ -195,7 +196,7 @@ class AbstractRange[Atom: Time | Date | DateTime](ABC):
     # def string_list(self) -> list[str]: ...
 
 
-class AbstractSpan[Atom: Time | DateTime](ABC):
+class AbstractSpan[Atom: Time | DateTime](ABC, SpanProtocol):
     @property
     @abstractmethod
     def start(self) -> Atom: ...
@@ -648,7 +649,7 @@ class Date(BaseModel):
     #     return NONE_DATE
 
 
-class Time(BaseModel):
+class Time(BaseModel, TimeProtocol):
     """Bespoke immutable date class designed to simplify working with times,
     in particular input parsing, time calculations, and ranges.
     """
@@ -1066,7 +1067,7 @@ class TimeDelta:
         return cls(seconds)
 
 
-class DateTime(BaseModel):
+class DateTime(BaseModel, TimeProtocol):
     """
     .
     """
