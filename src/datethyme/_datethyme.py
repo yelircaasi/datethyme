@@ -45,7 +45,7 @@ from .exceptions import (
     DateValidationError,
     TimeValidationError,
 )
-from .protocols import SpanProtocol, TimeProtocol # pyright: ignore
+from .protocols import SpanProtocol  # pyright: ignore
 from .utils import (
     DATE_TIME_REGEX,
     WeekdayLiteral,
@@ -57,9 +57,9 @@ from .utils import (
 FROZEN = True
 
 
-# ==============================================================================================================
+# =================================================================================================
 # ABCs
-# ==============================================================================================================
+# =================================================================================================
 
 
 # T = TypeVar("T", bound=TimeProtocol)
@@ -211,6 +211,9 @@ class AbstractSpan[Atom: Time | DateTime](ABC, SpanProtocol):
     @abstractmethod
     def __init__(self, start: Atom, end: Atom) -> None: ...
 
+    def __hash__(self) -> int:
+        return hash((self.start, self.end))
+
     @property
     def name(self) -> str:
         return "TODO"
@@ -300,7 +303,8 @@ class AbstractSpan[Atom: Time | DateTime](ABC, SpanProtocol):
 
     # @abstractmethod
     # @dispatch(str)
-    # def contains(self, other: Atom, include_start: bool = True, include_end: bool = False) -> bool: ...
+    # def contains(
+    #     self, other: Atom, include_start: bool = True, include_end: bool = False) -> bool: ...
 
     @abstractmethod
     def affine_transform(
@@ -324,9 +328,9 @@ class AbstractSpan[Atom: Time | DateTime](ABC, SpanProtocol):
         # return result
 
 
-# ==============================================================================================================
+# ================================================================================================
 # --- ELEMENTARY TYPES ---------------------------------------------------------------------------
-# ==============================================================================================================
+# ================================================================================================
 
 
 class Date(BaseModel):
@@ -443,9 +447,9 @@ class Date(BaseModel):
     def __sub__(self, subtrahend: int) -> "Date":  # pyright: ignore
         return Date.from_ordinal(self.ordinal - int(subtrahend))
 
-    @dispatch("Date")
+    @dispatch(BaseModel)  # type: ignore
     def __sub__(self, subtrahend: "Date") -> int:  # pyright: ignore
-        if not subtrahend:
+        if not isinstance(subtrahend, Date):
             raise TypeError("Date or int required for method __sub__ of Date.")
         return self.ordinal - subtrahend.ordinal
 
@@ -530,7 +534,7 @@ class Date(BaseModel):
     def format(self, template: str) -> str:  # TODO
         """Returns a the date written out in long form."""
 
-        def get_string(placeholder: str) -> str:
+        def get_string(placeholder: str) -> str:  # noqa: PLR0911
             normalized = placeholder.lower()
             match normalized:
                 case "weekday":
@@ -649,7 +653,7 @@ class Date(BaseModel):
     #     return NONE_DATE
 
 
-class Time(BaseModel, TimeProtocol):
+class Time(BaseModel):  # , TimeProtocol):
     """Bespoke immutable date class designed to simplify working with times,
     in particular input parsing, time calculations, and ranges.
     """
@@ -730,18 +734,24 @@ class Time(BaseModel, TimeProtocol):
     def __bool__(self):
         return True
 
-    @dispatch((int, float))
     def __add__(self, mins: int | float) -> "Time":
         return Time.from_minutes(min(1440, max(0, self.to_minutes() + mins)))
 
-    @dispatch("Time")
+    @dispatch(BaseModel)
     def __sub__(self, subtrahend: "Time") -> "TimeDelta":  # pyright: ignore
         if not isinstance(subtrahend, Time):
             raise TypeError
         return TimeDelta(self.to_seconds() - subtrahend.to_seconds())
 
-    @dispatch(int | float)
-    def __sub__(self, mins: int | float) -> "Time":
+    @dispatch(int)
+    def __sub__(self, mins: int) -> "Time":  # pyright: ignore
+        return self._sub(mins)
+
+    @dispatch(float)
+    def __sub__(self, mins: int) -> "Time":
+        return self._sub(mins)
+
+    def _sub(self, mins: int | float) -> "Time":
         return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
 
     @deal.pure
@@ -1067,7 +1077,7 @@ class TimeDelta:
         return cls(seconds)
 
 
-class DateTime(BaseModel, TimeProtocol):
+class DateTime(BaseModel):  # , TimeProtocol):
     """
     .
     """
@@ -1291,6 +1301,9 @@ class TimeSpan(AbstractSpan[Time]):
         self._end = end
         self._name = name
 
+    def __hash__(self) -> int:
+        return hash((self._start, self._end, self._name))
+
     @property
     def start(self) -> Time:
         return self._start
@@ -1448,6 +1461,9 @@ class DateTimeSpan(AbstractSpan[DateTime]):
 
     def __add__(self, other: Date | Time | DateTime) -> "DateTimeSpan":
         return self  # TODO
+
+    def __hash__(self) -> int:
+        return hash((self._start, self._end, self._name))
 
     @property
     def span(self) -> "DateTimeSpan":

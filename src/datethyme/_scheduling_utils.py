@@ -1,9 +1,9 @@
 from collections.abc import Callable, Iterable
 from functools import partial
 from itertools import pairwise
-from typing import Literal, Protocol, Self, TypeVar, cast
+from typing import Literal, TypeVar, cast
 
-from .protocols import TimeProtocol, SpanProtocol # pyright: ignore
+from .protocols import SpanProtocol, TimeProtocol  # pyright: ignore
 
 T = TypeVar("T", bound=TimeProtocol)
 PairCallback = Callable[[SpanProtocol[T], SpanProtocol[T]], tuple[SpanProtocol[T], SpanProtocol[T]]]

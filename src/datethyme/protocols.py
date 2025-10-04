@@ -1,6 +1,14 @@
-from typing import Protocol, Self
+from typing import Protocol, Self, runtime_checkable
 
 
+@runtime_checkable
+class DeltaProtocol(Protocol):
+    hours: float
+    minutes: float
+    seconds: float
+
+
+@runtime_checkable
 class TimeProtocol(Protocol):
     hour: int
     minute: int
@@ -41,6 +49,7 @@ class TimeProtocol(Protocol):
     def round_seconds(self) -> "TimeProtocol": ...
 
 
+@runtime_checkable
 class SpanProtocol[T: TimeProtocol](Protocol):
     @property
     def start(self) -> T: ...
@@ -71,3 +80,6 @@ class SpanProtocol[T: TimeProtocol](Protocol):
         new_end: T | None = None,
         min_minutes: int | float = 5,
     ) -> "SpanProtocol[T]": ...
+
+
+class PartitionProtocol: ...

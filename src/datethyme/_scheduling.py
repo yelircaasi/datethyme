@@ -1,13 +1,14 @@
 from abc import abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from itertools import pairwise
-from typing import Iterator, Literal, Protocol, Self, TypeVar, Union
+from typing import Literal, Self, TypeVar, Union
 
 from ._datethyme import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ._scheduling_utils import (
-    stack_forward,
     is_contiguous,
+    stack_forward,
 )
+from .protocols import DeltaProtocol, PartitionProtocol  # pyright: ignore
 from .utils import (
     assert_xor,
 )
@@ -16,20 +17,7 @@ NestedSpan = Union[TimeSpan, "TimePartition"]
 
 S = TypeVar("S")
 T = TypeVar("T", bound=Time | DateTime | Date)
-
-
-# =================================================================================================
-DEFAULT_DATE = Date.parse("1970-01-01")
-
-
-class DeltaProtocol(Protocol):
-    hours: float
-    minutes: float
-    seconds: float
-
-
-class PartitionProtocol:
-    ...
+DEFAULT_DATE = Date.parse("2000-01-01")
 
 
 class DateTimePartition(PartitionProtocol):
@@ -273,7 +261,7 @@ class DateTimePartition(PartitionProtocol):
     def index_from_time(self, point: DateTime) -> int | None:
         raise NotImplementedError
 
-    def affine_transform(
+    def affine_transform(  # TODO
         self,
         scale_factor: float,
         new_start: DateTime | None = None,
@@ -282,9 +270,9 @@ class DateTimePartition(PartitionProtocol):
     ) -> Self:
         new_length = scale_factor * self.minutes
         if new_start and not new_end:
-            result = self.__class__(new_start, new_start.add_minutes(new_length))
+            result = self.__class__(new_start, new_start.add_minutes(new_length))  # type: ignore
         elif new_end and not new_start:
-            result = self.__class__(new_end.add_minutes(new_length), new_end)
+            result = self.__class__(new_end.add_minutes(new_length), new_end)  # type: ignore
         else:
             raise ValueError
 
@@ -292,15 +280,11 @@ class DateTimePartition(PartitionProtocol):
             raise ValueError
         return result
 
-    def reordered(
-        self, orderer: Callable[[DateTimeSpan], int | float | str | DateTime]
-    ) -> Self:
+    def reordered(self, orderer: Callable[[DateTimeSpan], int | float | str | DateTime]) -> Self:
         reordered = sorted(self.spans, key=orderer)
         return self.__class__.from_partition(stack_forward(reordered))
 
     # FROM TimePartition -------------------------------------------------
-
-
 
     @property
     def passes_day_boundary(self) -> bool: ...
@@ -320,8 +304,7 @@ class DateTimePartition(PartitionProtocol):
             )
         )
 
-
-    # DEV ONLY ----------------------------------------------------------------------------------------
+    # DEV ONLY -----------------------------------------------------------------------------------
     # class DateTimePartition():
 
     # spans: Iterable[DateTimeSpan]
@@ -336,7 +319,7 @@ class DateTimePartition(PartitionProtocol):
     # @property
     # def end(self):
     #     return max(self.ends)
-    # ---------------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------------
     @classmethod
     def from_datetimes(
         cls, times: Iterable[DateTime], names: Iterable[str | None] | None = None
@@ -359,7 +342,7 @@ class DateTimePartition(PartitionProtocol):
             start=self.start.date,
             stop=self.end.date,
         )
-    
+
     def iter_nested(self) -> Iterator[tuple[int, DateTimeSpan]]:
         raise NotImplementedError
 
@@ -382,7 +365,10 @@ class DateTimePartition(PartitionProtocol):
         def format_span(span: TimeSpan):
             return f"{span.start} - {span.name}"
 
-        return f"TimePartition(\n    {'\n    '.join(map(format_span, self.spans))}\n    {self.end} - <END>\n)"
+        return (
+            f"TimePartition(\n    {'\n    '.join(map(format_span, self.spans))}"
+            f"\n    {self.end} - <END>\n)"
+        )
 
     # def repr_indented(self, span: DateTimePartition, indent: int) -> str:
     #     prefix = indent * " "
@@ -400,7 +386,6 @@ class DateTimePartition(PartitionProtocol):
 
 
 # ================================================================================================
-
 
 
 class TimePartition(PartitionProtocol):
