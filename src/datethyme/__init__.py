@@ -17,6 +17,8 @@ from ._datethyme import (
 from ._scheduling import (
     DateTimePartition,
     TimePartition,
+    ScheduleItem,
+    ScheduleItems,
 )
 from .exceptions import (
     DateTimeValidationError,
@@ -45,6 +47,8 @@ __all__ = [
     "HourRangeDated",
     "MinuteRange",
     "MinuteRangeDated",
+    "ScheduleItem",
+    "ScheduleItems",
     "SecondRange",
     "SecondRangeDated",
     "Time",

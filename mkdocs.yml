@@ -20,10 +20,10 @@ nav:
     - Span Types:
         - TimeSpan: timespan.md
         - DateTimeSpan: datetimespan.md
-    - Null Types:
-        - NoneDate: nonedate.md
-        - NoneTime: nonetime.md
-        - NoneDateTime: nonedatetime.md
+    - Scheduling Types:
+        - TimePartition: timepartition.md
+        - DateTimePartition: datetimepartition.md
+        - ScheduleItem: scheduleitem.md
     - TimeDelta: timedelta.md
     - utils: utils.md
 plugins:
@@ -49,6 +49,7 @@ theme:
     name: material
     palette:
         scheme: slate
+        primary: teal
         accent: teal
     highlightjs: false
 extra_css:
