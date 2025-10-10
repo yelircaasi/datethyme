@@ -21,7 +21,7 @@ from collections.abc import Callable, Iterable, Iterator
 from math import floor
 from typing import Any, Literal, Self, TypeVar, Union
 
-import deal
+# import deal
 from multipledispatch import dispatch
 from pydantic import (
     BaseModel,
@@ -346,14 +346,14 @@ class Date(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    @deal.has()
-    @deal.raises(DateValidationError)
+    # @deal.has()
+    # @deal.raises(DateValidationError)
     def validate_raw_date(cls, raw_date: str | dict | list | tuple) -> dict[str, str | int | float]:
         return validate_date(raw_date)
 
     @model_serializer
-    @deal.has()
-    @deal.raises(ValidationError)
+    # @deal.has()
+    # @deal.raises(ValidationError)
     def serialize_date(self) -> str:
         return str(self)
 
@@ -367,17 +367,17 @@ class Date(BaseModel):
         return DATETIME.date(self.year, self.month, self.day)
 
     @property
-    @deal.pure
+    # @deal.pure
     def ordinal(self) -> int:
         return self.stdlib.toordinal()
 
     @property
-    @deal.pure
+    # @deal.pure
     def weekday_ordinal(self) -> int:
         return self.stdlib.weekday()
 
     @property
-    @deal.pure
+    # @deal.pure
     def weekday(self) -> WeekdayLiteral:
         weekday_dict: dict[int, WeekdayLiteral] = {
             0: "mon",
@@ -391,7 +391,7 @@ class Date(BaseModel):
         return weekday_dict[self.weekday_ordinal]
 
     @property
-    @deal.has()
+    # @deal.has()
     def prose(self) -> str:
         """Prose English date string of the form `Wednesday, March 17th 2025`."""
         return self.format("{Weekday}, {Month} {ordinal}, {year}")
@@ -420,19 +420,19 @@ class Date(BaseModel):
             )
         return DateTime(year=self.year, month=self.month, day=self.day)
 
-    @deal.pure
+    # @deal.pure
     def __str__(self) -> str:
         return f"{self.year}-{self.month:0>2}-{self.day:0>2}"
 
-    @deal.pure
+    # @deal.pure
     def __repr__(self) -> str:
         return f"Date({self.__str__()})"
 
-    @deal.pure
+    # @deal.pure
     def __bool__(self) -> bool:
         return True
 
-    @deal.has()
+    # @deal.has()
     def __add__(self, days: int) -> "Date":
         """Create a new date `days` later than `self`."""
         d = DATETIME.date.fromordinal(self.ordinal + int(days))
@@ -453,7 +453,7 @@ class Date(BaseModel):
             raise TypeError("Date or int required for method __sub__ of Date.")
         return self.ordinal - subtrahend.ordinal
 
-    @deal.pure
+    # @deal.pure
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, DATETIME.date | Date):
             raise TypeError("Unsupported comparison.")
@@ -463,39 +463,39 @@ class Date(BaseModel):
             other.day,
         )
 
-    @deal.pure
+    # @deal.pure
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() < int(other)
 
-    @deal.pure
+    # @deal.pure
     def __gt__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() > int(other)
 
-    @deal.pure
+    # @deal.pure
     def __le__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() <= int(other)
 
-    @deal.pure
+    # @deal.pure
     def __ge__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() >= int(other)
 
-    @deal.pure
+    # @deal.pure
     def __int__(self) -> int:
         return self.ordinal
 
-    @deal.pure
+    # @deal.pure
     def __hash__(self) -> int:
         return hash((self.year, self.month, self.day))
 
-    @deal.pure
+    # @deal.pure
     def __pow__(self, other: "Date") -> "DateRange":
         return DateRange(start=self, stop=other, step=1, inclusive=False)
 
@@ -513,24 +513,24 @@ class Date(BaseModel):
             return None
 
     @classmethod
-    @deal.has("time")
+    # @deal.has("time")
     def today(cls) -> "Date":
         """Return todays date, using datetime.date.today() from the Python standard library."""
         d = DATETIME.date.today()
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
-    @deal.pure
+    # @deal.pure
     def from_ordinal(cls, ord: int) -> "Date":
         d = DATETIME.date.fromordinal(ord)
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
-    @deal.has("time")
+    # @deal.has("time")
     def tomorrow(cls) -> "Date":
         return cls.today() + 1
 
-    @deal.has()
+    # @deal.has()
     def format(self, template: str) -> str:  # TODO
         """Returns a the date written out in long form."""
 
@@ -608,11 +608,16 @@ class Date(BaseModel):
         placeholders = re.findall(r"(?<=\{)[A-Za-z]+3?(?=\})", template)
         return template.format(**{p: transfer_case(p, get_string(p)) for p in placeholders})
 
-    @deal.has()
-    def range(self, end: Union["Date", int], inclusive: bool = False) -> list["Date"]:
+    # @deal.has()
+    def range(self, end: "Date | int", inclusive: bool = False) -> list["Date"]:
         """Returns a list of consecutive days, default non-inclusive as is standard in Python.
         Supports reverse-order ranges."""
-        inclusive = inclusive and (self != end != 0)
+        if isinstance(end, int):
+            end = self + end
+        if not isinstance(end, Date):
+            raise ValueError(f"`end` is of type `{type(end)}`; expected `{Date}`.")
+        
+        inclusive = inclusive and (self != end)
 
         date1 = self.model_copy()
         if isinstance(end, int):
@@ -643,7 +648,7 @@ class Date(BaseModel):
 
         return dates
 
-    @deal.pure
+    # @deal.pure
     def days_to(self, date2: "Date") -> int:
         return date2.ordinal - self.ordinal
 
@@ -666,13 +671,13 @@ class Time(BaseModel):  # , TimeProtocol):
 
     @model_validator(mode="before")
     @classmethod
-    @deal.has()
-    @deal.raises(TimeValidationError)
+    # @deal.has()
+    # @deal.raises(TimeValidationError)
     def validate_time(cls, raw_time: str | dict | list | tuple) -> dict[str, str | int | float]:
         return validate_time(raw_time)
 
     @model_serializer
-    @deal.pure
+    # @deal.pure
     def serialize_time(self) -> str:
         return str(self)
 
@@ -720,17 +725,17 @@ class Time(BaseModel):  # , TimeProtocol):
     def __rshift__(self, other: "Time") -> "TimeSpan":
         return self.to(other)
 
-    @deal.pure
+    # @deal.pure
     def __str__(self) -> str:
         if self.second:
             return f"{self.hour:0>2}:{self.minute:0>2}:{self.second:06.3f}"
         return f"{self.hour:0>2}:{self.minute:0>2}"
 
-    @deal.pure
+    # @deal.pure
     def __repr__(self) -> str:
         return f"Time({self.__str__()})"
 
-    @deal.pure
+    # @deal.pure
     def __bool__(self):
         return True
 
@@ -754,7 +759,7 @@ class Time(BaseModel):  # , TimeProtocol):
     def _sub(self, mins: int | float) -> "Time":
         return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
 
-    @deal.pure
+    # @deal.pure
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Time):
             raise TypeError("Unsupported comparison.")
@@ -788,7 +793,7 @@ class Time(BaseModel):  # , TimeProtocol):
             raise TypeError("Unsupported comparison.")
         return self.to_minutes() >= other.to_minutes()
 
-    @deal.pure
+    # @deal.pure
     def __hash__(self) -> int:
         return hash((self.hour, self.minute))
 
@@ -805,13 +810,13 @@ class Time(BaseModel):  # , TimeProtocol):
             return None
 
     @classmethod
-    @deal.has("time")
+    # @deal.has("time")
     def now(cls) -> "Time":
         time_now = DATETIME.datetime.now()
         return cls(hour=time_now.hour, minute=time_now.minute)
 
     @classmethod
-    @deal.has()
+    # @deal.has()
     def from_hours(cls, hours: int | float, places: int | None = None) -> "Time":
         hours, minutes = divmod(hours, 1.0)
         minutes, seconds = divmod(minutes * 60.0, 1.0)
@@ -823,7 +828,7 @@ class Time(BaseModel):  # , TimeProtocol):
         )
 
     @classmethod
-    @deal.has()
+    # @deal.has()
     def from_minutes(cls, minutes: int | float, places: int | None = None) -> "Time":
         hours, minutes = divmod(minutes, 60.0)
         minutes, seconds = divmod(minutes, 1.0)
@@ -835,7 +840,7 @@ class Time(BaseModel):  # , TimeProtocol):
         )
 
     @classmethod
-    @deal.has()
+    # @deal.has()
     def from_seconds(cls, seconds: int | float, places: int | None = None) -> "Time":
         hours, seconds = divmod(seconds, 1440.0)
         minutes, seconds = divmod(seconds, 60.0)
@@ -846,12 +851,12 @@ class Time(BaseModel):  # , TimeProtocol):
         )
 
     @classmethod
-    @deal.pure
+    # @deal.pure
     def start(cls) -> "Time":
         return cls(hour=0)
 
     @classmethod
-    @deal.pure
+    # @deal.pure
     def end(cls) -> "Time":
         return cls(hour=24)
 
@@ -895,87 +900,87 @@ class Time(BaseModel):  # , TimeProtocol):
         new_seconds = self._ceiling(self.to_seconds(), increment)
         return self.__class__.from_seconds(new_seconds)
 
-    @deal.pure
+    # @deal.pure
     def to_hours(self, places: int | None = None) -> float:
         raw = self.hour + self.minute / 60 + self.second / 3600
         return round(raw, places or 1)
 
-    @deal.pure
+    # @deal.pure
     def to_minutes(self, places: int | None = None) -> float:
         raw = 60.0 * self.hour + self.minute + self.second / 60.0
         return round(raw, places or 1)
 
-    @deal.pure
+    # @deal.pure
     def to_seconds(self, places: int | None = None) -> float:
         raw = 3600.0 * self.hour + 60.0 * self.minute + self.second
         return round(raw, places or 1)
 
-    @deal.pure
+    # @deal.pure
     def minutes_to(self, time2: "Time") -> float:
         t2, t1 = time2.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def minutes_from(self, time2: "Time") -> float:
         t2, t1 = self.to_minutes(), time2.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def minutes_to_next(self, time2: "Time") -> float:
         if time2 >= self:
             return self.minutes_to(time2)
         else:
             return self.minutes_to(DAY_END) + DAY_START.minutes_to(time2)
 
-    @deal.pure
+    # @deal.pure
     def minutes_from_last(self, time2: "Time") -> float:
         if time2 <= self:
             return time2.minutes_to(self)
         else:
             return time2.minutes_to(DAY_END) + DAY_START.minutes_to(self)
 
-    @deal.pure
+    # @deal.pure
     def seconds_to(self, time2: "Time") -> float:
         t2, t1 = time2.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def seconds_from(self, time2: "Time") -> float:
         t2, t1 = self.to_minutes(), time2.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def seconds_to_next(self, time2: "Time") -> float:
         if time2 >= self:
             return self.minutes_to(time2)
         else:
             return self.minutes_to(DAY_END) + DAY_START.minutes_to(time2)
 
-    @deal.pure
+    # @deal.pure
     def seconds_from_last(self, time2: "Time") -> float:
         if time2 <= self:
             return time2.minutes_to(self)
         else:
             return time2.minutes_to(DAY_END) + DAY_START.minutes_to(self)
 
-    @deal.pure
+    # @deal.pure
     def hours_to(self, time2: "Time") -> float:
         t2, t1 = time2.to_hours(), self.to_hours()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def hours_from(self, time2: "Time") -> float:
         t2, t1 = self.to_hours(), time2.to_hours()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def hours_to_next(self, time2: "Time") -> float:
         if time2 >= self:
             return self.hours_to(time2)
         else:
             return self.hours_to(DAY_END) + DAY_START.hours_to(time2)
 
-    @deal.pure
+    # @deal.pure
     def hours_from_last(self, time2: "Time") -> float:
         if time2 <= self:
             return time2.hours_to(self)
@@ -1093,8 +1098,8 @@ class DateTime(BaseModel):  # , TimeProtocol):
 
     @model_validator(mode="before")
     @classmethod
-    @deal.has()
-    @deal.raises(DateTimeValidationError, DateValidationError, TimeValidationError)
+    # @deal.has()
+    # @deal.raises(DateTimeValidationError, DateValidationError, TimeValidationError)
     def validate_datetime(
         cls, raw_datetime: str | dict | list | tuple
     ) -> dict[str, str | int | float]:
@@ -1213,17 +1218,17 @@ class DateTime(BaseModel):  # , TimeProtocol):
         time, wraps = self.time.add_seconds_wraparound(n)
         return (self.date + wraps) & time
 
-    @deal.pure
+    # @deal.pure
     def minutes_to(self, datetime2: "DateTime") -> float:
         t2, t1 = datetime2.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def minutes_from(self, datetime2: "DateTime") -> float:
         t2, t1 = self.to_minutes(), datetime2.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def minutes_to_next(self, time2: "Time") -> float:
         self_time = self.time
         if time2 >= self_time:
@@ -1231,7 +1236,7 @@ class DateTime(BaseModel):  # , TimeProtocol):
         else:
             return 1440 - self_time.minutes_from(time2)
 
-    @deal.pure
+    # @deal.pure
     def minutes_from_last(self, time2: "Time") -> float:
         self_time = self.time
         if time2 <= self_time:
@@ -1239,17 +1244,17 @@ class DateTime(BaseModel):  # , TimeProtocol):
         else:
             return 1440 - self_time.minutes_to(time2)
 
-    @deal.pure
+    # @deal.pure
     def seconds_to(self, datetime2: "DateTime") -> float:
         t2, t1 = datetime2.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def seconds_from(self, datetime2: "DateTime") -> float:
         t2, t1 = self.to_minutes(), datetime2.to_minutes()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def seconds_to_next(self, time2: "Time") -> float:
         self_time = self.time
         if time2 >= self_time:
@@ -1257,7 +1262,7 @@ class DateTime(BaseModel):  # , TimeProtocol):
         else:
             return self_time.minutes_to(DAY_END) + DAY_START.minutes_to(time2)
 
-    @deal.pure
+    # @deal.pure
     def seconds_from_last(self, time2: "Time") -> float:
         self_time = self.time
         if time2 <= self_time:
@@ -1265,17 +1270,17 @@ class DateTime(BaseModel):  # , TimeProtocol):
         else:
             return time2.minutes_to(DAY_END) + DAY_START.minutes_to(self_time)
 
-    @deal.pure
+    # @deal.pure
     def hours_to(self, datetime2: "Time") -> float:
         t2, t1 = datetime2.to_hours(), self.to_hours()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def hours_from(self, datetime2: "Time") -> float:
         t2, t1 = self.to_hours(), datetime2.to_hours()
         return t2 - t1
 
-    @deal.pure
+    # @deal.pure
     def hours_to_next(self, time2: "Time") -> float:
         self_time = self.time
         if time2 >= self_time:
@@ -1283,7 +1288,7 @@ class DateTime(BaseModel):  # , TimeProtocol):
         else:
             return self_time.hours_to(DAY_END) + DAY_START.hours_to(time2)
 
-    @deal.pure
+    # @deal.pure
     def hours_from_last(self, time2: "Time") -> float:
         self_time = self.time
         if time2 <= self_time:

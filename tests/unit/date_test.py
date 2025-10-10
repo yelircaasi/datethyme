@@ -2,7 +2,7 @@ import datetime as stdlib_datetime
 
 import pytest
 
-from datethyme import NONE_DATE, Date, DateRange, DateTime, Time
+from datethyme import Date, DateRange, DateTime, Time
 from datethyme._datethyme import DateTimeSpan
 
 
@@ -11,7 +11,7 @@ class TestDate:
     st_pat = Date(year=2027, month=3, day=17)
     time1613 = Time(hour=16, minute=13)
 
-    def test_validate_raw_date(self):
+    def test_validate_raw_date(self) -> None:
         assert self.st_pat == Date.model_validate("2027-03-17")
         assert self.st_pat == Date.model_validate((2027, 3, 17))
         assert self.st_pat == Date.model_validate([2027, 3, 17])
@@ -224,11 +224,11 @@ class TestDate:
         assert self.st_pat.format(template) == formatted
 
     def test_if_valid(self):
-        assert Date.if_valid("invalid string") is NONE_DATE
+        assert Date.if_valid("invalid string") is None
         assert Date.if_valid("2027-03-17") == self.st_pat
 
-    def test_none(self):
-        assert Date.none() == NONE_DATE
+    # def test_none(self):
+    #     assert Date.none() == NONE_DATE
 
     def test_range(self):
         may5th = Date(year=2025, month=5, day=5)

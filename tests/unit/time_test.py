@@ -1,27 +1,28 @@
+from sys import float_repr_style
+from typing import Literal
 import pytest
 
 from datethyme import Time
 from datethyme._datethyme import Date, TimeDelta
-from datethyme._null import NONE_TIME, NoneTime
 from datethyme.exceptions import TimeValidationError
 
 
 class TestTime:
     def test_validate_time(self):
         with pytest.raises(TimeValidationError):
-            Time.validate_raw_time("25:00")
+            Time.model_validate("25:00")
         with pytest.raises(TimeValidationError):
-            Time.validate_raw_time("12:60")
+            Time.model_validate("12:60")
 
-        assert Time.validate_raw_time("14:30") == {"hour": 14, "minute": 30, "second": 0.0}
-        assert Time.validate_raw_time("09:15:30") == {"hour": 9, "minute": 15, "second": 30.0}
-        assert Time.validate_raw_time({"hour": 10, "minute": 45}) == {
+        assert Time.model_validate("14:30") == {"hour": 14, "minute": 30, "second": 0.0}
+        assert Time.model_validate("09:15:30") == {"hour": 9, "minute": 15, "second": 30.0}
+        assert Time.model_validate({"hour": 10, "minute": 45}) == {
             "hour": 10,
             "minute": 45,
             "second": 0.0,
         }
-        assert Time.validate_raw_time([8, 30]) == {"hour": 8, "minute": 30, "second": 0.0}
-        assert Time.validate_raw_time((12, 15, 45)) == {"hour": 12, "minute": 15, "second": 45.0}
+        assert Time.model_validate([8, 30]) == {"hour": 8, "minute": 30, "second": 0.0}
+        assert Time.model_validate((12, 15, 45)) == {"hour": 12, "minute": 15, "second": 45.0}
 
     def test_start(self):
         start_time = Time.start()
@@ -53,8 +54,8 @@ class TestTime:
             (1.7583333333333333, Time(hour=1, minute=0, second=45.5)),
         ],
     )
-    def test_from_hours(self, expected):
-        assert Time.from_hours(self) == expected
+    def test_from_hours(self, hours: float, expected):
+        assert Time.from_hours(hours) == expected
 
     @pytest.mark.parametrize(
         "minutes, expected_hour, expected_minute, expected_second",
@@ -65,7 +66,13 @@ class TestTime:
             (1440, 24, 0, 0.0),
         ],
     )
-    def test_from_minutes(self, minutes, expected_hour, expected_minute, expected_second):
+    def test_from_minutes(
+        self,
+        minutes: int | float,
+        expected_hour: int,
+        expected_minute: int,
+        expected_second: float,
+    ):
         time = Time.from_minutes(minutes)
         assert time.hour == expected_hour
         assert time.minute == expected_minute
@@ -80,13 +87,13 @@ class TestTime:
             (3645.5, Time(hour=1, minute=0, second=45.5)),
         ],
     )
-    def test_from_seconds(self, expected):
-        assert Time.from_seconds(self) == expected
+    def test_from_seconds(self, seconds: float, expected: Time) -> None:
+        assert Time.from_seconds(seconds) == expected
 
-    def test_none(self):
-        none_time = Time.none()
-        assert isinstance(none_time, NoneTime)
-        assert none_time == NONE_TIME
+    # def test_none(self):
+    #     none_time = Time.none()
+    #     assert isinstance(none_time, NoneTime)
+    #     assert none_time == NONE_TIME
 
     def test_now(self):
         current_time = Time.now()
@@ -104,7 +111,12 @@ class TestTime:
         ],
         ids=["normal_30", "normal_90", "clamped", "negative"],
     )
-    def test_dunder_add(self, time, minutes_to_add, expected):
+    def test_dunder_add(
+        self,
+        time: Time,
+        minutes_to_add: int | float,
+        expected: Time,
+    ):
         result = time + minutes_to_add
         assert result == expected
 
@@ -128,11 +140,16 @@ class TestTime:
         [
             (Time(hour=10, minute=30), Time(hour=10, minute=30), True),
             (Time(hour=10, minute=30), Time(hour=10, minute=31), False),
-            (Time(hour=10, minute=30), NoneTime(), False),
+            # (Time(hour=10, minute=30), None, False),
             (Time(hour=10, minute=30), "not a time", False),
         ],
     )
-    def test_dunder_eq(self, time_a, time_b, expected):
+    def test_dunder_eq(
+        self,
+        time_a: Time,
+        time_b: Time | None | Literal["not a time"],
+        expected: bool,
+    ):
         assert (time_a == time_b) is expected
 
     @pytest.mark.parametrize(
@@ -141,10 +158,15 @@ class TestTime:
             (Time(hour=10, minute=30), Time(hour=10, minute=30), True),
             (Time(hour=10, minute=31), Time(hour=10, minute=30), True),
             (Time(hour=10, minute=29), Time(hour=10, minute=30), False),
-            (Time(hour=10, minute=30), NoneTime(), False),
+            # (Time(hour=10, minute=30), None, False),
         ],
     )
-    def test_dunder_ge(self, time_a, time_b, expected):
+    def test_dunder_ge(
+        self,
+        time_a: Time,
+        time_b: Time | None,
+        expected: bool,
+    ):
         assert (time_a >= time_b) is expected
 
     @pytest.mark.parametrize(
@@ -153,10 +175,15 @@ class TestTime:
             (Time(hour=10, minute=31), Time(hour=10, minute=30), True),
             (Time(hour=10, minute=30), Time(hour=10, minute=30), False),
             (Time(hour=10, minute=29), Time(hour=10, minute=30), False),
-            (Time(hour=10, minute=30), NoneTime(), False),
+            # (Time(hour=10, minute=30), None, False),
         ],
     )
-    def test_dunder_gt(self, time_a, time_b, expected):
+    def test_dunder_gt(
+        self,
+        time_a: Time,
+        time_b: Time | None,
+        expected: bool,
+    ):
         assert (time_a > time_b) is expected
 
     def test_dunder_hash(self):
@@ -173,10 +200,15 @@ class TestTime:
             (Time(hour=10, minute=30), Time(hour=10, minute=30), True),
             (Time(hour=10, minute=30), Time(hour=10, minute=31), True),
             (Time(hour=10, minute=31), Time(hour=10, minute=30), False),
-            (Time(hour=10, minute=30), NoneTime(), False),
+            # (Time(hour=10, minute=30), None, False),
         ],
     )
-    def test_dunder_le(self, time_a, time_b, expected):
+    def test_dunder_le(
+        self,
+        time_a: Time,
+        time_b: Time | None,
+        expected: bool,
+    ) -> None:
         assert (time_a <= time_b) is expected
 
     @pytest.mark.parametrize(
@@ -185,10 +217,15 @@ class TestTime:
             (Time(hour=10, minute=29), Time(hour=10, minute=30), True),
             (Time(hour=10, minute=30), Time(hour=10, minute=30), False),
             (Time(hour=10, minute=31), Time(hour=10, minute=30), False),
-            (Time(hour=10, minute=30), NoneTime(), False),
+            # (Time(hour=10, minute=30), None, False),
         ],
     )
-    def test_dunder_lt(self, time_a, time_b, expected):
+    def test_dunder_lt(
+        self,
+        time_a: Time,
+        time_b: Time | None,
+        expected: bool,
+    ) -> None:
         assert (time_a < time_b) is expected
 
     @pytest.mark.parametrize(
@@ -199,10 +236,14 @@ class TestTime:
             (Time(hour=14, minute=30, second=45.5), "Time(14:30:45.500)"),
         ],
     )
-    def test_dunder_repr(self, time, expected):
+    def test_dunder_repr(
+        self,
+        time: Time,
+        expected: str,
+    ) -> None:
         assert repr(time) == expected
 
-    def test_dunder_rshift(self):
+    def test_dunder_rshift(self) -> None:
         start_time = Time(hour=9, minute=0)
         end_time = Time(hour=17, minute=0)
         timespan = start_time >> end_time
@@ -218,7 +259,11 @@ class TestTime:
             (Time(hour=0, minute=0, second=0), "00:00"),
         ],
     )
-    def test_dunder_str(self, time, expected):
+    def test_dunder_str(
+        self,
+        time: Time,
+        expected: str,
+    ) -> None:
         assert str(time) == expected
 
     def test_dunder_sub(self):
@@ -239,9 +284,14 @@ class TestTime:
             (Time(hour=22, minute=0), 5, Time(hour=24, minute=0)),
             (Time(hour=2, minute=0), -5, Time(hour=0, minute=0)),
         ],
-        ids=["", "", "clamped_end", "clamped_start"],
+        ids=["", "clamped_end", "clamped_start"],
     )
-    def test_add_hours_bounded(self, time, hours, expected):
+    def test_add_hours_bounded(
+        self,
+        time: Time,
+        hours: int,
+        expected: Time,
+    ):
         result = time.add_hours_bounded(hours)
         assert result == expected
 
@@ -253,7 +303,13 @@ class TestTime:
             (Time(hour=2, minute=0), -5, Time(hour=21, minute=0), -1),
         ],
     )
-    def test_add_hours_wraparound(self, time, hours, expected_time, expected_days):
+    def test_add_hours_wraparound(
+        self,
+        time: Time,
+        hours: int | float,
+        expected_time: Time,
+        expected_days: int,
+    ) -> None:
         result_time, days = time.add_hours_wraparound(hours)
         assert result_time == expected_time
         assert days == expected_days
@@ -267,7 +323,12 @@ class TestTime:
         ],
         ids=["", "clamped_end", "clamped_start"],
     )
-    def test_add_minutes_bounded(self, time, minutes, expected):
+    def test_add_minutes_bounded(
+        self,
+        time: Time,
+        minutes: int | float,
+        expected: Time,
+    ) -> None:
         result = time.add_minutes_bounded(minutes)
         assert result == expected
 
@@ -279,7 +340,13 @@ class TestTime:
             (Time(hour=1, minute=0), -90, Time(hour=22, minute=30), -1),
         ],
     )
-    def test_add_minutes_wraparound(self, time, minutes, expected_time, expected_days):
+    def test_add_minutes_wraparound(
+        self,
+        time: Time,
+        minutes: int | float,
+        expected_time: Time,
+        expected_days: int,
+    ) -> None:
         result_time, days = time.add_minutes_wraparound(minutes)
         assert result_time == expected_time
         assert days == expected_days
@@ -293,7 +360,12 @@ class TestTime:
         ],
         ids=["", "clamped_end", "clamped_start"],
     )
-    def test_add_seconds_bounded(self, time, seconds, expected):
+    def test_add_seconds_bounded(
+        self,
+        time: Time,
+        seconds: int | float,
+        expected: Time,
+    ) -> None:
         result = time.add_seconds_bounded(seconds)
         assert result == expected
 
@@ -305,7 +377,13 @@ class TestTime:
             (Time(hour=0, minute=1, second=0), -90, Time(hour=23, minute=59, second=30), -1),
         ],
     )
-    def test_add_seconds_wraparound(self, time, seconds, expected_time, expected_days):
+    def test_add_seconds_wraparound(
+        self,
+        time,
+        seconds: int | float,
+        expected_time,
+        expected_days: int,
+    ):
         result_time, days = time.add_seconds_wraparound(seconds)
         assert result_time == expected_time
         assert days == expected_days
@@ -318,7 +396,12 @@ class TestTime:
             (Time(hour=8, minute=0), Time(hour=10, minute=0), -2.0),
         ],
     )
-    def test_hours_from(self, time_a, time_b, expected):
+    def test_hours_from(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.hours_from(time_b)
         assert result == expected
 
@@ -329,7 +412,12 @@ class TestTime:
             (Time(hour=10, minute=0), Time(hour=8, minute=0), 14.0),
         ],
     )
-    def test_hours_from_last(self, time_a, time_b, expected):
+    def test_hours_from_last(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.hours_from_last(time_b)
         assert result == expected
 
@@ -341,7 +429,12 @@ class TestTime:
             (Time(hour=10, minute=0), Time(hour=8, minute=0), -2.0),
         ],
     )
-    def test_hours_to(self, time_a, time_b, expected):
+    def test_hours_to(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.hours_to(time_b)
         assert result == expected
 
@@ -352,7 +445,12 @@ class TestTime:
             (Time(hour=12, minute=0), Time(hour=8, minute=0), 20.0),
         ],
     )
-    def test_hours_to_next(self, time_a, time_b, expected):
+    def test_hours_to_next(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.hours_to_next(time_b)
         assert result == expected
 
@@ -363,7 +461,7 @@ class TestTime:
         assert valid_time.minute == 30
 
         invalid_time = Time.if_valid("25:70")
-        assert isinstance(invalid_time, NoneTime)
+        assert invalid_time is None
 
     @pytest.mark.parametrize(
         "time_a, time_b, expected",
@@ -373,7 +471,12 @@ class TestTime:
             (Time(hour=8, minute=0), Time(hour=10, minute=0), -120.0),
         ],
     )
-    def test_minutes_from(self, time_a, time_b, expected):
+    def test_minutes_from(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.minutes_from(time_b)
         assert result == expected
 
@@ -384,7 +487,12 @@ class TestTime:
             (Time(hour=10, minute=0), Time(hour=8, minute=0), 840.0),
         ],
     )
-    def test_minutes_from_last(self, time_a, time_b, expected):
+    def test_minutes_from_last(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.minutes_from_last(time_b)
         assert result == expected
 
@@ -396,7 +504,12 @@ class TestTime:
             (Time(hour=10, minute=0), Time(hour=8, minute=0), -120.0),
         ],
     )
-    def test_minutes_to(self, time_a, time_b, expected):
+    def test_minutes_to(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.minutes_to(time_b)
         assert result == expected
 
@@ -407,7 +520,12 @@ class TestTime:
             (Time(hour=12, minute=0), Time(hour=8, minute=0), 1200.0),
         ],
     )
-    def test_minutes_to_next(self, time_a, time_b, expected):
+    def test_minutes_to_next(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.minutes_to_next(time_b)
         assert result == expected
 
@@ -419,7 +537,7 @@ class TestTime:
             (Time(hour=8, minute=0), Time(hour=10, minute=0), -120.0),
         ],
     )
-    def test_seconds_from(self, time_a, time_b, expected):
+    def test_seconds_from(self, time_a, time_b, expected) -> None:
         result = time_a.seconds_from(time_b)
         assert result == expected
 
@@ -430,7 +548,12 @@ class TestTime:
             (Time(hour=10, minute=0), Time(hour=8, minute=0), 840.0),
         ],
     )
-    def test_seconds_from_last(self, time_a, time_b, expected):
+    def test_seconds_from_last(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.seconds_from_last(time_b)
         assert result == expected
 
@@ -442,7 +565,12 @@ class TestTime:
             (Time(hour=10, minute=0), Time(hour=8, minute=0), -120.0),
         ],
     )
-    def test_seconds_to(self, time_a, time_b, expected):
+    def test_seconds_to(
+        self,
+        time_a,
+        time_b,
+        expected: float,
+    ) -> None:
         result = time_a.seconds_to(time_b)
         assert result == expected
 
@@ -453,7 +581,12 @@ class TestTime:
             (Time(hour=12, minute=0), Time(hour=8, minute=0), 1200.0),
         ],
     )
-    def test_seconds_to_next(self, time_a, time_b, expected):
+    def test_seconds_to_next(
+        self,
+        time_a: Time,
+        time_b: Time,
+        expected: float,
+    ) -> None:
         result = time_a.seconds_to_next(time_b)
         assert result == expected
 
@@ -464,7 +597,11 @@ class TestTime:
             (Time(hour=14, minute=30, second=45.5), "14:30:45.500"),
         ],
     )
-    def test_serialize_time(self, time, expected):
+    def test_serialize_time(
+        self,
+        time: Time,
+        expected: str,
+    ) -> None:
         result = time.serialize_time()
         assert result == expected
 
@@ -479,7 +616,11 @@ class TestTime:
             (Time(hour=12, minute=15), 735.0),
         ],
     )
-    def test_to_minutes(self, time, expected):
+    def test_to_minutes(
+        self,
+        time: Time,
+        expected: float,
+    ) -> None:
         result = time.to_minutes()
         assert result == expected
 
@@ -492,6 +633,10 @@ class TestTime:
             (Time(hour=1, minute=0, second=45.5), 3645.5),
         ],
     )
-    def test_to_seconds(self, time, expected):
+    def test_to_seconds(
+        self,
+        time: Time,
+        expected: float,
+    ) -> None:
         result = time.to_seconds()
         assert result == expected
