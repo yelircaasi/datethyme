@@ -96,6 +96,7 @@ in {
                 UV_PYTHON = pythonExecutableForDev;
                 UV_PYTHON_DOWNLOADS = "never";
                 NIX_PYTHON = pythonExecutableForDev;
+                VIRTUAL_ENV = "${virtualenvForDev}";
             };
 
         shellHook = universalHook;
