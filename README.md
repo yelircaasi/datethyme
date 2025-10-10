@@ -1,5 +1,10 @@
 # datethyme
 
+TODO:
+
+- add `add_hours_strict` (fail if wrap) and `add_hours_maybe` (return None if wrap)
+- add `minutes|seconds_elapsed` and `minutes|seconds_remaining` properties?
+
 Running this project requires `copier`, `git`, `uv`, and `flake`. Install `nix` and
 install the others by running `nix-shell -p uv python3 git`. You can now copy the project and run the toy CLI provided out-of-the-box:
 

@@ -1,26 +1,24 @@
+---
 colors: true
 parallel: true
 output:
-  - summary
-  - failure
-  - success
-
+    - summary
+    - failure
+    - success
 skip_output:
-  - empty_summary
-
+    - empty_summary
 pre-commit:
-
-  commands:
-    mypy:
-      glob: "*.py"
-      files: git diff --name-only main
-      run: mypy --cache-dir .cache/mypy_cache {files}
-    check:
-      tags: check lint
-      files: git diff --name-only main
-      glob: "*.py"
-      run: printf "=== ruff check ===\n" && ruff check {staged_files} --fix
-    format:
-      tags: check lint
-      glob: "*.py"
-      run: ruff format {staged_files}
+    commands:
+        mypy:
+            glob: "*.py"
+            files: git diff --name-only main
+            run: mypy --cache-dir .cache/mypy_cache {files}
+        check:
+            tags: check lint
+            files: git diff --name-only main
+            glob: "*.py"
+            run: printf "=== ruff check ===\n" && ruff check {staged_files} --fix
+        format:
+            tags: check lint
+            glob: "*.py"
+            run: ruff format {staged_files}

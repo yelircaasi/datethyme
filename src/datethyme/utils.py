@@ -56,7 +56,7 @@ def validate_date(raw_date: str | dict | list | tuple) -> dict[str, str | int | 
         11: 30,
         12: 31,
     }
-    outdict = {}
+    outdict: dict[str, str | int | float] = {}
     if isinstance(raw_date, dict):
         outdict = raw_date
     elif isinstance(raw_date, str) and (result := re.search(DATE_REGEX, raw_date.strip())):
@@ -72,8 +72,8 @@ def validate_date(raw_date: str | dict | list | tuple) -> dict[str, str | int | 
     if (
         outdict
         and (outdict["month"] in MAX_DAYS)
-        and (0 < outdict["day"] <= MAX_DAYS[outdict["month"]])
-        and all((outdict["year"] > 1970, outdict["month"] > 0, outdict["day"] > 0))
+        and (0 < outdict["day"] <= MAX_DAYS[outdict["month"]])  # type: ignore
+        and all((outdict["year"] > 1970, outdict["month"] > 0, outdict["day"] > 0))  # type: ignore
     ):
         return outdict
 
@@ -85,7 +85,7 @@ def validate_date(raw_date: str | dict | list | tuple) -> dict[str, str | int | 
 def validate_time(raw_time: str | dict | list | tuple) -> dict[str, str | int | float]:
     if not raw_time:
         raise TimeValidationError.from_value(raw_time)
-    outdict = {}
+    outdict: dict[str, str | int | float] = {}
     if isinstance(raw_time, dict):
         outdict = raw_time
     if isinstance(raw_time, str):
@@ -98,9 +98,9 @@ def validate_time(raw_time: str | dict | list | tuple) -> dict[str, str | int | 
     if (tuple(outdict.values()) == (-1, -1, -1.0)) or all(
         (
             outdict,
-            0 <= outdict["hour"] <= 24,
-            0 <= outdict.get("minute", 0) <= 60,
-            0.0 <= outdict.get("second", 0.0) <= 60.0,
+            0 <= outdict["hour"] <= 24,  # type: ignore
+            0 <= outdict.get("minute", 0) <= 60,  # type: ignore
+            0.0 <= outdict.get("second", 0.0) <= 60.0,  # type: ignore
         )
     ):
         return outdict
