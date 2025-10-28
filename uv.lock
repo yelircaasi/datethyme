@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11, <3.15"
 
 [[package]]
@@ -274,7 +274,7 @@ validation = [
 
 [[package]]
 name = "datethyme"
-version = "0.5.0"
+version = "0.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "deal" },
@@ -352,7 +352,7 @@ cli-utils = [
     { name = "scalene", specifier = ">=1.5.49" },
     { name = "semver", specifier = ">=3.0" },
     { name = "tomli", specifier = ">=2.0" },
-    { name = "ty", specifier = ">=0.0.1a5" },
+    { name = "ty", specifier = ">=0.0.0" },
     { name = "vulture", specifier = ">=2.14" },
     { name = "yamllint", specifier = ">=1.37" },
 ]

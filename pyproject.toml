@@ -70,7 +70,7 @@ cli-utils = [
     "scalene         >= 1.5.49 ",
     "semver          >= 3.0    ",
     "tomli           >= 2.0    ",
-    "ty              >= 0.0.1a5",
+    "ty              >= 0.0.0",
     "vulture         >= 2.14   ",
     "yamllint        >= 1.37   ",
 ]
