@@ -19,7 +19,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from math import floor
-from typing import Any, Literal, Self, TypeVar, Union
+from typing import Any, Literal, Self, TypeVar, Union, overload
 
 # import deal
 from multipledispatch import dispatch
@@ -438,17 +438,15 @@ class Date(BaseModel):
         d = DATETIME.date.fromordinal(self.ordinal + int(days))
         return Date(year=d.year, month=d.month, day=d.day)
 
-    # @dispatch()
-    # def __sub__(self, subtrahend):
-    #     raise ValueError(f"Invalid type for argument 'subtrahend' to
-    # method '__sub__' of 'Date': {type(subtrahend)}")@dispatch(int)
-
-    @dispatch(int)
-    def __sub__(self, subtrahend: int) -> "Date":  # pyright: ignore
-        return Date.from_ordinal(self.ordinal - int(subtrahend))
-
-    @dispatch(BaseModel)  # type: ignore
-    def __sub__(self, subtrahend: "Date") -> int:  # pyright: ignore
+    @overload
+    def __sub__(self, subtrahend: int) -> "Date":
+        pass
+    @overload
+    def __sub__(self, subtrahend: "Date") -> int:
+        pass
+    def __sub__(self, subtrahend: "Date | int") -> "Date | int":
+        if isinstance(subtrahend, int):
+            return Date.from_ordinal(self.ordinal - int(subtrahend))
         if not isinstance(subtrahend, Date):
             raise TypeError("Date or int required for method __sub__ of Date.")
         return self.ordinal - subtrahend.ordinal

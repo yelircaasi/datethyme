@@ -1,6 +1,6 @@
 [project]
 name = "datethyme"
-version = "0.4.1"
+version = "0.4.2"
 description = "A savory approach to date and time, built on Pydantic and datetime, with an emphasis on input validation and date/time arithmetic."
 authors = [{name = "Isaac Riley", email = "yelircaasi@proton.me"}]
 readme = "README.md"

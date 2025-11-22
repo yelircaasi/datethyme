@@ -300,7 +300,7 @@ class DateTimePartition(PartitionProtocol):
             raise ValueError
         return DateTimePartition(
             spans=(
-                TimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names)
+                DateTimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names)
             )
         )
 
