@@ -441,9 +441,11 @@ class Date(BaseModel):
     @overload
     def __sub__(self, subtrahend: int) -> "Date":
         pass
+
     @overload
     def __sub__(self, subtrahend: "Date") -> int:
         pass
+
     def __sub__(self, subtrahend: "Date | int") -> "Date | int":
         if isinstance(subtrahend, int):
             return Date.from_ordinal(self.ordinal - int(subtrahend))
@@ -614,7 +616,7 @@ class Date(BaseModel):
             end = self + end
         if not isinstance(end, Date):
             raise ValueError(f"`end` is of type `{type(end)}`; expected `{Date}`.")
-        
+
         inclusive = inclusive and (self != end)
 
         date1 = self.model_copy()

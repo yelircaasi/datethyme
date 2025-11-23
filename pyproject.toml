@@ -46,8 +46,10 @@ docs = [
     "mkdocstrings-python >= 1.13 ",
     "mkdocs-material     <  9.5  ",
     "pygments            >= 2.19 ",
+    "ruff                >= 0.9  ",
 ]
 dev = [
+    "structlint        >= 0.2.1 ",
     "ipython           >= 8.31  ",
     "deply             >= 0.5   ",
     "grimp             >= 3.5   ",
@@ -263,8 +265,8 @@ convention = "google"
 
 [tool.structlint]
 root_dir = "."
-module_name = "consilium.notes"
-module_root_dir = "src/consilium/notes"
+module_name = "datethyme"
+module_root_dir = "src/datethyme"
 
 [tool.structlint.docs]
 md_dir = "docs/md"

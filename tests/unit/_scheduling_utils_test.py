@@ -106,19 +106,19 @@ def test_apply_pairwise(callback, original, modified):
         (
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
-            DateTime(hour=25, minute=61, second=61),
+            DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
         ),
     ],
 )
@@ -149,16 +149,16 @@ def test_earliest_start(original, earliest):
         (
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
             [0.2, 0.3, 0.1, 0.5],
@@ -209,16 +209,16 @@ def test_get_relative_lengths(original, rel_lengths):
         (
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
             999,
@@ -226,16 +226,16 @@ def test_get_relative_lengths(original, rel_lengths):
         (
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
             999,
@@ -269,19 +269,19 @@ def test_get_total_length(original, length):
         (
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
-            DateTime(hour=25, minute=61, second=61),
+            DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
         ),
     ],
 )
@@ -328,22 +328,22 @@ def test_most_central_span(sequence, central_span):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
@@ -381,22 +381,22 @@ def test_snap_back(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
@@ -434,22 +434,22 @@ def test_snap_between(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
@@ -487,22 +487,22 @@ def test_snap_forward(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
@@ -540,22 +540,22 @@ def test_split_gap_equal(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
@@ -593,28 +593,31 @@ def test_split_gap_inverse_proportional(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
     ],
 )
-def test_split_gap_proportional(original, modified):
+def test_split_gap_proportional(
+    original: tuple[TimeSpan, TimeSpan] | tuple[DateTimeSpan, DateTimeSpan],
+    modified: tuple[TimeSpan, TimeSpan] | tuple[DateTimeSpan, DateTimeSpan],
+):
     assert split_gap_proportional(*original) == modified
 
 
@@ -646,22 +649,22 @@ def test_split_gap_proportional(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
@@ -699,28 +702,31 @@ def test_split_overlap_equal(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
     ],
 )
-def test_split_overlap_inverse_proportional(original, modified):
+def test_split_overlap_inverse_proportional(
+    original: tuple[TimeSpan, TimeSpan] | tuple[DateTimeSpan, DateTimeSpan],
+    modified: tuple[TimeSpan, TimeSpan] | tuple[DateTimeSpan, DateTimeSpan],
+) -> None:
     assert split_overlap_inverse_proportional(*original) == modified
 
 
@@ -752,28 +758,31 @@ def test_split_overlap_inverse_proportional(original, modified):
         (
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
             (
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ),
         ),
     ],
 )
-def test_split_overlap_proportional(original, modified):
+def test_split_overlap_proportional(
+    original: tuple[TimeSpan, TimeSpan] | tuple[DateTimeSpan, DateTimeSpan],
+    modified: tuple[TimeSpan, TimeSpan] | tuple[DateTimeSpan, DateTimeSpan],
+) -> None:
     assert split_overlap_proportional(*original) == modified
 
 
@@ -800,25 +809,28 @@ def test_split_overlap_proportional(original, modified):
         ),
         (
             [
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
             ],
             [
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
             ],
         ),
     ],
 )
-def test_stack_backward(original, stacked):
+def test_stack_backward(
+    original: list[Time] | list[DateTime],
+    stacked: list[Time] | list[DateTime],
+) -> None:
     assert stack_backward(original) == stacked
 
 
@@ -845,20 +857,20 @@ def test_stack_backward(original, stacked):
         ),
         (
             [
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
             ],
             [
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
             ],
         ),
     ],
@@ -890,20 +902,20 @@ def test_stack_forward(original, stacked):
         ),
         (
             [
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
             ],
             [
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
-                DateTime(hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
             ],
         ),
     ],
@@ -941,16 +953,16 @@ def test_stack_from_middle(original, stacked):
         (
             [
                 DateTimeSpan(
-                    start=DateTime(hour=25, minute=61, second=61),
-                    end=DateTime(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=DateTime(hour=25, minute=61, second=61),
-                    end=DateTime(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=DateTime(hour=25, minute=61, second=61),
-                    end=DateTime(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
             Time(hour=25, minute=61, second=61),
@@ -989,16 +1001,16 @@ def test_truncate(original, earliest, latest, before_inside_after):
             Time(hour=25, minute=61, second=61),
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
         ),
@@ -1021,16 +1033,16 @@ def test_truncate(original, earliest, latest, before_inside_after):
             Time(hour=25, minute=61, second=61),
             [
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
                 DateTimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
+                    start=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
+                    end=DateTime(year=2000, month=1, day=1, hour=25, minute=61, second=61),
                 ),
             ],
         ),

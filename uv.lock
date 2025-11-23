@@ -274,7 +274,7 @@ validation = [
 
 [[package]]
 name = "datethyme"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "." }
 dependencies = [
     { name = "deal" },
@@ -309,6 +309,7 @@ dev = [
     { name = "scalene" },
     { name = "semver" },
     { name = "snakefood3" },
+    { name = "structlint" },
     { name = "z3c-checkversions" },
 ]
 docs = [
@@ -317,6 +318,7 @@ docs = [
     { name = "mkdocstrings" },
     { name = "mkdocstrings-python" },
     { name = "pygments" },
+    { name = "ruff" },
 ]
 test = [
     { name = "coverage" },
@@ -364,6 +366,7 @@ dev = [
     { name = "scalene", specifier = ">=1.5.49" },
     { name = "semver", specifier = ">=3.0" },
     { name = "snakefood3", specifier = ">=0.0.7" },
+    { name = "structlint", specifier = ">=0.2.1" },
     { name = "z3c-checkversions", specifier = ">=3.0" },
 ]
 docs = [
@@ -372,6 +375,7 @@ docs = [
     { name = "mkdocstrings", specifier = ">=0.27" },
     { name = "mkdocstrings-python", specifier = ">=1.13" },
     { name = "pygments", specifier = ">=2.19" },
+    { name = "ruff", specifier = ">=0.9" },
 ]
 test = [
     { name = "coverage", specifier = ">7.6" },
@@ -1972,6 +1976,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/3f/13cacea96900bbd31bb05c6b74135f85d15564fc583802be56976c940470/stevedore-5.4.1.tar.gz", hash = "sha256:3135b5ae50fe12816ef291baff420acb727fcd356106e3e9cbfa9e5985cd6f4b", size = 513858, upload-time = "2025-02-20T14:03:57.285Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/45/8c4ebc0c460e6ec38e62ab245ad3c7fc10b210116cea7c16d61602aa9558/stevedore-5.4.1-py3-none-any.whl", hash = "sha256:d10a31c7b86cba16c1f6e8d15416955fc797052351a56af15e608ad20811fcfe", size = 49533, upload-time = "2025-02-20T14:03:55.849Z" },
+]
+
+[[package]]
+name = "structlint"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "deal" },
+    { name = "grimp" },
+    { name = "multipledispatch" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fc/fa/82e1b32cc4658aee612b63797817f2baf988a60c682a14a658b4d0db9114/structlint-0.2.1.tar.gz", hash = "sha256:9193ca745771ca30c16da9a4c05a53a0019444a6a94875a2c911994cb0601071", size = 16062, upload-time = "2025-10-26T17:56:47.676Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/6b/1b15c0eaf40e75f3b54dd681ae2e8e0662643912f4d548eed2ba07139bac/structlint-0.2.1-py3-none-any.whl", hash = "sha256:d04568cdb6df02f2a54de3a4cbfafb28695de3c7f1f6742115cffcb7d8e130fc", size = 16931, upload-time = "2025-10-26T17:56:46.599Z" },
 ]
 
 [[package]]
