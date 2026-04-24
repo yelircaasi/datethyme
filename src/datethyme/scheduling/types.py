@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import UserList
 from collections.abc import Callable, Iterable, Iterator
+from enum import StrEnum
 from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
@@ -18,7 +19,6 @@ type ItemSequence = object  # TODO -> replace with Entries
 
 NestedSpan = Union[TimeSpan, "TimePartition"]
 
-S = TypeVar("S")
 T = TypeVar("T", bound=Time | DateTime | Date)
 DEFAULT_DATE = Date.parse("2000-01-01")
 
@@ -513,3 +513,9 @@ class ScheduleItems[T](UserList[ScheduleItem]):
 
 
 # migrate Entry from consilium?
+
+
+class Calendar: ...
+
+
+class Strategy(StrEnum): ...

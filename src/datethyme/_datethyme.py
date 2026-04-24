@@ -64,44 +64,7 @@ FROZEN = True
 # =================================================================================================
 
 
-# T = TypeVar("T", bound=TimeProtocol)
-
-
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
-
-
-# class OptionalDate(ABC):
-#     year: int | None
-#     month: int | None
-#     day: int | None
-
-#     @abstractmethod
-#     def __lt__(self, other: Any) -> bool: ...
-
-
-# class OptionalTime(ABC):
-#     hour: int | None
-#     minute: int | None
-#     second: float | None
-
-#     @abstractmethod
-#     def __lt__(self, other: Any) -> bool: ...
-
-
-# class OptionalDateTime(ABC):
-#     year: int | None
-#     month: int | None
-#     day: int | None
-#     hour: int | None
-#     minute: int | None
-#     second: float | None
-
-#     @abstractmethod
-#     def __lt__(self, other: Any) -> bool: ...
-
-
-# Atom = TypeVar("Atom", bound=AtomProtocol)
-# TT = TypeVar("TT", bound=TimeProtocol)
 PairCallback = Callable[
     [tuple["AbstractSpan", "AbstractSpan"]],
     tuple["AbstractSpan", "AbstractSpan"],
