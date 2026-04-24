@@ -1,7 +1,7 @@
 from operator import attrgetter
 
-from datethyme import Date, DateTimePartition, Time
-from datethyme._scheduling import Item, ItemSequence
+from datethyme import Date, Time
+from datethyme.scheduling.types import DateTimePartition, Item, ItemSequence
 
 agenda: DateTimePartition = Date.parse("2025-10-10").partition(
     start_name="sleep",
@@ -19,34 +19,28 @@ agenda: DateTimePartition = Date.parse("2025-10-10").partition(
     },
 )
 
-morning_routine = ItemSequence(
-    (
-        Item("wake up", 1),
-        Item("get dressed", 5),
-        Item("workout", 10),
-        Item("shower", 15),
-    )
-)
+morning_routine = ItemSequence((
+    Item("wake up", 1),
+    Item("get dressed", 5),
+    Item("workout", 10),
+    Item("shower", 15),
+))
 
-evening_routine = ItemSequence(
-    (
-        Item("clean up", 5),
-        Item("walk", 10),
-        Item("change clothes", 1),
-        Item("reading", 30, ideal=60),
-    )
-)
+evening_routine = ItemSequence((
+    Item("clean up", 5),
+    Item("walk", 10),
+    Item("change clothes", 1),
+    Item("reading", 30, ideal=60),
+))
 
-chore_backlog = ItemSequence(
-    (
-        Item("a", 5),
-        Item("b", 10, ideal=20),
-        Item("c", 15, minimum=10),
-        Item("d", 30),
-    )
-)
+chore_backlog = ItemSequence((
+    Item("a", 5),
+    Item("b", 10, ideal=20),
+    Item("c", 15, minimum=10),
+    Item("d", 30),
+))
 
-agenda = agenda.partition_element(
+agenda = agenda.partition_element(  # type: ignore TODO
     "morning routine",
     morning_routine,
     item_min=1,
@@ -58,7 +52,7 @@ agenda = agenda.partition_element(
     item_max=60,
 )
 
-agenda, leftover_chores = agenda.pack_from(
+agenda, leftover_chores = agenda.pack_from(  # type: ignore TODO
     "chores",
     chore_backlog,
     prefer_compress=False,

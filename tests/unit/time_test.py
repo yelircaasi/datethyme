@@ -1,5 +1,5 @@
-from sys import float_repr_style
 from typing import Literal
+
 import pytest
 
 from datethyme import Time

@@ -17,14 +17,14 @@ type PairCallback[TP: TimeProtocol] = Callable[
 ```
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable, Iterable
 from functools import partial
 from itertools import pairwise
-from typing import Literal, TypeAlias, TypeVar, cast, overload
+from typing import Literal, TypeVar, cast, overload
 
-from adiumentum import areinstances
-
-from .protocols import SpanProtocol, TimeProtocol  # pyright: ignore
+from ..protocols import SpanProtocol, TimeProtocol
 
 T = TypeVar("T", bound=TimeProtocol)
 type SpanPair[TP: TimeProtocol] = tuple[SpanProtocol[TP], SpanProtocol[TP]]
@@ -70,36 +70,27 @@ def snap_between(span: SpanProtocol[T], earliest: T | None, latest: T | None) ->
     raise ValueError
 
 
-@overload
-def earliest_start[T: TimeProtocol](seq: Iterable[T]) -> T: ...
-@overload
-def earliest_start[T: TimeProtocol](seq: SpanIterable[T]) -> T: ...
 def earliest_start[T: TimeProtocol](seq: SpanIterable[T] | Iterable[T]) -> T:
     """Please write me!"""
 
-    if areinstances(seq, TimeProtocol):
+    if all(map(lambda inst: isinstance(inst, TimeProtocol), seq)):
         return min(cast(Iterable[T], seq))
     return min([t.start for t in cast(SpanIterable[T], seq)])
 
 
-@overload
-def latest_end[T: TimeProtocol](seq: Iterable[T]) -> T: ...
-@overload
-def latest_end[T: TimeProtocol](seq: SpanIterable[T]) -> T: ...
-def latest_end[T: TimeProtocol](seq: SpanIterable[T] | Iterable[T]) -> T:
+def latest_end[T: TimeProtocol](seq: Iterable[T] | SpanIterable[T]) -> T:
     """Please write me!"""
 
-    if areinstances(seq, TimeProtocol):
-        return max(cast(Iterable[T], seq))
-    return max([t.end for t in cast(SpanIterable[T], seq)])
+    if all(map(lambda inst: isinstance(inst, TimeProtocol), seq)):
+        return max(cast(Iterable, seq))
+    return max([t.end for t in cast(SpanIterable, seq)])
 
 
-# TODO: currently only supports first overload
-@overload
-def most_central[T: TimeProtocol](seq: SpanIterable[T]) -> SpanProtocol[T]: ...
 @overload
 def most_central[T: TimeProtocol](seq: Iterable[T]) -> T: ...
-def most_central[T: TimeProtocol](seq: SpanIterable[T] | Iterable[T]) -> SpanProtocol[T] | T:
+@overload
+def most_central[T: TimeProtocol](seq: SpanIterable[T]) -> SpanProtocol[T]: ...
+def most_central[T: TimeProtocol](seq: Iterable[T] | SpanIterable[T]) -> T | SpanProtocol[T]:
     """Please write me!"""
 
     def get_midpoint(start: TimeProtocol, end: TimeProtocol) -> TimeProtocol:
@@ -107,10 +98,12 @@ def most_central[T: TimeProtocol](seq: SpanIterable[T] | Iterable[T]) -> SpanPro
 
     start: TimeProtocol = earliest_start(seq)
     end: TimeProtocol = latest_end(seq)
-    midpoint: TimeProtocol = get_midpoint(start, end)
+    get_midpoint(start, end)
 
-    def get_midpoint_distance(spn: SpanProtocol[T]) -> int:
-        return int(abs(midpoint.minutes_to(spn.midpoint)))
+    def get_midpoint_distance(item: T | SpanProtocol) -> int:
+        if isinstance(item, SpanProtocol):
+            midpoint = item.midpoint
+        return int(abs(midpoint.minutes_to(midpoint)))
 
     return min(seq, key=get_midpoint_distance)
 
@@ -135,23 +128,23 @@ def stack_forward(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
 
     spans: SpanList[T] = []
     anchor = anchor or earliest_start(seq)
-    _current: T = anchor or earliest_start(seq)
+    current: T = anchor or earliest_start(seq)
     for span in seq:
-        spans.append(shifted := span.shift_start_rigid(_current))
-        _current = shifted.end
+        spans.append(shifted := span.shift_start_rigid(current))
+        current = shifted.end
 
     return spans
 
 
-def stack_backward(seq: SpanIterable[T] | Iterable[T], anchor: T | None = None) -> SpanList[T]:
+def stack_backward(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
     """Please write me!"""
 
     spans: SpanList[T] = []
     anchor = anchor or latest_end(seq)
-    _current: T = anchor or earliest_start(seq)
+    current: T = anchor or earliest_start(seq)
     for span in seq:
-        spans.insert(0, shifted := span.shift_end_rigid(_current))
-        _current = shifted.start
+        spans.insert(0, shifted := span.shift_end_rigid(current))
+        current = shifted.start
 
     return spans
 
@@ -345,17 +338,17 @@ def eclipse_forward[T: TimeProtocol](
     if not seq:
         return tuple(), tuple()
 
-    spans: SpanList[T] = [(seq := list(seq))[0]]  # pyright: ignore
-    rejects: SpanList[T] = []  # pyright: ignore
-    _current = seq[0].end
+    spans: SpanList[T] = [(seq := list(seq))[0]]
+    rejects: SpanList[T] = []
+    current = seq[0].end
 
     for span in seq[1:]:
-        rejected_span, kept_span = span.split(max(_current, span.start))
+        rejected_span, kept_span = span.split(max(current, span.start))
         if kept_span:
             spans.append(kept_span)
         if rejected_span:
             rejects.append(rejected_span)
-        _current = max(_current, kept_span.end)
+        current = max(current, kept_span.end)
 
     return tuple(spans), tuple(rejects)
 
@@ -370,15 +363,15 @@ def eclipse_backward[T: TimeProtocol](
 
     spans: SpanList[T] = [(seq := list(seq))[-1]]
     rejects: SpanList[T] = []
-    _current = seq[0].end
+    current = seq[0].end
 
     for span in seq[-2::-1]:
-        kept_span, rejected_span = span.split(min(_current, span.end))
+        kept_span, rejected_span = span.split(min(current, span.end))
         if kept_span:
             spans.append(kept_span)
         if rejected_span:
             rejects.append(rejected_span)
-        _current = min(_current, kept_span.end)
+        current = min(current, kept_span.end)
 
     return tuple(spans), tuple(rejects)
 
@@ -426,7 +419,7 @@ def squeeze(
     min_minutes: int | float = 5,
 ) -> SpanTuple[T]:
     """Squeeze all elements of `seq` to fit between `earliest` and `latest`."""
-    spans: SpanList[T] = []  # pyright: ignore
+    spans: SpanList[T] = []
     # earliest: Atom = earliest or earliest_start(seq)
     # latest: Atom = latest or latest_end(seq)
     if mode == "PROPORTIONAL":
@@ -440,17 +433,17 @@ def squeeze(
     earliest_: T = earliest or earliest_start(seq)
     latest_: T = latest or latest_end(seq)
     new_total: float = earliest_.minutes_to(latest_)
-    _current = earliest_
+    current = earliest_
     squeezed: SpanProtocol[T]
     for span, rel_length in zip(seq, relative_lengths):
         spans.append(
-            squeezed := span.affine_transform(
+            squeezed := span.forward_affine_transform(
                 scale_factor=rel_length * new_total,
-                new_start=_current,
+                new_start=current,
                 min_minutes=min_minutes,
             )
         )
-        _current = squeezed.end
+        current = squeezed.end
     return tuple(spans)
 
 
@@ -466,7 +459,7 @@ def squeeze_with_rollover(
     seq = list(seq)
     keep_n = (
         int(len(seq) // min_minutes)
-        if earliest and latest and (len(seq) * min_minutes) > earliest.minutes_to(latest)  # pyright: ignore
+        if earliest and latest and (len(seq) * min_minutes) > earliest.minutes_to(latest)
         else len(seq)
     )
     return (

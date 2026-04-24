@@ -14,12 +14,6 @@ from ._datethyme import (
     TimeDelta,
     TimeSpan,
 )
-from ._scheduling import (
-    DateTimePartition,
-    TimePartition,
-    ScheduleItem,
-    ScheduleItems,
-)
 from .exceptions import (
     DateTimeValidationError,
     DateValidationError,
@@ -31,14 +25,13 @@ from .utils import (
     DATE_TIME_REGEX,
 )
 
-__all__ = [
+__all__ = (
     "DATE_REGEX",
     "DATE_REGEX_STRICT",
     "DATE_TIME_REGEX",
     "Date",
     "DateRange",
     "DateTime",
-    "DateTimePartition",
     "DateTimeSpan",
     "DateTimeValidationError",
     "DateValidationError",
@@ -47,13 +40,10 @@ __all__ = [
     "HourRangeDated",
     "MinuteRange",
     "MinuteRangeDated",
-    "ScheduleItem",
-    "ScheduleItems",
     "SecondRange",
     "SecondRangeDated",
     "Time",
     "TimeDelta",
-    "TimePartition",
     "TimeSpan",
     "TimeValidationError",
-]
+)

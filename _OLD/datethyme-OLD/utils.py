@@ -67,7 +67,7 @@ def validate_date(raw_date: str | dict | list | tuple) -> dict[str, str | int | 
         and (0 < outdict["day"] <= MAX_DAYS[outdict["month"]])
         and all((outdict["year"] > 1970, outdict["month"] > 0, outdict["day"] > 0))
     ):
-        return outdict
+        return outdict  # type: ignore
 
     raise DateValidationError.from_value(raw_date)
 
@@ -87,14 +87,12 @@ def validate_time(raw_time: str | dict | list | tuple) -> dict[str, str | int | 
     if isinstance(raw_time, list | tuple) and (0 < len(raw_time) < 4):
         outdict = dict(zip(("hour", "minute", "second"), raw_time))
 
-    if (tuple(outdict.values()) == (-1, -1, -1.0)) or all(
-        (
-            outdict,
-            0 <= outdict["hour"] <= 24,
-            0 <= outdict.get("minute", 0) <= 60,
-            0.0 <= outdict.get("second", 0.0) <= 60.0,
-        )
-    ):
-        return outdict
+    if (tuple(outdict.values()) == (-1, -1, -1.0)) or all((
+        outdict,
+        0 <= outdict["hour"] <= 24,
+        0 <= outdict.get("minute", 0) <= 60,
+        0.0 <= outdict.get("second", 0.0) <= 60.0,
+    )):
+        return outdict  # type: ignore
 
     raise TimeValidationError.from_value(raw_time)

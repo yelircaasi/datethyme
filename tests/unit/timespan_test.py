@@ -111,11 +111,11 @@ class TestTimeSpan:
         assert transform_ab == expected_ab
 
         expected_ac = TimeSpan()
-        transform_ac = self.span_ac.affine_transform(0.25, new_start=TimeSpan(...))
+        transform_ac = self.span_ac.forward_affine_transform(0.25, new_start=TimeSpan(...))
         assert transform_ac == expected_ac
 
         expected_ac_constrained = TimeSpan()
-        transform_ac_constrained = self.span_ac.affine_transform(
+        transform_ac_constrained = self.span_ac.forward_affine_transform(
             0.25,
             new_start=TimeSpan(...),
             min_minutes=...,
@@ -123,7 +123,7 @@ class TestTimeSpan:
         assert transform_ac_constrained == expected_ac_constrained
 
         expected_ad = TimeSpan()
-        transformed_ad = self.span_ac.affine_transform(
+        transformed_ad = self.span_ac.forward_affine_transform(
             1.3,
             new_start=TimeSpan(...),
             min_minutes=...,

@@ -3,7 +3,7 @@
 import datetime as DATETIME
 import re
 from math import floor
-from typing import Any, Self, Union
+from typing import Any, Self
 
 import deal
 from multipledispatch import dispatch
@@ -42,10 +42,10 @@ from .utils import (
 
 class Date(OptionalDate, BaseModel):
     @property
-    def datetime(self) -> "DateTime":
+    def datetime(self) -> DateTime:
         return DateTime.from_pair(self, Time.none())
 
-    def __and__(self, time: OptionalTime) -> "DateTime":
+    def __and__(self, time: OptionalTime) -> DateTime:
         if isinstance(time, Time):
             return DateTime(
                 year=self.year,
@@ -57,7 +57,7 @@ class Date(OptionalDate, BaseModel):
             )
         return DateTime(year=self.year, month=self.month, day=self.day)
 
-    def __pow__(self, other: "Date") -> "DateRange":
+    def __pow__(self, other: Date) -> DateRange:
         return DateRange(start=self, stop=other)
 
     """Bespoke immutable date class designed to simplify working with dates,
@@ -96,7 +96,7 @@ class Date(OptionalDate, BaseModel):
         return True
 
     @deal.has()
-    def __add__(self, days: int) -> "Date":
+    def __add__(self, days: int) -> Date:
         """Create a new date `days` later than `self`."""
         d = DATETIME.date.fromordinal(self.ordinal + int(days))
         return Date(year=d.year, month=d.month, day=d.day)
@@ -107,11 +107,11 @@ class Date(OptionalDate, BaseModel):
     #     of 'Date': {type(subtrahend)}")
 
     @dispatch(int)
-    def __sub__(self, subtrahend: int) -> "Date":
+    def __sub__(self, subtrahend: int) -> Date:  # type: ignore
         return Date.from_ordinal(self.ordinal - int(subtrahend))
 
     @dispatch(OptionalDate)
-    def __sub__(self, subtrahend: "Date") -> int:  # type: ignore
+    def __sub__(self, subtrahend: Date) -> int:  # type: ignore
         return self.ordinal - subtrahend.ordinal
 
     @deal.pure
@@ -192,15 +192,15 @@ class Date(OptionalDate, BaseModel):
         return self.format("{Weekday}, {Month} {ordinal}, {year}")
 
     @property
-    def start(self) -> "DateTime":
+    def start(self) -> DateTime:
         return DateTime.from_pair(self, Time(hour=0))
 
     @property
-    def end(self) -> "DateTime":
+    def end(self) -> DateTime:
         return DateTime.from_pair(self, Time(hour=24))
 
     @property
-    def span(self) -> "DateTimeSpan":
+    def span(self) -> DateTimeSpan:
         return self.start**self.end
 
     @classmethod
@@ -209,7 +209,7 @@ class Date(OptionalDate, BaseModel):
         return cls.model_validate(date_string)
 
     @classmethod
-    def if_valid(cls, date_string: str) -> Self | "NoneDate":
+    def if_valid(cls, date_string: str) -> Self | NoneDate:
         """Parse a string and return an instance of Date if possible; otherwise None."""
         try:
             return cls.model_validate(date_string)
@@ -218,29 +218,29 @@ class Date(OptionalDate, BaseModel):
 
     @classmethod
     @deal.has("time")
-    def today(cls) -> "Date":
+    def today(cls) -> Date:
         """Return todays date, using datetime.date.today() from the Python standard library."""
         d = DATETIME.date.today()
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
     @deal.pure
-    def from_ordinal(cls, ord: int) -> "Date":
+    def from_ordinal(cls, ord: int) -> Date:
         d = DATETIME.date.fromordinal(ord)
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
     @deal.has("time")
-    def tomorrow(cls) -> "Date":
+    def tomorrow(cls) -> Date:
         return cls.today() + 1
 
     @staticmethod
     @deal.pure
-    def none() -> "NoneDate":
+    def none() -> NoneDate:
         return NONE_DATE
 
     @deal.pure
-    def days_to(self, date2: "Date") -> int:
+    def days_to(self, date2: Date) -> int:
         return date2.ordinal - self.ordinal
 
     @deal.has()
@@ -320,7 +320,7 @@ class Date(OptionalDate, BaseModel):
         return template.format(**{p: transfer_case(p, get_string(p)) for p in placeholders})
 
     @deal.has()
-    def range(self, end: Union["Date", int], inclusive: bool = True) -> list["Date"]:
+    def range(self, end: Date | int, inclusive: bool = True) -> list[Date]:
         """Returns a list of consecutive days, default inclusive. Supports reverse-order ranges."""
         inclusive = inclusive and (self != end != 0)
 
@@ -355,7 +355,7 @@ class Date(OptionalDate, BaseModel):
 
 
 class Time(OptionalTime, BaseModel):
-    def __and__(self, date: "Date") -> "DateTime":
+    def __and__(self, date: Date) -> DateTime:
         return DateTime(
             year=date.year,
             month=date.month,
@@ -365,7 +365,7 @@ class Time(OptionalTime, BaseModel):
             second=self.second,
         )
 
-    def __pow__(self, other: "Time") -> "TimeSpan":
+    def __pow__(self, other: Time) -> TimeSpan:
         return TimeSpan(start=self, end=other)
 
     """Bespoke immutable date class designed to simplify working with times,
@@ -405,15 +405,15 @@ class Time(OptionalTime, BaseModel):
         return True
 
     @dispatch((int, float))
-    def __add__(self, mins: int | float) -> "Time":
+    def __add__(self, mins: int | float) -> Time:
         return Time.from_minutes(min(1440, max(0, self.to_minutes() + mins)))
 
     @dispatch(OptionalTime)
-    def __sub__(self, subtrahend: "Time") -> "TimeDelta":
+    def __sub__(self, subtrahend: Time) -> TimeDelta:
         return TimeDelta(self.to_seconds() - subtrahend.to_seconds())
 
     @dispatch((int, float))
-    def __sub__(self, mins: int | float) -> "Time":  # type: ignore
+    def __sub__(self, mins: int | float) -> Time:  # type: ignore
         return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
 
     @deal.pure
@@ -425,25 +425,25 @@ class Time(OptionalTime, BaseModel):
         return False
 
     @deal.has()
-    def __lt__(self, other: "Time") -> bool:  # type: ignore
+    def __lt__(self, other: Time) -> bool:  # type: ignore
         if isinstance(other, NoneTime):
             return False
         return self.to_minutes() < other.to_minutes()
 
     @deal.has()
-    def __gt__(self, other: "Time") -> bool:  # type: ignore
+    def __gt__(self, other: Time) -> bool:  # type: ignore
         if isinstance(other, NoneTime):
             return False
         return self.to_minutes() > other.to_minutes()
 
     @deal.has()
-    def __le__(self, other: "Time") -> bool:  # type: ignore
+    def __le__(self, other: Time) -> bool:  # type: ignore
         if isinstance(other, NoneTime):
             return False
         return self.to_minutes() <= other.to_minutes()
 
     @deal.has()
-    def __ge__(self, other: "Time") -> bool:  # type: ignore
+    def __ge__(self, other: Time) -> bool:  # type: ignore
         if isinstance(other, NoneTime):
             return False
         return self.to_minutes() >= other.to_minutes()
@@ -457,7 +457,7 @@ class Time(OptionalTime, BaseModel):
         return cls.model_validate(time_string)
 
     @classmethod
-    def if_valid(cls, time_string: str) -> Self | "NoneTime":
+    def if_valid(cls, time_string: str) -> Self | NoneTime:
         """Parse a string and return an instance of Time if possible; otherwise None."""
         try:
             return cls.model_validate(time_string)
@@ -466,20 +466,20 @@ class Time(OptionalTime, BaseModel):
 
     @classmethod
     @deal.has("time")
-    def now(cls) -> "Time":
+    def now(cls) -> Time:
         time_now = DATETIME.datetime.now()
         return cls(hour=time_now.hour, minute=time_now.minute)
 
     @classmethod
     @deal.pure
-    def from_minutes(cls, mins: int | float) -> "Time":
+    def from_minutes(cls, mins: int | float) -> Time:
         hour, minute = divmod(mins, 60.0)
         minute, second = divmod(minute, 1.0)
         return cls(hour=int(hour), minute=int(minute), second=60.0 * second)
 
     @staticmethod
     @deal.pure
-    def none() -> "NoneTime":
+    def none() -> NoneTime:
         return NONE_TIME
 
     @deal.pure
@@ -491,31 +491,31 @@ class Time(OptionalTime, BaseModel):
         return 3600 * self.hour + 60 * self.minute + self.second
 
     @deal.pure
-    def minutes_to(self, time2: "Time") -> float:
+    def minutes_to(self, time2: Time) -> float:
         t2, t1 = time2.to_minutes(), self.to_minutes()
         return t2 - t1
 
     @deal.pure
-    def minutes_from(self, time2: "Time") -> float:
+    def minutes_from(self, time2: Time) -> float:
         t2, t1 = self.to_minutes(), time2.to_minutes()
         return t2 - t1
 
-    def add_hours_wraparound(self, n: int | float) -> tuple["Time", int]:
+    def add_hours_wraparound(self, n: int | float) -> tuple[Time, int]:
         return (self, 999)  # TODO
 
-    def add_minutes_wraparound(self, n: int | float) -> tuple["Time", int]:
+    def add_minutes_wraparound(self, n: int | float) -> tuple[Time, int]:
         return (self, 999)  # TODO
 
-    def add_seconds_wraparound(self, n: int | float) -> tuple["Time", int]:
+    def add_seconds_wraparound(self, n: int | float) -> tuple[Time, int]:
         return (self, 999)  # TODO
 
-    def add_hours(self, n: int | float) -> "Time":
+    def add_hours(self, n: int | float) -> Time:
         return self  # TODO
 
-    def add_minutes(self, n: int | float) -> "Time":
+    def add_minutes(self, n: int | float) -> Time:
         return self  # TODO
 
-    def add_seconds(self, n: int | float) -> "Time":
+    def add_seconds(self, n: int | float) -> Time:
         return self  # TODO
 
 
@@ -557,7 +557,7 @@ class TimeDelta:
 
 
 class DateTime(BaseModel, OptionalDateTime):
-    def __pow__(self, other: "DateTime") -> "DateTimeSpan":
+    def __pow__(self, other: DateTime) -> DateTimeSpan:
         return DateTimeSpan(start=self, end=other)
 
     """
@@ -621,19 +621,19 @@ class DateTime(BaseModel, OptionalDateTime):
         return Time(hour=self.hour, minute=self.minute, second=self.second)
 
     @deal.has()
-    def __lt__(self, other: "DateTime") -> bool:  # type: ignore
+    def __lt__(self, other: DateTime) -> bool:  # type: ignore
         return (self.date < other.date) and (self.time < other.time)
 
     @deal.has()
-    def __gt__(self, other: "DateTime") -> bool:  # type: ignore
+    def __gt__(self, other: DateTime) -> bool:  # type: ignore
         return (self.date > other.date) and (self.time > other.time)
 
     @deal.has()
-    def __le__(self, other: "DateTime") -> bool:  # type: ignore
+    def __le__(self, other: DateTime) -> bool:  # type: ignore
         return (self.date <= other.date) and (self.time <= other.time)
 
     @deal.has()
-    def __ge__(self, other: "DateTime") -> bool:  # type: ignore
+    def __ge__(self, other: DateTime) -> bool:  # type: ignore
         return (self.date >= other.date) and (self.time >= other.time)
 
     @classmethod
@@ -647,19 +647,19 @@ class DateTime(BaseModel, OptionalDateTime):
             second=t.second or 0.0,
         )
 
-    def add_days(self, n: int) -> "DateTime":
+    def add_days(self, n: int) -> DateTime:
         time, wraps = self.time.add_hours_wraparound(n * 24)
         return (self.date + wraps) & time
 
-    def add_hours(self, n: int | float) -> "DateTime":
+    def add_hours(self, n: int | float) -> DateTime:
         time, wraps = self.time.add_hours_wraparound(n)
         return (self.date + wraps) & time
 
-    def add_minutes(self, n: int | float) -> "DateTime":
+    def add_minutes(self, n: int | float) -> DateTime:
         time, wraps = self.time.add_minutes_wraparound(n)
         return (self.date + wraps) & time
 
-    def add_seconds(self, n: int | float) -> "DateTime":
+    def add_seconds(self, n: int | float) -> DateTime:
         time, wraps = self.time.add_seconds_wraparound(n)
         return (self.date + wraps) & time
 
@@ -672,11 +672,11 @@ class DateSpan(AbstractSpan[Date]):
         self.start = start
         self.end = end
 
-    def hull(self, other: "DateSpan", strict: bool = False) -> "DateSpan":
+    def hull(self, other: DateSpan, strict: bool = False) -> DateSpan:
         # alias outer, union, cover
         return DateSpan(min(self.start, other.start), max(self.end, other.end))
 
-    def intersection(self, other: "DateSpan", strict: bool = False) -> Union["DateSpan", None]:
+    def intersection(self, other: DateSpan, strict: bool = False) -> DateSpan | None:
         # alias inner
         first, second = sorted((self, other), key=lambda d: d.start)
         if first.start <= second.start < first.end:
@@ -699,19 +699,17 @@ class DateSpan(AbstractSpan[Date]):
     def seconds(self) -> float:
         return 24 * 60 * 60 * self.days
 
-    def gap(
-        self, other: "DateSpan", strict: bool = False
-    ) -> Union["DateSpan", None]:  # alias end_to_start
+    def gap(self, other: DateSpan, strict: bool = False) -> DateSpan | None:  # alias end_to_start
         if self.start > other.end:
             return DateSpan(other.end, self.start)
         if other.start > self.end:
             return DateSpan(other.end, self.start)
         return None
 
-    def start_to_start(self, other: "DateSpan", strict: bool = False) -> "DateSpan":
+    def start_to_start(self, other: DateSpan, strict: bool = False) -> DateSpan:
         return DateSpan(self.start, other.start)
 
-    def end_to_end(self, other: "DateSpan", strict: bool = False) -> "DateSpan":
+    def end_to_end(self, other: DateSpan, strict: bool = False) -> DateSpan:
         return DateSpan(self.end, other.end)
 
 
@@ -736,32 +734,26 @@ class TimeSpan(AbstractSpan[Time]):
     def seconds(self) -> float:
         return self.end.to_seconds() - self.start.to_seconds()
 
-    def end_to_end(self, other: "TimeSpan", strict: bool = False) -> "TimeSpan":
+    def end_to_end(self, other: TimeSpan, strict: bool = False) -> TimeSpan:
         return TimeSpan(self.end, other.end)
 
-    def gap(
-        self, other: "TimeSpan", strict: bool = False
-    ) -> Union["TimeSpan", None]:  # alias end_to_start
+    def gap(self, other: TimeSpan, strict: bool = False) -> TimeSpan | None:  # alias end_to_start
         if self.start > other.end:
             return TimeSpan(other.end, self.start)
         if other.start > self.end:
             return TimeSpan(other.end, self.start)
         return None
 
-    def hull(
-        self, other: "TimeSpan", strict: bool = False
-    ) -> "TimeSpan":  # alias outer, union, cover
+    def hull(self, other: TimeSpan, strict: bool = False) -> TimeSpan:  # alias outer, union, cover
         return TimeSpan(min(self.start, other.start), max(self.end, other.end))
 
-    def intersection(
-        self, other: "TimeSpan", strict: bool = False
-    ) -> Union["TimeSpan", None]:  # alias inner
+    def intersection(self, other: TimeSpan, strict: bool = False) -> TimeSpan | None:  # alias inner
         first, second = sorted((self, other), key=lambda d: d.start)
         if first.start <= second.start < first.end:
             return TimeSpan(second.start, min((first.end, second.end)))
         return None
 
-    def start_to_start(self, other: "TimeSpan", strict: bool = False) -> "TimeSpan":
+    def start_to_start(self, other: TimeSpan, strict: bool = False) -> TimeSpan:
         return TimeSpan(self.start, other.start)
 
 
@@ -770,7 +762,7 @@ class DateTimeSpan(AbstractSpan[DateTime]):
         self.start = start
         self.end = end
 
-    def gap(self, other: "DateTimeSpan", strict: bool = False) -> Union["DateTimeSpan", None]:
+    def gap(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan | None:
         # alias end_to_start
         if self.start > other.end:
             return DateTimeSpan(other.end, self.start)
@@ -778,13 +770,11 @@ class DateTimeSpan(AbstractSpan[DateTime]):
             return DateTimeSpan(other.end, self.start)
         return None
 
-    def hull(self, other: "DateTimeSpan", strict: bool = False) -> "DateTimeSpan":
+    def hull(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan:
         # alias outer, union, cover
         return DateTimeSpan(min(self.start, other.start), max(self.end, other.end))
 
-    def intersection(
-        self, other: "DateTimeSpan", strict: bool = False
-    ) -> Union["DateTimeSpan", None]:
+    def intersection(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan | None:
         # alias inner
         if self.start > other.end:
             return DateTimeSpan(other.end, self.start)
@@ -792,13 +782,13 @@ class DateTimeSpan(AbstractSpan[DateTime]):
             return DateTimeSpan(other.end, self.start)
         return None
 
-    def start_to_start(self, other: "DateTimeSpan", strict: bool = False) -> "DateTimeSpan":
+    def start_to_start(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan:
         return DateTimeSpan(self.start, other.start)
 
-    def end_to_end(self, other: "DateTimeSpan", strict: bool = False) -> "DateTimeSpan":
+    def end_to_end(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan:
         return DateTimeSpan(self.end, other.end)
 
-    def __add__(self, other: Date | Time | DateTime) -> "DateTimeSpan":
+    def __add__(self, other: Date | Time | DateTime) -> DateTimeSpan:
         return self  # TODO
 
     @property
@@ -892,7 +882,7 @@ class DateRange(AbstractRange[Date]):
         last_index = self.start.days_to(limit)
         return limit - (last_index % self.step)
 
-    def __reversed__(self) -> "DateRange":
+    def __reversed__(self) -> DateRange:
         start = self.last
         end = self.start - 1
         return DateRange(start, end, step=self.step, inclusive=False)
@@ -931,7 +921,7 @@ class DateRange(AbstractRange[Date]):
     def seconds(self) -> float:
         return 24 * 60 * 60 * len(self)
 
-    def gap(self, other: "DateRange", strict: bool = False) -> Union["DateRange", None]:
+    def gap(self, other: DateRange, strict: bool = False) -> DateRange | None:
         # alias end_to_start
         if self.start > other.stop:
             return DateRange(other.stop, self.start)
@@ -939,22 +929,22 @@ class DateRange(AbstractRange[Date]):
             return DateRange(other.stop, self.start)
         return None
 
-    def hull(self, other: "DateRange", strict: bool = False) -> "DateRange":
+    def hull(self, other: DateRange, strict: bool = False) -> DateRange:
         return DateRange(
             min((self.start, other.start)),
             max((self.stop, other.stop)),
         )
 
-    def intersection(self, other: "DateRange", strict: bool = False) -> Union["DateRange", None]:
+    def intersection(self, other: DateRange, strict: bool = False) -> DateRange | None:
         first, second = sorted((self, other), key=lambda d: d.start)
         if first.start <= second.start < first.stop:
             return DateRange(second.start, min((first.stop, second.stop)))
         return None
 
-    def start_to_start(self, other: "DateRange", strict: bool = False) -> "DateRange":
+    def start_to_start(self, other: DateRange, strict: bool = False) -> DateRange:
         return DateRange(self.start, other.start)
 
-    def end_to_end(self, other: "DateRange", strict: bool = False) -> "DateRange":
+    def end_to_end(self, other: DateRange, strict: bool = False) -> DateRange:
         return DateRange(self.stop, other.stop)
 
     def __iter__(self):

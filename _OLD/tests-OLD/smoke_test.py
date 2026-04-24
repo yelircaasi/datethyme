@@ -3,7 +3,7 @@ from datethyme import Date, DateTime, Time
 t0 = Time.parse("00:37")
 t1 = Time.parse("05:15:30.345")
 
-td_a = t1 - t0
+td_a = t1 - t0  # type: ignore
 print(f"{td_a.days:.3f} days between {t0} and {t1}.")
 print(f"{td_a.hours:.3f} hours between {t0} and {t1}.")
 print(f"{td_a.minutes:.3f} minutes between {t0} and {t1}.")

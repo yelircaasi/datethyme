@@ -171,11 +171,11 @@ class TestNoneTime:
         assert not (nt >= nt)
         assert nt == nt
 
-        assert not nt.__lt__(t)
-        assert not nt.__gt__(t)
-        assert not nt.__le__(t)
-        assert not nt.__ge__(t)
-        assert not nt.__eq__(t)
+        assert not nt < t
+        assert not nt > t
+        assert not nt <= t
+        assert not nt >= t
+        assert not nt == t
 
         assert not (t < nt)
         assert not (t > nt)
@@ -183,11 +183,11 @@ class TestNoneTime:
         assert not (t >= nt)
         assert not (t == nt)
 
-        assert not t.__lt__(nt)
-        assert not t.__gt__(nt)
-        assert not t.__le__(nt)
-        assert not t.__ge__(nt)
-        assert not t.__eq__(nt)
+        assert not t < nt
+        assert not t > nt
+        assert not t <= nt
+        assert not t >= nt
+        assert not t == nt
 
         assert str(nt) == repr(nt) == "NoneTime"
 

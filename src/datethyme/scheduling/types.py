@@ -1,17 +1,20 @@
-from abc import abstractmethod
+from __future__ import annotations
+
+from collections import UserList
 from collections.abc import Callable, Iterable, Iterator
 from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
-from ._datethyme import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
-from ._scheduling_utils import (
+from .._datethyme import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
+from ..protocols import DeltaProtocol, PartitionProtocol
+from ..utils import assert_xor  # TODO: import from adiumentum
+from .algorithms import (
     is_contiguous,
     stack_forward,
 )
-from .protocols import DeltaProtocol, PartitionProtocol  # pyright: ignore
-from .utils import (
-    assert_xor,
-)
+
+type Item = object  # TODO -> replace with Entry
+type ItemSequence = object  # TODO -> replace with Entries
 
 NestedSpan = Union[TimeSpan, "TimePartition"]
 
@@ -46,8 +49,8 @@ class DateTimePartition(PartitionProtocol):
         return tuple(map(lambda sp: sp.name, self.spans))
 
     @property
-    def span(self) -> "DateTimeSpan":
-        return self.start.to(self.end)  # pyright: ignore
+    def span(self) -> DateTimeSpan:
+        return self.start.to(self.end)  # TODO # type: ignore
 
     @property
     def spans(self) -> tuple[DateTimeSpan, ...]:
@@ -86,9 +89,9 @@ class DateTimePartition(PartitionProtocol):
         return self.span.seconds
 
     def __bool__(self) -> bool:
-        return self.end > self.start  # pyright: ignore
+        return self.end > self.start
 
-    def __contains__(self, other) -> bool:
+    def __contains__(self, other: object) -> bool:
         return self.contains(other)
 
     # @classmethod
@@ -106,7 +109,6 @@ class DateTimePartition(PartitionProtocol):
         cls,
         segments: Iterable[DateTimeSpan],
         pipeline: Iterable[Callable[[Iterable[DateTimeSpan]], Iterable[DateTimeSpan]]],
-        # Callable[[Iterable[DateTimeSpan]], tuple[DateTimeSpan]],
         names: Iterable[str | None] | None = None,
     ) -> Self:
         for step in pipeline:
@@ -120,8 +122,8 @@ class DateTimePartition(PartitionProtocol):
         names: Iterable[str | None] | None = None,
     ) -> Self:
         names = names or (None,) * (len(times := tuple(times)) - 1)
-        spans = (a.span(b, name=name) for (a, b), name in zip(pairwise(times), names))  # pyright: ignore
-        return cls(spans=spans, names=names)  # pyright: ignore
+        spans = (a.span(b, name=name) for (a, b), name in zip(pairwise(times), names))
+        return cls(spans=spans, names=names)
 
     @classmethod
     def from_partition(
@@ -201,7 +203,6 @@ class DateTimePartition(PartitionProtocol):
     ) -> Self:
         raise NotImplementedError
 
-    @abstractmethod
     def contains(
         self,
         other,
@@ -209,35 +210,39 @@ class DateTimePartition(PartitionProtocol):
         include_end: bool = False,
     ) -> bool:
         ...
-        # return self.span.contains(other)
+        return self.span.contains(
+            other.span,
+            include_start=include_start,
+            include_end=include_end,
+        )
 
-    def gap(self, other, strict: bool = False) -> "DateTimeSpan | None": ...
+    def gap(self, other, strict: bool = False) -> DateTimeSpan | None: ...
 
-    def hull(self, other, strict: bool = False) -> "DateTimeSpan":
+    def hull(self, other, strict: bool = False) -> DateTimeSpan:
         return self.span.hull(other)
 
     def interior_point(self, alpha: float) -> DateTime:
         return self.span.interior_point(alpha)
 
-    def intersection(self, other, strict: bool = False) -> "DateTimePartition | None":
+    def intersection(self, other, strict: bool = False) -> DateTimePartition | None:
         ...
         # return self.span.intersection(other)
 
-    def overlap(self, other, strict: bool = False) -> "DateTimePartition | None": ...
+    def overlap(self, other, strict: bool = False) -> DateTimePartition | None: ...
 
-    def shift_end_rigid(self, new_end: DateTime) -> "DateTimePartition":
+    def shift_end_rigid(self, new_end: DateTime) -> DateTimePartition:
         raise NotImplementedError
 
-    def shift_start_rigid(self, new_start: DateTime) -> "DateTimePartition":
+    def shift_start_rigid(self, new_start: DateTime) -> DateTimePartition:
         raise NotImplementedError
 
-    def snap_end_to(self, new_end: DateTime) -> "DateTimePartition":
+    def snap_end_to(self, new_end: DateTime) -> DateTimePartition:
         raise NotImplementedError
 
-    def snap_start_to(self, new_start: DateTime) -> "DateTimePartition":
+    def snap_start_to(self, new_start: DateTime) -> DateTimePartition:
         raise NotImplementedError
 
-    def split(self, cut_point: DateTime) -> "tuple[DateTimePartition, DateTimePartition]":
+    def split(self, cut_point: DateTime) -> tuple[DateTimePartition, DateTimePartition]:
         raise NotImplementedError
 
     def span_containing(self, point: DateTime) -> DateTimeSpan | None:
@@ -252,7 +257,7 @@ class DateTimePartition(PartitionProtocol):
         new_span: DateTimeSpan,
         mode: Literal["SQUEEZE", "PUSH_BACK", "PUSH_FORWARD"],
         split_incumbent: bool = True,
-    ) -> "DateTimePartition":
+    ) -> DateTimePartition:
         raise NotImplementedError
 
     def index_from_name(self, name: str) -> int | None:
@@ -261,20 +266,29 @@ class DateTimePartition(PartitionProtocol):
     def index_from_time(self, point: DateTime) -> int | None:
         raise NotImplementedError
 
-    def affine_transform(  # TODO
+    def forward_affine_transform(  # TODO
         self,
         scale_factor: float,
         new_start: DateTime | None = None,
+        min_minutes: int | float = 5,
+    ) -> Self:
+        new_length = scale_factor * self.minutes
+        new_start = new_start or self.start
+        result = self.__class__(new_start, new_start.add_minutes(new_length))  # type: ignore
+
+        if result.minutes < min_minutes:
+            raise ValueError
+        return result
+
+    def backward_affine_transform(  # TODO
+        self,
+        scale_factor: float,
         new_end: DateTime | None = None,
         min_minutes: int | float = 5,
     ) -> Self:
         new_length = scale_factor * self.minutes
-        if new_start and not new_end:
-            result = self.__class__(new_start, new_start.add_minutes(new_length))  # type: ignore
-        elif new_end and not new_start:
-            result = self.__class__(new_end.add_minutes(new_length), new_end)  # type: ignore
-        else:
-            raise ValueError
+        new_end = new_end or self.start
+        result = self.__class__(new_end.add_minutes(-new_length), new_end)  # type: ignore
 
         if result.minutes < min_minutes:
             raise ValueError
@@ -282,17 +296,18 @@ class DateTimePartition(PartitionProtocol):
 
     def reordered(self, orderer: Callable[[DateTimeSpan], int | float | str | DateTime]) -> Self:
         reordered = sorted(self.spans, key=orderer)
-        return self.__class__.from_partition(stack_forward(reordered))
+        return self.__class__.from_partition(stack_forward(reordered))  # type: ignore
 
     # FROM TimePartition -------------------------------------------------
 
     @property
-    def passes_day_boundary(self) -> bool: ...
+    def passes_day_boundary(self) -> bool:
+        return self.start.date < self.end.date
 
     @classmethod
     def from_times(
         cls, times: Iterable[Time], names: Iterable[str | None] | None = None
-    ) -> "DateTimePartition":
+    ) -> DateTimePartition:
         n_spans = len(times := tuple(times)) - 1
         if names is None:
             names = (None,) * n_spans
@@ -300,7 +315,7 @@ class DateTimePartition(PartitionProtocol):
             raise ValueError
         return DateTimePartition(
             spans=(
-                DateTimeSpan(start=a, end=b, name=name)
+                DateTimeSpan(start=a, end=b, name=name)  # TODO # type: ignore
                 for (a, b), name in zip(pairwise(times), names)
             )
         )
@@ -367,7 +382,8 @@ class DateTimePartition(PartitionProtocol):
             return f"{span.start} - {span.name}"
 
         return (
-            f"TimePartition(\n    {'\n    '.join(map(format_span, self.spans))}"
+            "TimePartition(\n    "
+            f"{'\n    '.join(map(format_span, self.spans))}"  # TODO # type: ignore
             f"\n    {self.end} - <END>\n)"
         )
 
@@ -377,7 +393,8 @@ class DateTimePartition(PartitionProtocol):
 
     #     return ("\n" + (" " * indent)).join(map(partial(self.format_span, indent=indent), span))
 
-    def format_span(self, span: "DateTimeSpan | DateTimePartition", indent: int = 0):
+    @staticmethod
+    def format_span(span: DateTimeSpan | DateTimePartition, indent: int = 0):
         prefix = indent * " "
         if isinstance(span, DateTimeSpan):
             return f"{prefix}{span.start} - {span.name}"
@@ -453,7 +470,7 @@ class ScheduleItem:
     def __str__(self) -> str:
         return f"ScheduleItem({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
 
-    def rescaled(self, scale_factor: float) -> "ScheduleItem":
+    def rescaled(self, scale_factor: float) -> ScheduleItem:
         return ScheduleItem(
             self.name,
             self.default * scale_factor,
@@ -463,7 +480,7 @@ class ScheduleItem:
         )
 
 
-class ScheduleItems(list[ScheduleItem]):
+class ScheduleItems[T](UserList[ScheduleItem]):
     """ """
 
     def __init__(self, items: Iterable[ScheduleItem]):

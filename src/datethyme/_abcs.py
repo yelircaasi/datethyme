@@ -1,50 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Literal, Protocol, TypeVar
+from typing import Literal, TypeVar
+
+from .protocols import TimeProtocol
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
 
-class OptionalDate(ABC):
-    year: int | None
-    month: int | None
-    day: float | None
-
-    @abstractmethod
-    def __lt__(self, other) -> bool: ...
-
-
-class OptionalTime(ABC):
-    hour: int | None
-    minute: int | None
-    second: float | None
-
-    @abstractmethod
-    def __lt__(self, other) -> bool: ...
-
-
-class OptionalDateTime(ABC):
-    year: int | None
-    month: int | None
-    day: int | None
-    hour: int | None
-    minute: int | None
-    second: float | None
-
-    @abstractmethod
-    def __lt__(self, other) -> bool: ...
-
-
-PointType = OptionalDate | OptionalTime | OptionalDateTime
-T = TypeVar("T", bound=PointType)
-
-
-class IntervalType(Protocol):
-    start: PointType
-    end: PointType
-
-
-class AbstractSpan[T: PointType](ABC):
+class AbstractSpan[T: TimeProtocol](ABC):
     start: T
     end: T
 
@@ -80,7 +43,7 @@ class AbstractSpan[T: PointType](ABC):
     def end_to_end(self, other): ...
 
 
-class AbstractRange[T: PointType](ABC):
+class AbstractRange[T: TimeProtocol](ABC):
     start: T
     stop: T
     step: int
@@ -129,14 +92,12 @@ class AbstractRange[T: PointType](ABC):
     def _increment(self) -> None: ...
 
     def __eq__(self, other) -> bool:
-        return all(
-            (
-                self.start == other.start,
-                self.stop == other.stop,
-                self.step == other.step,
-                self.inclusive == other.inclusive,
-            )
-        )
+        return all((
+            self.start == other.start,
+            self.stop == other.stop,
+            self.step == other.step,
+            self.inclusive == other.inclusive,
+        ))
 
     def __hash__(self) -> int:
         return hash((hash(self.start), hash(self.stop), self.step, self.inclusive))

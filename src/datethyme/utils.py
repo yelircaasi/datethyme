@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import re
 from typing import Literal
 
 import deal
 
+from datethyme._datethyme import SpanProtocol
+
 from .exceptions import DateValidationError, TimeValidationError
+from .protocols import TimeProtocol
 
 
 def assert_xor(a: bool | object | str | None, b: bool | object | str | None) -> bool:
@@ -95,14 +100,32 @@ def validate_time(raw_time: str | dict | list | tuple) -> dict[str, str | int | 
     if isinstance(raw_time, list | tuple) and (0 < len(raw_time) < 4):
         outdict = dict(zip(("hour", "minute", "second"), raw_time))
 
-    if (tuple(outdict.values()) == (-1, -1, -1.0)) or all(
-        (
-            outdict,
-            0 <= outdict["hour"] <= 24,  # type: ignore
-            0 <= outdict.get("minute", 0) <= 60,  # type: ignore
-            0.0 <= outdict.get("second", 0.0) <= 60.0,  # type: ignore
-        )
-    ):
+    if (tuple(outdict.values()) == (-1, -1, -1.0)) or all((
+        outdict,
+        0 <= outdict["hour"] <= 24,  # type: ignore
+        0 <= outdict.get("minute", 0) <= 60,  # type: ignore
+        0.0 <= outdict.get("second", 0.0) <= 60.0,  # type: ignore
+    )):
         return outdict
 
     raise TimeValidationError.from_value(raw_time)
+
+
+def compute_index(*, start: int, current: int, step: int, tolerance: float = 1e-8) -> int:
+    raw_float_offset: float = (current - start) / step
+    index_ = int(raw_float_offset)
+    if abs(index_ - raw_float_offset) > tolerance:
+        raise IndexError
+    return index_
+
+
+def get_start[Atom: TimeProtocol](obj: Atom | SpanProtocol[Atom]) -> Atom:
+    if isinstance(obj, TimeProtocol):
+        return obj
+    return obj.start
+
+
+def get_end[Atom: TimeProtocol](obj: Atom | SpanProtocol[Atom]) -> Atom:
+    if isinstance(obj, TimeProtocol):
+        return obj
+    return obj.end

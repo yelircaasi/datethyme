@@ -81,20 +81,26 @@ class TestDateTimeSpan:
 
     def test_affine_transform(self):
         expected_ab = DateTimeSpan()
-        assert self.span_ab.affine_transform(1.3, new_start=DateTimeSpan(...)) == expected_ab
+        assert (
+            self.span_ab.forward_affine_transform(1.3, new_start=DateTimeSpan(...)) == expected_ab
+        )
 
         expected_ac = DateTimeSpan()
-        assert self.span_ac.affine_transform(0.25, new_start=DateTimeSpan(...)) == expected_ac
+        assert (
+            self.span_ac.forward_affine_transform(0.25, new_start=DateTimeSpan(...)) == expected_ac
+        )
 
         expected_ac_constrained = DateTimeSpan()
         assert (
-            self.span_ac.affine_transform(0.25, new_start=DateTimeSpan(...), min_minutes=...)
+            self.span_ac.forward_affine_transform(
+                0.25, new_start=DateTimeSpan(...), min_minutes=...
+            )
             == expected_ac_constrained
         )
 
         expected_ad = DateTimeSpan()
         assert (
-            self.span_ac.affine_transform(1.3, new_start=DateTimeSpan(...), min_minutes=...)
+            self.span_ac.forward_affine_transform(1.3, new_start=DateTimeSpan(...), min_minutes=...)
             == expected_ad
         )
 

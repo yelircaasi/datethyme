@@ -190,11 +190,11 @@ class TestNoneDate:
         assert not (self.nonedate >= self.nonedate)
         assert self.nonedate == self.nonedate
 
-        assert not self.nonedate.__lt__(self.date)
-        assert not self.nonedate.__gt__(self.date)
-        assert not self.nonedate.__le__(self.date)
-        assert not self.nonedate.__ge__(self.date)
-        assert not self.nonedate.__eq__(self.date)
+        assert not self.nonedate < self.date
+        assert not self.nonedate > self.date
+        assert not self.nonedate <= self.date
+        assert not self.nonedate >= self.date
+        assert not self.nonedate == self.date
 
         assert not (self.date < self.nonedate)
         assert not (self.date > self.nonedate)
@@ -202,11 +202,11 @@ class TestNoneDate:
         assert not (self.date >= self.nonedate)
         assert not (self.date == self.nonedate)
 
-        assert not self.date.__lt__(self.nonedate)
-        assert not self.date.__gt__(self.nonedate)
-        assert not self.date.__le__(self.nonedate)
-        assert not self.date.__ge__(self.nonedate)
-        assert not self.date.__eq__(self.nonedate)
+        assert not self.date < self.nonedate
+        assert not self.date > self.nonedate
+        assert not self.date <= self.nonedate
+        assert not self.date >= self.nonedate
+        assert not self.date == self.nonedate
 
     def test_string_and_repr(self):
         assert str(self.nonedate) == repr(self.nonedate) == "NoneDate"

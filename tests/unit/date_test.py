@@ -15,13 +15,11 @@ class TestDate:
         assert self.st_pat == Date.model_validate("2027-03-17")
         assert self.st_pat == Date.model_validate((2027, 3, 17))
         assert self.st_pat == Date.model_validate([2027, 3, 17])
-        assert self.st_pat == Date.model_validate(
-            {
-                "year": 2027,
-                "month": 3,
-                "day": 17,
-            }
-        )
+        assert self.st_pat == Date.model_validate({
+            "year": 2027,
+            "month": 3,
+            "day": 17,
+        })
 
     def test_serialize_date(self): ...
 

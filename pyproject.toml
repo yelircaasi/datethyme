@@ -119,6 +119,7 @@ fail_under = 0
 directory = "codeqa/coverage/html"
 
 [tool.mypy]
+python_version = "3.14"
 ignore_missing_imports = true
 disable_error_code = [
     "prop-decorator",
@@ -151,10 +152,11 @@ markers = [
 ]
 
 [tool.ruff]
+preview = true
 include = ["pyproject.toml", "*.py"]
 exclude = [".venv/", "*.pyi", "scratch/"]
 cache-dir = ".cache/ruff_cache"
-target-version = "py312"
+target-version = "py314"
 line-length = 100
 indent-width = 4
 
@@ -233,6 +235,7 @@ select = [
     "RUF",
 ]
 ignore = [
+    "PLR0904", # Too many public methods
     "N812",    # lowercase-imported-as-non-lowercase
     "F811",    # Redefinitions of unused names
     "D100",    # Missing docstring in public module

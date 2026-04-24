@@ -9,14 +9,23 @@ from pydantic import (
     Field,
 )
 
-from ._abcs import (
-    AbstractSpan,
-    OptionalDate,
-    OptionalTime,
-)
+# from ._abcs import (
+#     AbstractSpan,
+#     OptionalDate,
+#     OptionalTime,
+# )
 
 
-class NoneDate(OptionalDate, BaseModel):
+class AbstractSpan: ...
+
+
+class OptionalDate: ...
+
+
+class OptionalTime: ...
+
+
+class NoneDate(BaseModel):
     """Empty date for cases where this may be superior to using None."""
 
     model_config = ConfigDict(frozen=True)

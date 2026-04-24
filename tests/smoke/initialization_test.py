@@ -56,22 +56,18 @@ secondrangedated = SecondRangeDated(start=datetime, stop=datetime.add_days(3))
 timespan = TimeSpan(start=time, end=time.add_hours_bounded(2))
 datetimespan = DateTimeSpan(start=datetime, end=datetime.add_hours(2))
 
-timepartition = TimePartition(
-    (
-        TimeSpan(start=time, end=time.add_hours_bounded(2)),
-        TimeSpan(start=time.add_hours_bounded(2), end=time.add_hours_bounded(4)),
-        TimeSpan(start=time.add_hours_bounded(4), end=time.add_hours_bounded(6)),
-        TimeSpan(start=time.add_hours_bounded(6), end=time.add_hours_bounded(8)),
-    )
-)
-datetimepartition = DateTimePartition(
-    (
-        DateTimeSpan(start=datetime, end=datetime.add_hours(2)),
-        DateTimeSpan(start=datetime.add_hours(2), end=datetime.add_hours(4)),
-        DateTimeSpan(start=datetime.add_hours(4), end=datetime.add_hours(6)),
-        DateTimeSpan(start=datetime.add_hours(6), end=datetime.add_hours(8)),
-    )
-)
+timepartition = TimePartition((
+    TimeSpan(start=time, end=time.add_hours_bounded(2)),
+    TimeSpan(start=time.add_hours_bounded(2), end=time.add_hours_bounded(4)),
+    TimeSpan(start=time.add_hours_bounded(4), end=time.add_hours_bounded(6)),
+    TimeSpan(start=time.add_hours_bounded(6), end=time.add_hours_bounded(8)),
+))
+datetimepartition = DateTimePartition((
+    DateTimeSpan(start=datetime, end=datetime.add_hours(2)),
+    DateTimeSpan(start=datetime.add_hours(2), end=datetime.add_hours(4)),
+    DateTimeSpan(start=datetime.add_hours(4), end=datetime.add_hours(6)),
+    DateTimeSpan(start=datetime.add_hours(6), end=datetime.add_hours(8)),
+))
 
 
 def test_basic_initialization():
