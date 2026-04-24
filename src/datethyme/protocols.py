@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Literal, Protocol, Self, TypeVar, runtime_checkable
 
 from pydantic import NonNegativeInt
@@ -53,8 +53,8 @@ class TimeProtocol(Protocol):
     @classmethod
     def parse(cls, str) -> Self: ...
 
-    def to(self, __other, name: str | None = None) -> SpanProtocol: ...
-    def span(self, __other, name: str | None = None) -> SpanProtocol: ...
+    def to(self, __other) -> SpanProtocol: ...
+    def span(self, __other) -> SpanProtocol: ...
 
     @property
     def ordinal(self) -> float: ...
@@ -174,7 +174,7 @@ def make_entry_adapter[T: object, D: DateProtocol](  # noqa: C901 (too complex)
     get_due_date: Callable[[T], D | None],
     get_earliest_date: Callable[[T], D | None],
 ) -> type[EntryProtocol]:
-    class Adapter(EntryProtocol):
+    class EntryAdapter(EntryProtocol):
         def __init__(
             self,
             entry: T,
@@ -221,4 +221,15 @@ def make_entry_adapter[T: object, D: DateProtocol](  # noqa: C901 (too complex)
         def earliest_date(self) -> D | None:
             return get_earliest_date(self.entry)
 
-    return Adapter
+    return EntryAdapter
+
+
+class EntriesProtocol(Protocol): ...
+
+
+def make_entries_adapter[T: Iterable[EntryProtocol]](
+    # TODO
+) -> type[EntriesProtocol]:
+    class EntriesAdapter: ...
+
+    return EntriesAdapter

@@ -512,10 +512,28 @@ class ScheduleItems[T](UserList[ScheduleItem]):
         return f"ItemSequence(\n    {'\n    '.join(map(repr, self))}\n)"
 
 
+class Entries:
+    """Container type for a sequence of entries."""
+
+
 # migrate Entry from consilium?
+class DayPartition:
+    """Special case of DateTimePartition beginning at 00:00 and ending at 24:00 on the same day."""
+
+
+class CalendarDay:
+    schedule: DayPartition  # validate that start is 00:00 and end is 24:00
+    entries: Entries
+
+
+class Agenda:
+    """Like CalendarPartition, except that start time may be after 00:00 and end time may be before 24:00."""
 
 
 class Calendar: ...
 
 
 class Strategy(StrEnum): ...
+
+
+# TODO: how to add identity, i.e. 'is' operator?

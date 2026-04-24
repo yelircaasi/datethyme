@@ -44,7 +44,7 @@ from pydantic import (
 from .exceptions import (
     DateTimeValidationError,
 )
-from .protocols import SpanProtocol, TimeProtocol
+from .protocols import DateProtocol, SpanProtocol, TimeProtocol
 from .utils import (
     DATE_TIME_REGEX,
     WeekdayLiteral,
@@ -120,7 +120,7 @@ class AbstractRange[Atom: Time | DateTime | Date](ABC):
         return self
 
     def __next__(self) -> Atom:
-        if self._current < self.stop:
+        if self._current < self.stop:  # pyright: ignore
             self._increment()
             return self._current
         else:
@@ -320,7 +320,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
 # ================================================================================================
 
 
-class Date(BaseModel):
+class Date(BaseModel, DateProtocol):
     """Bespoke immutable date class designed to simplify working with dates,
     in particular input parsing, date calculations, and ranges.
     """
@@ -654,7 +654,7 @@ class Date(BaseModel):
     #     return NONE_DATE
 
 
-class Time(BaseModel):
+class Time(BaseModel, TimeProtocol):
     # implements TimeProtocol
     """Bespoke immutable date class designed to simplify working with times,
     in particular input parsing, time calculations, and ranges.
