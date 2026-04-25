@@ -397,7 +397,7 @@ class DateTimePartition(PartitionProtocol):
     def format_span(span: DateTimeSpan | DateTimePartition, indent: int = 0):
         prefix = indent * " "
         if isinstance(span, DateTimeSpan):
-            return f"{prefix}{span.start} - {span.name}"
+            return f"{prefix}{span.start} - {id(span)}"
         elif isinstance(span, DateTimePartition):
             return repr(DateTimePartition).replace("\n", "\n" + prefix)
         raise ValueError
