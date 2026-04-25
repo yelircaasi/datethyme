@@ -7,15 +7,12 @@ from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
 from .._datethyme import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
-from ..protocols import DeltaProtocol, PartitionProtocol
+from ..protocols import DeltaProtocol, EntryProtocol, PartitionProtocol
 from ..utils import assert_xor  # TODO: import from adiumentum
 from .algorithms import (
     is_contiguous,
     stack_forward,
 )
-
-type Item = object  # TODO -> replace with Entry
-type ItemSequence = object  # TODO -> replace with Entries
 
 NestedSpan = Union[TimeSpan, "TimePartition"]
 
@@ -448,72 +445,131 @@ class TimePartition(PartitionProtocol):
 class DatePartition: ...
 
 
-class ScheduleItem:
+class Entry(EntryProtocol):
     def __init__(
         self,
         name: str,
-        default: int | float,
+        normal_time: int,
         *,
-        minimum: int | float | None = None,
-        ideal: int | float | None = None,
-        maximum: int | float | None = None,
+        priority: float,
+        contexts: set[str | None] | None = None,
+        dependencies: set[str] | None = None,
+        min_time: int | None = None,
+        ideal_time: int | None = None,
+        max_time: int | None = None,
     ):
-        self.name = name
-        self.default = default
-        self.ideal = ideal or self.default
-        self.minimum = min(default, minimum or default, self.ideal)
-        self.maximum = max(default, maximum or default, self.ideal)
+        self._name = name
+        self._priority = priority
+        self._contexts = contexts
+        self._normal_time = normal_time
+        self._ideal_time = ideal_time
+        self._min_time = min_time
+        self._max_time = max_time
+        self._dependencies = dependencies
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def priority(self) -> float:
+        return self._priority
+
+    @property
+    def min_time(self) -> int:
+        return min(
+            self._normal_time,
+            self._min_time or self._normal_time,
+            self._ideal_time or self._normal_time,
+        )
+
+    @property
+    def normal_time(self) -> int:
+        return self._normal_time
+
+    @property
+    def ideal_time(self) -> int:
+        return self._ideal_time or self._normal_time
+
+    @property
+    def max_time(self) -> int:
+        return max(
+            self._normal_time,
+            self._max_time or self._normal_time,
+            self._ideal_time or self._normal_time,
+        )
+
+    @property
+    def contexts(self) -> set[str | None]:
+        return self._contexts or set()
+
+    @property
+    def dependencies(self) -> set[str]:
+        return self._dependencies or set()
+
+    @property
+    def due_date(self) -> Date | None:
+        raise NotImplementedError
+
+    @property
+    def earliest_date(self) -> Date | None:
+        raise NotImplementedError
 
     def __repr__(self) -> str:
-        return f"ScheduleItem({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
+        return (
+            f"ScheduleItem({self.min_time} ≤ {self.normal_time}"
+            f" ≤ {self.max_time}, ideal_time={self.ideal_time})"
+        )
 
     def __str__(self) -> str:
-        return f"ScheduleItem({self.minimum} ≤ {self.default} ≤ {self.maximum}, ideal={self.ideal})"
+        return repr(self)
 
-    def rescaled(self, scale_factor: float) -> ScheduleItem:
-        return ScheduleItem(
+    def rescaled(self, scale_factor: float) -> Entry:
+        def rescale(maybe_num: int | None) -> int | None:
+            if maybe_num is None:
+                return maybe_num
+            return round(scale_factor * maybe_num)
+
+        return Entry(
             self.name,
-            self.default * scale_factor,
-            minimum=self.minimum * scale_factor,
-            ideal=self.ideal * scale_factor,
-            maximum=self.maximum * scale_factor,
+            round(self._normal_time * scale_factor),
+            min_time=rescale(self._min_time),
+            ideal_time=rescale(self._ideal_time),
+            max_time=rescale(self._min_time),
+            priority=self._priority,
         )
 
 
-class ScheduleItems[T](UserList[ScheduleItem]):
-    """TODO: fold into Entries"""
+class Entries[T](UserList[Entry]):
+    """Container type for a sequence of entries."""
 
-    def __init__(self, items: Iterable[ScheduleItem]):
+    def __init__(self, items: Iterable[Entry]) -> None:
         items = list(items)
         if not len(set(items)) == len(items):
             raise ValueError("Item names must be unique.")
         super().__init__(items)
 
     @property
-    def default(self) -> float:
-        return sum(map(lambda it: it.default, self))
+    def normal_time(self) -> float:
+        return sum(map(lambda it: it.normal_time, self))
 
     @property
-    def minimum(self) -> float:
-        return sum(map(lambda it: it.minimum, self))
+    def min_time(self) -> float:
+        return sum(map(lambda it: it.min_time, self))
 
     @property
-    def ideal(self) -> float:
-        return sum(map(lambda it: it.ideal, self))
+    def ideal_time(self) -> float:
+        return sum(map(lambda it: it.ideal_time, self))
 
     @property
-    def maximum(self) -> float:
-        return sum(map(lambda it: it.maximum, self))
+    def max_time(self) -> float:
+        return sum(map(lambda it: it.max_time, self))
 
     def __repr__(self) -> str:
-        return f"ItemSequence(\n    {'\n    '.join(map(repr, self))}\n)"
+        return f"Entries(\n    {'\n    '.join(map(repr, self))}\n)"
 
     def __str__(self) -> str:
-        return f"ItemSequence(\n    {'\n    '.join(map(repr, self))}\n)"
-
-
-class Entries:
-    """Container type for a sequence of entries."""
+        return f"Entries(\n    {'\n    '.join(map(repr, self))}\n)"
 
 
 # migrate Entry from consilium?
@@ -528,7 +584,7 @@ class CalendarDay:
 
 class Agenda:
     """Like CalendarPartition, except that start time may be after 00:00
-        and end time may be before 24:00.
+    and end time may be before 24:00.
     """
 
 

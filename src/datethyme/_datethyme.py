@@ -501,10 +501,10 @@ class Date(BaseModel, DateProtocol):
         return cls.model_validate(date_string)
 
     @classmethod
-    def if_valid(cls, date_string: str) -> Self | None:
+    def if_valid(cls, raw_date: object) -> Self | None:
         """Parse a string and return an instance of Date if possible; otherwise None."""
         try:
-            return cls.model_validate(date_string)
+            return cls.model_validate(raw_date)
         except Exception:
             return None
 

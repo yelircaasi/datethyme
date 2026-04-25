@@ -149,7 +149,7 @@ class EntryProtocol[D: DateProtocol](Protocol):
     def max_time(self) -> int: ...
 
     @property
-    def contexts(self) -> set[str]: ...
+    def contexts(self) -> set[str | None]: ...
 
     @property
     def dependencies(self) -> set[str]: ...
@@ -169,7 +169,7 @@ def make_entry_adapter[T: object, D: DateProtocol](  # noqa: C901 (too complex)
     get_normal_time: Callable[[T], NonNegativeInt],
     get_ideal_time: Callable[[T], NonNegativeInt],
     get_max_time: Callable[[T], NonNegativeInt],
-    get_contexts: Callable[[T], set[str]],
+    get_contexts: Callable[[T], set[str | None]],
     get_dependencies: Callable[[T], set[str]],
     get_due_date: Callable[[T], D | None],
     get_earliest_date: Callable[[T], D | None],
@@ -206,7 +206,7 @@ def make_entry_adapter[T: object, D: DateProtocol](  # noqa: C901 (too complex)
             return get_max_time(self.entry)
 
         @property
-        def contexts(self) -> set[str]:
+        def contexts(self) -> set[str | None]:
             return get_contexts(self.entry)
 
         @property

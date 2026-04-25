@@ -1,16 +1,16 @@
 from ..protocols import EntryProtocol, make_entry_adapter
 from .types import (
     DateTimePartition,
-    ScheduleItem,
-    ScheduleItems,
+    Entry,
+    Entries,
     TimePartition,
 )
 
 __all__ = (
     "DateTimePartition",
     "EntryProtocol",
-    "ScheduleItem",
-    "ScheduleItems",
+    "Entry",
+    "Entries",
     "TimePartition",
     "make_entry_adapter",
 )

@@ -1,7 +1,7 @@
 from operator import attrgetter
 
 from datethyme import Date, Time
-from datethyme.scheduling.types import DateTimePartition, Item, ItemSequence
+from datethyme.scheduling.types import DateTimePartition, Item, Entries
 
 agenda: DateTimePartition = Date.parse("2025-10-10").partition(
     start_name="sleep",
@@ -19,21 +19,21 @@ agenda: DateTimePartition = Date.parse("2025-10-10").partition(
     },
 )
 
-morning_routine = ItemSequence((
+morning_routine = Entries((
     Item("wake up", 1),
     Item("get dressed", 5),
     Item("workout", 10),
     Item("shower", 15),
 ))
 
-evening_routine = ItemSequence((
+evening_routine = Entries((
     Item("clean up", 5),
     Item("walk", 10),
     Item("change clothes", 1),
     Item("reading", 30, ideal=60),
 ))
 
-chore_backlog = ItemSequence((
+chore_backlog = Entries((
     Item("a", 5),
     Item("b", 10, ideal=20),
     Item("c", 15, minimum=10),

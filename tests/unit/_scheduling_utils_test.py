@@ -7,7 +7,7 @@ from datethyme.scheduling.algorithms import (
     get_relative_lengths,
     get_total_length,
     latest_end,
-    most_central_span,
+    most_central,
     snap_back,
     snap_between,
     snap_forward,
@@ -296,8 +296,8 @@ def test_latest_end(original, latest):
         (...),
     ],
 )
-def test_most_central_span(sequence, central_span):
-    assert most_central_span(sequence) == central_span
+def test_most_central(sequence, central_span):
+    assert most_central(sequence) == central_span
 
 
 @pytest.mark.parametrize(

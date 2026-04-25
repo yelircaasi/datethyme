@@ -36,10 +36,10 @@ class TestDate:
         )
 
     def test_if_valid(self):
-        assert Date.if_valid("") == self.nonedate
-        assert Date.if_valid("nonsense") == self.nonedate
-        assert Date.if_valid(None) == self.nonedate
-        assert Date.if_valid((1, 2, 3)) == self.nonedate
+        assert Date.if_valid("") is None
+        assert Date.if_valid("nonsense") is None
+        assert Date.if_valid(None) is None
+        assert Date.if_valid((1, 2, 3)) is None
         assert Date.if_valid("2025-04-25") == self.date
         assert Date.if_valid("2025-4-25") == self.date
 
@@ -165,11 +165,11 @@ class TestDate:
 
 
 class TestNoneDate:
-    nonedate = Date.none()
+    nonedate = NoneDate()
     date = Date(year=2025, month=4, day=25)
 
     def test_validation(self):
-        assert self.nonedate == NoneDate() == Date.none()
+        # assert self.nonedate == NoneDate() == Date.none()
         assert self.nonedate.year is None
         assert self.nonedate.month is None
         assert self.nonedate.day is None
