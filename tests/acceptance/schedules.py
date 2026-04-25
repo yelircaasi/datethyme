@@ -1,11 +1,11 @@
 from operator import attrgetter
 
-from datethyme import Date, Time
-from datethyme.scheduling.types import DateTimePartition, Item, Entries
+from datethyme import Time
+from datethyme.scheduling.types import DateTimePartition, Entries, Entry
 
-agenda: DateTimePartition = Date.parse("2025-10-10").partition(
-    start_name="sleep",
-    events={
+agenda = DateTimePartition.from_starts(
+    # start_name="sleep",
+    spans={
         Time.parse("05:30"): "morning routine",
         Time.parse("06:30"): "gym",
         Time.parse("07:15"): "work (morning)",
@@ -17,39 +17,40 @@ agenda: DateTimePartition = Date.parse("2025-10-10").partition(
         Time.parse("20:30"): "evening routine",
         Time.parse("22:30"): "sleep",
     },
+    end=Time.parse("24:00"),
 )
 
 morning_routine = Entries((
-    Item("wake up", 1),
-    Item("get dressed", 5),
-    Item("workout", 10),
-    Item("shower", 15),
+    Entry("wake up", 1),
+    Entry("get dressed", 5),
+    Entry("workout", 10),
+    Entry("shower", 15),
 ))
 
 evening_routine = Entries((
-    Item("clean up", 5),
-    Item("walk", 10),
-    Item("change clothes", 1),
-    Item("reading", 30, ideal=60),
+    Entry("clean up", 5),
+    Entry("walk", 10),
+    Entry("change clothes", 1),
+    Entry("reading", 30, ideal_time=60),
 ))
 
 chore_backlog = Entries((
-    Item("a", 5),
-    Item("b", 10, ideal=20),
-    Item("c", 15, minimum=10),
-    Item("d", 30),
+    Entry("a", 5),
+    Entry("b", 10, ideal_time=20),
+    Entry("c", 15, min_time=10),
+    Entry("d", 30),
 ))
 
-agenda = agenda.partition_element(  # type: ignore TODO
+agenda = agenda.partition_element(
     "morning routine",
     morning_routine,
-    item_min=1,
-    item_max=20,
+    min_length=1,
+    max_length=20,
 ).partition_element(
     "evening routine",
     evening_routine,
-    item_min=5,
-    item_max=60,
+    min_length=5,
+    max_length=60,
 )
 
 agenda, leftover_chores = agenda.pack_from(  # type: ignore TODO

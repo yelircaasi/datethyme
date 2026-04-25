@@ -7,6 +7,8 @@ TS_24_623 = Time(hour=15, minute=0)
 TS_24_812 = Time(hour=15, minute=0)
 TS_25_112 = Time(hour=7, minute=3)
 
+PLACEHOLDER_TIME = Time(hour=10, minute=0)
+
 
 class TestTimeSpan:
     time_a = TS_24_622
@@ -52,7 +54,7 @@ class TestTimeSpan:
             (Time(hour=10, minute=0), Time(hour=10, minute=30), 0.5),
         ],
     )
-    def test_hours(self, start, end, expected_hours):
+    def test_hours(self, start, end, expected_hours) -> None:
         span = TimeSpan(start, end)
         assert span.hours == expected_hours
 
@@ -63,21 +65,21 @@ class TestTimeSpan:
             (Time(hour=0, minute=0), Time(hour=0, minute=0), 0),
         ],
     )
-    def test_days(self, start, end, expected_days):
+    def test_days(self, start, end, expected_days) -> None:
         span = TimeSpan(start, end)
         assert span.days == expected_days
 
-    def test_name_and_id(self):
+    def test_name_and_id(self) -> None:
         span = TimeSpan(Time(hour=10, minute=0), Time(hour=11, minute=0), name="TestSpan")
         assert span.name == "TestSpan"
         assert span.id == "TestSpan"
 
-    def test_hull(self):
+    def test_hull(self) -> None:
         hull = self.span_ac.hull(self.span_bd)
         assert hull.start == self.time_a
         assert hull.end == Time(hour=12, minute=0)
 
-    def test_intersection(self):
+    def test_intersection(self) -> None:
         a = TimeSpan(Time(hour=10, minute=0), Time(hour=11, minute=0))
         b = TimeSpan(Time(hour=10, minute=30), Time(hour=12, minute=0))
         inter = a.intersection(b)
@@ -85,13 +87,13 @@ class TestTimeSpan:
         assert inter.start == Time(hour=10, minute=30)
         assert inter.end == Time(hour=11, minute=0)
 
-    def test_intersection_none(self):
+    def test_intersection_none(self) -> None:
         a = TimeSpan(Time(hour=10, minute=0), Time(hour=11, minute=0))
         b = TimeSpan(Time(hour=12, minute=0), Time(hour=13, minute=0))
         inter = a.intersection(b)
         assert inter is None
 
-    def test_gap(self):
+    def test_gap(self) -> None:
         a = TimeSpan(Time(hour=10, minute=0), Time(hour=11, minute=0))
         b = TimeSpan(Time(hour=12, minute=0), Time(hour=13, minute=0))
         gap = a.gap(b)
@@ -99,73 +101,79 @@ class TestTimeSpan:
         assert gap.start == Time(hour=11, minute=0)
         assert gap.end == Time(hour=12, minute=0)
 
-    def test_gap_none(self):
+    def test_gap_none(self) -> None:
         a = TimeSpan(Time(hour=10, minute=0), Time(hour=11, minute=0))
         b = TimeSpan(Time(hour=10, minute=30), Time(hour=12, minute=0))
         gap = a.gap(b)
         assert gap is None
 
-    def test_affine_transform(self):
-        expected_ab = TimeSpan()
-        transform_ab = self.span_ab.affine_transform(1.3, new_start=TimeSpan(...))
+    def test_affine_transform(self) -> None:
+        expected_ab = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
+        transform_ab = self.span_ab.forward_affine_transform(1.3, new_start=PLACEHOLDER_TIME)
         assert transform_ab == expected_ab
 
-        expected_ac = TimeSpan()
-        transform_ac = self.span_ac.forward_affine_transform(0.25, new_start=TimeSpan(...))
+        expected_ac = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
+        transform_ac = self.span_ac.forward_affine_transform(0.25, new_start=PLACEHOLDER_TIME)
         assert transform_ac == expected_ac
 
-        expected_ac_constrained = TimeSpan()
+        expected_ac_constrained = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
         transform_ac_constrained = self.span_ac.forward_affine_transform(
             0.25,
-            new_start=TimeSpan(...),
-            min_minutes=...,
+            new_start=PLACEHOLDER_TIME,
+            min_minutes=999,
         )
         assert transform_ac_constrained == expected_ac_constrained
 
-        expected_ad = TimeSpan()
+        expected_ad = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
         transformed_ad = self.span_ac.forward_affine_transform(
             1.3,
-            new_start=TimeSpan(...),
-            min_minutes=...,
+            new_start=PLACEHOLDER_TIME,
+            min_minutes=999,
         )
         assert transformed_ad == expected_ad
 
-    def test_contains(self):
+    def test_contains(self) -> None:
         assert self.span_ac.contains(self.time_b)
         assert not self.span_ac.contains(self.time_d)
 
-    def test_interior_point(self):
-        assert self.span_ab.interior_point(0.77) == Time(...)
+    def test_interior_point(self) -> None:
+        assert self.span_ab.interior_point(0.77) == PLACEHOLDER_TIME
 
-    def test_shift_end_rigid(self):
+    def test_shift_end_rigid(self) -> None:
         assert self.span_ab.shift_end_rigid(self.time_c) == self.span_ac
 
-    def test_shift_start_rigid(self):
-        assert self.span_ab.shift_start_rigid(self.time_c) == TimeSpan(...)
+    def test_shift_start_rigid(self) -> None:
+        assert self.span_ab.shift_start_rigid(self.time_c) == TimeSpan(
+            PLACEHOLDER_TIME, PLACEHOLDER_TIME
+        )
 
-    def test_snap_start_to(self):
-        assert self.span_bc.snap_start_to(Time()) == TimeSpan()
+    def test_snap_start_to(self) -> None:
+        assert self.span_bc.snap_start_to(PLACEHOLDER_TIME) == TimeSpan(
+            PLACEHOLDER_TIME, PLACEHOLDER_TIME
+        )
 
-    def test_snap_end_to(self):
-        assert self.span_bc.snap_end_to(Time()) == TimeSpan()
+    def test_snap_end_to(self) -> None:
+        assert self.span_bc.snap_end_to(PLACEHOLDER_TIME) == TimeSpan(
+            PLACEHOLDER_TIME, PLACEHOLDER_TIME
+        )
 
-    def test_split(self):
+    def test_split(self) -> None:
         assert self.span_ac.split(self.time_b) == (self.span_ab, self.span_bc)
 
     def test_id(self): ...
 
     def test_name(self): ...
 
-    def test_dunder_bool(): ...
+    def test_dunder_bool(self): ...
 
-    def test_dunder_contains(): ...
+    def test_dunder_contains(self): ...
 
-    def test_dunder_eq(): ...
+    def test_dunder_eq(self): ...
 
-    def test_midpoint(): ...
+    def test_midpoint(self): ...
 
-    def test_overlap(): ...
+    def test_overlap(self): ...
 
-    def test_span(): ...
+    def test_span(self): ...
 
-    def test_subdivide(): ...
+    def test_subdivide(self): ...

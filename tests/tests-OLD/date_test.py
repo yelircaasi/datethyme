@@ -3,14 +3,15 @@ import re
 
 import pytest
 
-from datethyme import Date, DateValidationError, NoneDate, OptionalDate
+from datethyme import Date, DateValidationError
+from datethyme.null import NoneDate, OptionalDate
 
 
 class TestDate:
     date = Date(year=2025, month=4, day=25)
-    nonedate = Date.none()
+    nonedate = NoneDate()
 
-    def test_class_hierarchy(self):
+    def test_class_hierarchy(self) -> None:
         assert isinstance(self.date, Date)
         assert isinstance(self.nonedate, NoneDate)
         assert isinstance(self.date, OptionalDate)
@@ -18,14 +19,14 @@ class TestDate:
         assert not isinstance(self.nonedate, Date)
         assert not isinstance(self.date, NoneDate)
 
-    def test_parse(self):
+    def test_parse(self) -> None:
         assert self.date == Date.parse("2025-04-25") == Date.parse("2025-4-25")
 
     def test_representation(self):
         assert self.date.model_dump() == "2025-04-25"
         assert repr(self.date) == "Date(2025-04-25)"
 
-    def test_validation(self):
+    def test_validation(self) -> None:
         assert (
             self.date
             == Date.model_validate((2025, 4, 25))
@@ -35,7 +36,7 @@ class TestDate:
             == Date.model_validate("2025-4-25")
         )
 
-    def test_if_valid(self):
+    def test_if_valid(self) -> None:
         assert Date.if_valid("") is None
         assert Date.if_valid("nonsense") is None
         assert Date.if_valid(None) is None
@@ -43,19 +44,19 @@ class TestDate:
         assert Date.if_valid("2025-04-25") == self.date
         assert Date.if_valid("2025-4-25") == self.date
 
-    def test_days_to(self):
+    def test_days_to(self) -> None:
         assert self.date.days_to(Date(year=2026, month=1, day=15)) == 265
 
         assert self.date.stdlib == datetime.date(2025, 4, 25)
         assert self.date.weekday == "fri"
         assert self.date.prose == "Friday, April 25th, 2025"
 
-    def test_formatting(self):
+    def test_formatting(self) -> None:
         assert Date(year=2025, month=4, day=3).prose == "Thursday, April 3rd, 2025"
         assert Date(year=2027, month=10, day=4).prose == "Monday, October 4th, 2027"
         assert Date(year=2019, month=6, day=21).prose == "Friday, June 21st, 2019"
 
-    def test_today_and_tomorrow(self):
+    def test_today_and_tomorrow(self) -> None:
         today = Date.today()
         tomorrow = Date.tomorrow()
 

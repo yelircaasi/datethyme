@@ -451,7 +451,7 @@ class Entry(EntryProtocol):
         name: str,
         normal_time: int,
         *,
-        priority: float,
+        priority: float | None = None,
         contexts: set[str | None] | None = None,
         dependencies: set[str] | None = None,
         min_time: int | None = None,
@@ -473,7 +473,7 @@ class Entry(EntryProtocol):
 
     @property
     def priority(self) -> float:
-        return self._priority
+        return self._priority or 0.5
 
     @property
     def min_time(self) -> int:

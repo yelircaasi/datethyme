@@ -235,6 +235,7 @@ select = [
     "RUF",
 ]
 ignore = [
+    "PLR6301", # Unused self parameter
     "PLR0904", # Too many public methods
     "N812",    # lowercase-imported-as-non-lowercase
     "F811",    # Redefinitions of unused names

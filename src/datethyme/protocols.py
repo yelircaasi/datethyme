@@ -5,6 +5,8 @@ from typing import Literal, Protocol, Self, TypeVar, runtime_checkable
 
 from pydantic import NonNegativeInt
 
+from .scheduling.types import Entry
+
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
 
@@ -34,8 +36,24 @@ class DateProtocol(Protocol):
     def __hash__(self) -> int: ...
 
 
+
 @runtime_checkable
-class TimeProtocol(Protocol):
+class AtomProtocol(Protocol):
+    def __bool__(self) -> bool: ...
+    def __eq__(self, other) -> bool: ...
+    def __lt__(self, other) -> bool: ...
+    def __le__(self, other) -> bool: ...
+    def __gt__(self, other) -> bool: ...
+    def __ge__(self, other) -> bool: ...
+    def __hash__(self) -> int: ...
+    def __repr__(self) -> str: ...
+    def __str__(self) -> str: ...
+    def to_minutes(self) -> float: ...
+    def to_seconds(self) -> float: ...
+
+
+@runtime_checkable
+class TimeProtocol(AtomProtocol, Protocol):
     hour: int
     minute: int
     second: float
@@ -116,7 +134,28 @@ class SpanProtocol[T: TimeProtocol](Protocol):
     ) -> SpanProtocol[T]: ...
 
 
-class PartitionProtocol: ...
+class PartitionProtocol[Atom]:
+    @classmethod
+    def from_starts(
+        cls,
+        spans: dict[Atom, str] | Iterable[Atom],
+        end: Atom,
+    ) -> Self: ...
+
+    @classmethod
+    def from_ends(
+        cls,
+        spans: dict[Atom, str] | Iterable[Atom],
+        start: Atom,
+    ) -> Self: ...
+
+    def partition_element(
+        self,
+        element_id: str,
+        other: PartitionProtocol[Atom] | Iterable[Entry],
+        min_length: int = 1,
+        max_length: int | None = None,
+    ) -> Self: ...
 
 
 # @runtime_checkable

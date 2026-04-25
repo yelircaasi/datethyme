@@ -33,6 +33,8 @@ from pydantic import (
     model_validator,
 )
 
+from ._abcs import AbstractRange, AbstractSpan
+
 # from ._abcs import (
 #     AbstractDate,
 #     AbstractRange,
@@ -89,232 +91,6 @@ PairCallback = Callable[
 # Atom = TypeVar("Atom", "Time", "Date", "DateTime")
 
 
-class AbstractRange[Atom: Time | DateTime | Date](ABC):
-    start: Atom
-    stop: Atom
-    step: int
-    inclusive: bool
-    _current: Atom
-
-    @abstractmethod
-    def __init__(self, start: Atom, stop: Atom, step: int = 1, inclusive: bool = True) -> None: ...
-
-    @property
-    @abstractmethod
-    def last(self) -> Atom: ...
-
-    @abstractmethod
-    def __len__(self) -> int: ...
-
-    @abstractmethod
-    def __contains__(self, item: Atom) -> bool: ...
-
-    @abstractmethod
-    def __reversed__(self) -> Iterable[Atom]: ...
-
-    @abstractmethod
-    def __getitem__(self, idx) -> Atom: ...
-
-    def __iter__(self) -> Iterator[Atom]:
-        self._restart()
-        return self
-
-    def __next__(self) -> Atom:
-        if self._current < self.stop:  # pyright: ignore
-            self._increment()
-            return self._current
-        else:
-            raise StopIteration
-
-    def __eq__(self, other) -> bool:
-        return all((
-            self.start == other.start,
-            self.stop == other.stop,
-            self.step == other.step,
-            self.inclusive == other.inclusive,
-        ))
-
-    def __hash__(self) -> int:
-        return hash((hash(self.start), hash(self.stop), self.step, self.inclusive))
-
-    def index(self, item: Atom) -> int:
-        if item not in self:
-            raise ValueError(f"{item} is not in {self!r}")
-        return len(self.__class__(self.start, item, step=self.step, inclusive=False))
-
-    def index_ALTERNATIVE(self, item: Time, tolerance: float = 1e-8) -> int:
-        """TODO: Determine superior indexing approach."""
-        return compute_index(
-            start=round(item.to_seconds()),
-            current=round(self.start.to_seconds()),
-            step=self.step,
-            tolerance=tolerance,
-        )
-
-    def count(self, item: Atom) -> int:
-        return int(item in self)
-
-    def filtered(self, predicate: Callable[[Atom], bool]) -> Iterator[Atom]:
-        """
-        Generic filtered iterator.
-        """
-        for atom in self:
-            if predicate(atom):
-                yield atom
-
-    @abstractmethod
-    def _increment(self) -> None: ...
-
-    def _restart(self) -> None:
-        self._current = self.start
-
-    # @property
-    # @abstractmethod
-    # def string_list(self) -> list[str]: ...
-
-
-class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
-    @property
-    @abstractmethod
-    def start(self) -> Atom: ...
-
-    @property
-    @abstractmethod
-    def end(self) -> Atom: ...
-
-    def midpoint(self) -> Atom:
-        return self.interior_point(0.5)
-
-    @abstractmethod
-    def __init__(self, start: Atom, end: Atom) -> None: ...
-
-    def __hash__(self) -> int:
-        return hash((self.start, self.end))
-
-    @property
-    def name(self) -> str:
-        return "TODO"
-
-    @property
-    @abstractmethod
-    def days(self) -> float: ...
-
-    @property
-    @abstractmethod
-    def hours(self) -> float: ...
-
-    @property
-    @abstractmethod
-    def minutes(self) -> float: ...
-
-    @property
-    @abstractmethod
-    def seconds(self) -> float: ...
-
-    @property
-    def span(self) -> AbstractSpan[Atom]:
-        return self
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, AbstractSpan):
-            return (self.start == other.start) and (self.end == other.end)
-        return False
-
-    def __contains__(self, other) -> bool:
-        return self.contains(other)
-
-    def __bool__(self) -> bool:
-        return self.end > self.start
-
-    @abstractmethod
-    def round_hours(self, round_to: int) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def round_minutes(self, round_to: int) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def round_seconds(self, round_to: float) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def intersection(self, other, strict: bool = False) -> AbstractSpan[Atom] | None: ...
-
-    # alias inner
-
-    @abstractmethod
-    def hull(self, other, strict: bool = False) -> AbstractSpan[Atom]: ...
-
-    # alias outer, union, cover
-
-    # def union(self, other, strict: bool = False): ...
-
-    @abstractmethod
-    def gap(self, other, strict: bool = False) -> AbstractSpan[Atom] | None: ...
-
-    # alias end_to_start
-
-    @abstractmethod
-    def overlap(self, other, strict: bool = False) -> AbstractSpan[Atom] | None: ...
-
-    # alias end_to_start
-
-    @abstractmethod
-    def snap_start_to(self, new_start: Atom) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def split(self, cut_point: Atom) -> tuple[AbstractSpan[Atom], AbstractSpan[Atom]]: ...
-
-    @abstractmethod
-    def snap_end_to(self, new_end: Atom) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def shift_start_rigid(self, new_start: Atom) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def shift_end_rigid(self, new_end: Atom) -> AbstractSpan[Atom]: ...
-
-    @abstractmethod
-    def interior_point(self, alpha: float) -> Atom: ...
-
-    @abstractmethod  # use dispatch: str | AbstractSpan | AbstractTime
-    def contains(self, other, include_start: bool = True, include_end: bool = False) -> bool: ...
-
-    # @abstractmethod
-    # @dispatch(str)
-    # def contains(
-    #     self, other: Atom, include_start: bool = True, include_end: bool = False) -> bool: ...
-
-    @abstractmethod
-    def forward_affine_transform(
-        self,
-        *,
-        scale_factor: float,
-        new_start: Atom | None = None,
-        min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]:
-        raise NotImplementedError
-        # new_length = scale_factor * self.minutes
-        # if new_start and not new_end:
-        #     result = self.__class__(new_start, new_start.add_minutes(new_length))
-        # elif new_end and not new_start:
-        #     result = self.__class__(new_end.add_minutes(new_length), new_end)
-        # else:
-        #     raise ValueError
-
-        # if result.minutes < min_minutes:
-        #     raise ValueError
-        # return result
-
-    @abstractmethod
-    def backward_affine_transform(
-        self,
-        *,
-        scale_factor: float,
-        new_end: Atom | None = None,
-        min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]:
-        raise NotImplementedError
-
-
 # ================================================================================================
 # --- ELEMENTARY TYPES ---------------------------------------------------------------------------
 # ================================================================================================
@@ -343,6 +119,10 @@ class Date(BaseModel, DateProtocol):
     # @deal.raises(ValidationError)
     def serialize_date(self) -> str:
         return str(self)
+
+    @classmethod
+    def ymd(cls, year: int, month: int, day: int) -> Self:
+        return cls(year=year, month=month, day=day)
 
     @property
     def datetime(self) -> DateTime:
@@ -815,6 +595,10 @@ class Time(BaseModel, TimeProtocol):
         return hash((self.hour, self.minute, self.second))
 
     @classmethod
+    def hms(cls, hour: int, minute: int = 0, second: int | float = 0) -> Self:
+        return cls(hour=hour, minute=minute, second=second)
+
+    @classmethod
     def parse(cls, time_string: str) -> Self:
         return cls.model_validate(time_string)
 
@@ -936,76 +720,76 @@ class Time(BaseModel, TimeProtocol):
         return round(raw, places or 1)
 
     # @deal.pure
-    def minutes_to(self, time2: Time) -> float:
-        t2, t1 = time2.to_minutes(), self.to_minutes()
+    def minutes_to(self, other: Time) -> float:
+        t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def minutes_from(self, time2: Time) -> float:
-        t2, t1 = self.to_minutes(), time2.to_minutes()
+    def minutes_from(self, other: Time) -> float:
+        t2, t1 = self.to_minutes(), other.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def minutes_to_next(self, time2: Time) -> float:
-        if time2 >= self:
-            return self.minutes_to(time2)
+    def minutes_to_next(self, other: Time) -> float:
+        if other >= self:
+            return self.minutes_to(other)
         else:
-            return self.minutes_to(DAY_END) + DAY_START.minutes_to(time2)
+            return self.minutes_to(DAY_END) + DAY_START.minutes_to(other)
 
     # @deal.pure
-    def minutes_from_last(self, time2: Time) -> float:
-        if time2 <= self:
-            return time2.minutes_to(self)
+    def minutes_from_last(self, other: Time) -> float:
+        if other <= self:
+            return other.minutes_to(self)
         else:
-            return time2.minutes_to(DAY_END) + DAY_START.minutes_to(self)
+            return other.minutes_to(DAY_END) + DAY_START.minutes_to(self)
 
     # @deal.pure
-    def seconds_to(self, time2: Time) -> float:
-        t2, t1 = time2.to_minutes(), self.to_minutes()
+    def seconds_to(self, other: Time) -> float:
+        t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def seconds_from(self, time2: Time) -> float:
-        t2, t1 = self.to_minutes(), time2.to_minutes()
+    def seconds_from(self, other: Time) -> float:
+        t2, t1 = self.to_minutes(), other.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def seconds_to_next(self, time2: Time) -> float:
-        if time2 >= self:
-            return self.minutes_to(time2)
+    def seconds_to_next(self, other: Time) -> float:
+        if other >= self:
+            return self.minutes_to(other)
         else:
-            return self.minutes_to(DAY_END) + DAY_START.minutes_to(time2)
+            return self.minutes_to(DAY_END) + DAY_START.minutes_to(other)
 
     # @deal.pure
-    def seconds_from_last(self, time2: Time) -> float:
-        if time2 <= self:
-            return time2.minutes_to(self)
+    def seconds_from_last(self, other: Time) -> float:
+        if other <= self:
+            return other.minutes_to(self)
         else:
-            return time2.minutes_to(DAY_END) + DAY_START.minutes_to(self)
+            return other.minutes_to(DAY_END) + DAY_START.minutes_to(self)
 
     # @deal.pure
-    def hours_to(self, time2: Time) -> float:
-        t2, t1 = time2.to_hours(), self.to_hours()
+    def hours_to(self, other: Time) -> float:
+        t2, t1 = other.to_hours(), self.to_hours()
         return t2 - t1
 
     # @deal.pure
-    def hours_from(self, time2: Time) -> float:
-        t2, t1 = self.to_hours(), time2.to_hours()
+    def hours_from(self, other: Time) -> float:
+        t2, t1 = self.to_hours(), other.to_hours()
         return t2 - t1
 
     # @deal.pure
-    def hours_to_next(self, time2: Time) -> float:
-        if time2 >= self:
-            return self.hours_to(time2)
+    def hours_to_next(self, other: Time) -> float:
+        if other >= self:
+            return self.hours_to(other)
         else:
-            return self.hours_to(DAY_END) + DAY_START.hours_to(time2)
+            return self.hours_to(DAY_END) + DAY_START.hours_to(other)
 
     # @deal.pure
-    def hours_from_last(self, time2: Time) -> float:
-        if time2 <= self:
-            return time2.hours_to(self)
+    def hours_from_last(self, other: Time) -> float:
+        if other <= self:
+            return other.hours_to(self)
         else:
-            return time2.hours_to(DAY_END) + DAY_START.hours_to(self)
+            return other.hours_to(DAY_END) + DAY_START.hours_to(self)
 
     def add_hours_wraparound(self, n: int | float) -> tuple[Time, int]:
         days, hours = divmod(self.to_hours() + n, 24)
@@ -1084,6 +868,10 @@ class TimeDelta:
     @property
     def minutes(self) -> float:
         return self._seconds / 60.0
+
+    @property
+    def seconds(self) -> float:
+        return self._seconds
 
     @classmethod
     def from_days(cls, days: int | float) -> Self:
@@ -1309,72 +1097,58 @@ class DateTime(BaseModel):
         return t2 - t1
 
     # @deal.pure
-    def minutes_to_next(self, time2: Time) -> float:
+    def minutes_to_next(self, other: Time) -> float:
         self_time = self.time
-        if time2 >= self_time:
-            return self_time.minutes_to(time2)
+        if other >= self_time:
+            return (self.time).minutes_to(other)
         else:
-            return 1440 - self_time.minutes_from(time2)
+            return 1440 - other.minutes_from(self.time)
 
     # @deal.pure
-    def minutes_from_last(self, time2: Time) -> float:
-        self_time = self.time
-        if time2 <= self_time:
-            return time2.minutes_to(self_time)
-        else:
-            return 1440 - self_time.minutes_to(time2)
+    def minutes_from_last(self, other: Time) -> float:
+        return 1440 - self.minutes_to_next(other)
 
     # @deal.pure
-    def seconds_to(self, datetime2: DateTime) -> float:
-        t2, t1 = datetime2.to_minutes(), self.to_minutes()
+    def seconds_to(self, dateother: DateTime) -> float:
+        t2, t1 = dateother.to_minutes(), self.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def seconds_from(self, datetime2: DateTime) -> float:
-        t2, t1 = self.to_minutes(), datetime2.to_minutes()
+    def seconds_from(self, dateother: DateTime) -> float:
+        t2, t1 = self.to_minutes(), dateother.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def seconds_to_next(self, time2: Time) -> float:
-        self_time = self.time
-        if time2 >= self_time:
-            return self_time.minutes_to(time2)
+    def seconds_to_next(self, other: Time) -> float:
+        if other >= self.time:
+            return self.time.minutes_to(other)
         else:
-            return self_time.minutes_to(DAY_END) + DAY_START.minutes_to(time2)
+            return self.time.minutes_to(DAY_END) + DAY_START.minutes_to(other)
 
     # @deal.pure
-    def seconds_from_last(self, time2: Time) -> float:
-        self_time = self.time
-        if time2 <= self_time:
-            return time2.minutes_to(self_time)
-        else:
-            return time2.minutes_to(DAY_END) + DAY_START.minutes_to(self_time)
+    def seconds_from_last(self, other: Time) -> float:
+        return 86400 - self.seconds_to_next(other)
 
     # @deal.pure
-    def hours_to(self, datetime2: Time) -> float:
-        t2, t1 = datetime2.to_hours(), self.to_hours()
+    def hours_to(self, dateother: Time) -> float:
+        t2, t1 = dateother.to_hours(), self.to_hours()
         return t2 - t1
 
     # @deal.pure
-    def hours_from(self, datetime2: Time) -> float:
-        t2, t1 = self.to_hours(), datetime2.to_hours()
+    def hours_from(self, dateother: Time) -> float:
+        t2, t1 = self.to_hours(), dateother.to_hours()
         return t2 - t1
 
     # @deal.pure
-    def hours_to_next(self, time2: Time) -> float:
-        self_time = self.time
-        if time2 >= self_time:
-            return self.hours_to(time2)
+    def hours_to_next(self, other: Time) -> float:
+        if other >= self.time:
+            return self.hours_to(other)
         else:
-            return self_time.hours_to(DAY_END) + DAY_START.hours_to(time2)
+            return self.time.hours_to(DAY_END) + DAY_START.hours_to(other)
 
     # @deal.pure
-    def hours_from_last(self, time2: Time) -> float:
-        self_time = self.time
-        if time2 <= self_time:
-            return time2.hours_to(self_time)
-        else:
-            return time2.hours_to(DAY_END) + DAY_START.hours_to(self_time)
+    def hours_from_last(self, other: Time) -> float:
+        return 24 - self.hours_to_next(other)
 
 
 # --- SPAN TYPES ---------------------------------------------------------------------------------
@@ -1600,7 +1374,7 @@ class DateTimeSpan(AbstractSpan[DateTime]):
     def forward_affine_transform(
         self,
         scale_factor: float,
-        new_start: Time | None = None,
+        new_start: DateTime | None = None,
         min_minutes: int | float = 5,
     ) -> TimeSpan:
         raise NotImplementedError
@@ -1608,7 +1382,7 @@ class DateTimeSpan(AbstractSpan[DateTime]):
     def backward_affine_transform(
         self,
         scale_factor: float,
-        new_end: Time | None = None,
+        new_end: DateTime | None = None,
         min_minutes: int | float = 5,
     ) -> TimeSpan:
         raise NotImplementedError
@@ -1665,12 +1439,10 @@ class DateRange(AbstractRange[Date]):
         last_index = self.start.days_to(limit)
         return limit - (last_index % self.step)
 
-    @property
     def with_end(self) -> Self:
         self.inclusive = True
         return self
 
-    @property
     def without_end(self) -> Self:
         self.inclusive = False
         return self
@@ -1773,7 +1545,14 @@ class DateRange(AbstractRange[Date]):
 class DayRangeDated(AbstractRange[DateTime]):
     """ """
 
-    def __init__(self, start: DateTime, stop: DateTime, step: int = 1, inclusive: bool = True):
+    def __init__(
+        self,
+        start: DateTime,
+        stop: DateTime,
+        step: int = 1,
+        inclusive: bool = True,
+        allow_wraparound: bool = True,
+    ):
         self.start = start
         self.stop = stop
         self.step = step
@@ -1854,7 +1633,14 @@ class HourRange(AbstractRange[Time]):
 class HourRangeDated(AbstractRange[DateTime]):
     """ """
 
-    def __init__(self, start: DateTime, stop: DateTime, step: int = 1, inclusive: bool = True):
+    def __init__(
+        self,
+        start: DateTime,
+        stop: DateTime,
+        step: int = 1,
+        inclusive: bool = True,
+        allow_wraparound: bool = True,
+    ):
         self.start = start
         self.stop = stop
         self.step = step
@@ -1922,7 +1708,14 @@ class MinuteRange(AbstractRange[Time]):
 
 
 class MinuteRangeDated(AbstractRange[DateTime]):
-    def __init__(self, start: DateTime, stop: DateTime, step: int = 1, inclusive: bool = True):
+    def __init__(
+        self,
+        start: DateTime,
+        stop: DateTime,
+        step: int = 1,
+        inclusive: bool = True,
+        allow_wraparound: bool = True,
+    ):
         self.start = start
         self.stop = stop
         self.step = step
@@ -2015,7 +1808,14 @@ class SecondRange(AbstractRange[Time]):
 
 
 class SecondRangeDated(AbstractRange[DateTime]):
-    def __init__(self, start: DateTime, stop: DateTime, step: int = 1, inclusive: bool = True):
+    def __init__(
+        self,
+        start: DateTime,
+        stop: DateTime,
+        step: int = 1,
+        inclusive: bool = True,
+        allow_wraparound: bool = True,
+    ):
         self.start = start
         self.stop = stop
         self.step = step
@@ -2050,7 +1850,9 @@ class SecondRangeDated(AbstractRange[DateTime]):
         return self.start.add_seconds(idx * self.step)
 
     @dispatch(slice)
-    def __getitem__(self, slc: slice, inclusive: bool = True) -> SecondRangeDated:  # pyright: ignore
+    def __getitem__(
+        self, slc: slice, inclusive: bool = True, allow_wraparound: bool = True
+    ) -> SecondRangeDated:  # pyright: ignore
         """
         Attention! The step in the slice, if provided, is with respect to the
           pre-existing step in `self`. This is accordance with the behavior of
@@ -2079,12 +1881,3 @@ class SecondRangeDated(AbstractRange[DateTime]):
 
     def _increment(self) -> None:
         self._current = self._current.add_seconds(self.step)
-
-
-class TimePartition:
-    """
-    A contiguous sequence of DateSpan objects, useful for scheduling.
-    """
-
-    def __init__(self):
-        pass

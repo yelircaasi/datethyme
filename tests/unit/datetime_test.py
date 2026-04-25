@@ -255,28 +255,28 @@ class TestDateTime:
 
     def test_hours_to_next(self):
         dt1 = DateTime(2024, 6, 22, 23)
-        dt2 = DateTime(2024, 6, 22, 2)
+        dt2 = Time(hour=12, minute=30, second=0)
         assert dt1.hours_to_next(dt2) >= 0
 
-    def test_minutes_from(self):
+    def test_minutes_from(self) -> None:
         dt1 = DateTime(year=2024, month=6, day=22, hour=12, minute=0)
         dt2 = DateTime(year=2024, month=6, day=22, hour=12, minute=30)
         assert dt1.minutes_from(dt2) == -30
         assert dt2.minutes_from(dt1) == 30
 
-    def test_minutes_from_last(self):
+    def test_minutes_from_last(self) -> None:
         dt1 = DateTime(year=2024, month=6, day=22, hour=12, minute=0)
-        dt2 = DateTime(year=2024, month=6, day=22, hour=12, minute=30)
+        dt2 = Time(year=2024, month=6, day=22, hour=12, minute=30)
         assert dt1.minutes_from_last(dt2) >= 0
 
-    def test_minutes_to(self):
+    def test_minutes_to(self) -> None:
         dt1 = DateTime(year=2024, month=6, day=22, hour=12, minute=0)
         dt2 = DateTime(year=2024, month=6, day=22, hour=12, minute=45)
         assert dt1.minutes_to(dt2) == 45
 
-    def test_minutes_to_next(self):
+    def test_minutes_to_next(self) -> None:
         dt1 = DateTime(year=2024, month=6, day=22, hour=23, minute=59)
-        dt2 = DateTime(year=2024, month=6, day=22, hour=0, minute=1)
+        dt2 = Time(year=2024, month=6, day=22, hour=0, minute=1)
         assert dt1.minutes_to_next(dt2) >= 0
 
     def test_parse(self):
@@ -290,9 +290,9 @@ class TestDateTime:
         assert dt1.seconds_from(dt2) == -10
 
     def test_seconds_from_last(self):
-        dt1 = DateTime(year=2024, month=6, day=22, hour=12, minute=0, second=0)
-        dt2 = DateTime(year=2024, month=6, day=22, hour=12, minute=0, second=10)
-        assert dt1.seconds_from_last(dt2) >= 0
+        dt = DateTime(year=2024, month=6, day=22, hour=12, minute=0, second=0)
+        time = Time(hour=12, minute=0, second=10)
+        assert dt.seconds_from_last(time) >= 0
 
     def test_seconds_to(self):
         dt1 = DateTime(year=2024, month=6, day=22, hour=12, minute=0, second=0)
@@ -300,6 +300,6 @@ class TestDateTime:
         assert dt1.seconds_to(dt2) == 20
 
     def test_seconds_to_next(self):
-        dt1 = DateTime(year=2024, month=6, day=22, hour=23, minute=59, second=59)
-        dt2 = DateTime(year=2024, month=6, day=22, hour=0, minute=0, second=1)
-        assert dt1.seconds_to_next(dt2) >= 0
+        dt = DateTime(year=2024, month=6, day=22, hour=23, minute=59, second=59)
+        time = Time(hour=0, minute=0, second=1)
+        assert dt.seconds_to_next(time) >= 0
