@@ -6,7 +6,7 @@ from enum import StrEnum
 from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
-from .._datethyme import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
+from ..core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ..protocols import DeltaProtocol, EntryProtocol, PartitionProtocol
 from ..utils import assert_xor  # TODO: import from adiumentum
 from .algorithms import (
