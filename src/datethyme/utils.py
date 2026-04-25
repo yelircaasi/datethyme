@@ -5,7 +5,7 @@ from typing import Literal
 
 import deal
 
-from datethyme._datethyme import SpanProtocol
+from datethyme.protocols import SpanProtocol
 
 from .exceptions import DateValidationError, TimeValidationError
 from .protocols import TimeProtocol

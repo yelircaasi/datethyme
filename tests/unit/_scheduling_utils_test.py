@@ -1,5 +1,7 @@
 import pytest
-from datethyme._scheduling_utils import (
+
+from datethyme import DateTime, DateTimeSpan, Time, TimeSpan
+from datethyme.scheduling.algorithms import (
     apply_pairwise,
     earliest_start,
     get_relative_lengths,
@@ -21,8 +23,6 @@ from datethyme._scheduling_utils import (
     truncate,
     truncate_nodiscard,
 )
-
-from datethyme import DateTime, DateTimeSpan, Time, TimeSpan
 
 
 @pytest.mark.parametrize(

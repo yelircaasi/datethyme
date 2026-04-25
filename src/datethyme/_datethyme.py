@@ -517,7 +517,7 @@ class Date(BaseModel, DateProtocol):
 
     @classmethod
     # @deal.pure
-    def from_ordinal(cls, ord: int) -> Date:
+    def from_ordinal(cls, ord: int) -> Self:
         d = DATETIME.date.fromordinal(ord)
         return cls(year=d.year, month=d.month, day=d.day)
 
@@ -525,6 +525,18 @@ class Date(BaseModel, DateProtocol):
     # @deal.has("time")
     def tomorrow(cls) -> Date:
         return cls.today() + 1
+
+    @classmethod
+    def from_hours(cls, n: float | int) -> Self:
+        return cls.from_ordinal(round(n / 3600))
+
+    @classmethod
+    def from_minutes(cls, n: float | int) -> Self:
+        return cls.from_ordinal(round(n / 60))
+
+    @classmethod
+    def from_seconds(cls, n: float | int) -> Self:
+        return cls.from_ordinal(round(n))
 
     # @deal.has()
     def format(self, template: str) -> str:  # TODO
@@ -706,6 +718,14 @@ class Time(BaseModel, TimeProtocol):
     def decimal_places(self) -> int:
         return 10
 
+    @property
+    def ordinal(self) -> float:
+        return self.to_seconds(places=10)
+
+    @classmethod
+    def from_ordinal(cls, ordinal: float) -> Self:
+        return cls.from_seconds(ordinal, places=10)
+
     def __and__(self, date: Date) -> DateTime:
         return DateTime(
             year=date.year,
@@ -792,7 +812,7 @@ class Time(BaseModel, TimeProtocol):
 
     # @deal.pure
     def __hash__(self) -> int:
-        return hash((self.hour, self.minute))
+        return hash((self.hour, self.minute, self.second))
 
     @classmethod
     def parse(cls, time_string: str) -> Self:
@@ -808,13 +828,13 @@ class Time(BaseModel, TimeProtocol):
 
     @classmethod
     # @deal.has("time")
-    def now(cls) -> Time:
+    def now(cls) -> Self:
         time_now = DATETIME.datetime.now()
         return cls(hour=time_now.hour, minute=time_now.minute)
 
     @classmethod
     # @deal.has()
-    def from_hours(cls, hours: int | float, places: int | None = None) -> Time:
+    def from_hours(cls, hours: int | float, places: int = 0) -> Self:
         hours, minutes = divmod(hours, 1.0)
         minutes, seconds = divmod(minutes * 60.0, 1.0)
         seconds *= 60.0
@@ -826,7 +846,7 @@ class Time(BaseModel, TimeProtocol):
 
     @classmethod
     # @deal.has()
-    def from_minutes(cls, minutes: int | float, places: int | None = None) -> Time:
+    def from_minutes(cls, minutes: int | float, places: int = 0) -> Self:
         hours, minutes = divmod(minutes, 60.0)
         minutes, seconds = divmod(minutes, 1.0)
         seconds *= 60.0
@@ -838,7 +858,7 @@ class Time(BaseModel, TimeProtocol):
 
     @classmethod
     # @deal.has()
-    def from_seconds(cls, seconds: int | float, places: int | None = None) -> Time:
+    def from_seconds(cls, seconds: int | float, places: int = 0) -> Self:
         hours, seconds = divmod(seconds, 1440.0)
         minutes, seconds = divmod(seconds, 60.0)
         return cls(
@@ -856,6 +876,9 @@ class Time(BaseModel, TimeProtocol):
     # @deal.pure
     def end(cls) -> Time:
         return cls(hour=24)
+
+    def add_minutes(self, minutes: int | float) -> Time:
+        return Time.from_minutes(self.to_minutes() + minutes)
 
     def span(self, other: Time, name: str | None = None) -> TimeSpan:
         raise NotImplementedError
@@ -898,17 +921,17 @@ class Time(BaseModel, TimeProtocol):
         return self.__class__.from_seconds(new_seconds)
 
     # @deal.pure
-    def to_hours(self, places: int | None = None) -> float:
+    def to_hours(self, places: int = 0) -> float:
         raw = self.hour + self.minute / 60 + self.second / 3600
         return round(raw, places or 1)
 
     # @deal.pure
-    def to_minutes(self, places: int | None = None) -> float:
+    def to_minutes(self, places: int = 0) -> float:
         raw = 60.0 * self.hour + self.minute + self.second / 60.0
         return round(raw, places or 1)
 
     # @deal.pure
-    def to_seconds(self, places: int | None = None) -> float:
+    def to_seconds(self, places: int = 0) -> float:
         raw = 3600.0 * self.hour + 60.0 * self.minute + self.second
         return round(raw, places or 1)
 
@@ -1131,6 +1154,20 @@ class DateTime(BaseModel):
     def day_end(self) -> DateTime:
         return self.__class__.from_pair(self.date, DAY_END)
 
+    @property
+    def ordinal(self) -> float:
+        return self.to_seconds(places=10)
+
+    @classmethod
+    def from_ordinal(cls, ordinal: float) -> Self:
+        return cls.from_seconds(ordinal, places=10)
+
+    def __hash__(self) -> int:
+        return hash((self.year, self.month, self.day, self.hour, self.minute, self.second))
+
+    def __bool__(self) -> bool:
+        return True
+
     def __repr__(self) -> str:
         return f"DateTime({self.__str__()})"
 
@@ -1189,17 +1226,62 @@ class DateTime(BaseModel):
             second=t.second or 0.0,
         )
 
+    @classmethod
+    def from_hours(cls, n: float | int) -> Self:
+        day_seconds, time_seconds = divmod(n, 24)
+        return cls.from_pair(
+            Date.from_hours(day_seconds),
+            Time.from_hours(time_seconds),
+        )
+
+    @classmethod
+    def from_minutes(cls, n: float | int) -> Self:
+        day_seconds, time_seconds = divmod(n, 24)
+        return cls.from_pair(
+            Date.from_minutes(day_seconds),
+            Time.from_minutes(time_seconds),
+        )
+
+    @classmethod
+    def from_seconds(cls, n: float | int, places: int = 10) -> Self:
+        day_seconds, time_seconds = divmod(n, 24)
+        return cls.from_pair(
+            Date.from_seconds(day_seconds),
+            Time.from_seconds(time_seconds, places=places),
+        )
+
     def to_hours(self) -> float:
         return self.date.to_hours() + self.time.to_hours()
 
     def to_minutes(self) -> float:
         return self.date.to_minutes() + self.time.to_minutes()
 
-    def to_seconds(self) -> float:
-        return self.date.to_seconds() + self.time.to_seconds()
+    def to_seconds(self, places: int = 10) -> float:
+        return round(self.date.to_seconds() + self.time.to_seconds(), places)
 
-    def span(self, other: DateTime, name: str | None = None) -> DateTimeSpan:
+    def set_time(self, time: Time) -> Self:
+        self.hour = time.hour
+        self.minute = time.minute
+        self.second = time.second
+        return self
+
+    def round_hours(self, places: int = 0) -> Self:
+        new_time = Time.from_hours(round(self.time.to_hours(), places))
+        return self.set_time(new_time)
+
+    def round_minutes(self, places: int = 0) -> Self:
+        new_time = Time.from_minutes(round(self.time.to_minutes(), places))
+        return self.set_time(new_time)
+
+    def round_seconds(self, places: int = 0) -> Self:
+        new_time = Time.from_seconds(round(self.time.to_seconds(), places))
+        return self.set_time(new_time)
+
+    def span(self, other: DateTime) -> DateTimeSpan:
         raise NotImplementedError
+
+    def to(self, other: DateTime) -> DateTimeSpan:
+        return self.span(other)
 
     def add_days(self, n: int) -> DateTime:
         return (self.date + n) & self.time
@@ -1217,13 +1299,13 @@ class DateTime(BaseModel):
         return (self.date + wraps) & time
 
     # @deal.pure
-    def minutes_to(self, datetime2: DateTime) -> float:
-        t2, t1 = datetime2.to_minutes(), self.to_minutes()
+    def minutes_to(self, other: DateTime) -> float:
+        t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
     # @deal.pure
-    def minutes_from(self, datetime2: DateTime) -> float:
-        t2, t1 = self.to_minutes(), datetime2.to_minutes()
+    def minutes_from(self, other: DateTime) -> float:
+        t2, t1 = self.to_minutes(), other.to_minutes()
         return t2 - t1
 
     # @deal.pure

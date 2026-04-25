@@ -1,5 +1,5 @@
-from datethyme import DateTime
-from datethyme._datethyme import (
+from datethyme import (
+    DateTime,
     DateTimeHourRange,
     DateTimeMinuteRange,
     DateTimeSecondRange,

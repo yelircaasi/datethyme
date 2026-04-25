@@ -9,21 +9,34 @@ from pydantic import (
     Field,
 )
 
-from ._abcs import (
-    AbstractSpan,
-    OptionalDate,
-    OptionalTime,
-)
+# from ._abcs import (
+#     AbstractSpan,
+#     OptionalDate,
+#     OptionalTime,
+# )
 
 
-class NoneDate(OptionalDate, BaseModel):
+class AbstractSpan: ...
+
+
+class OptionalDate: ...
+
+
+class OptionalTime: ...
+
+
+class NoneDate(BaseModel):
     """Empty date for cases where this may be superior to using None."""
 
     model_config = ConfigDict(frozen=True)
 
-    year: None = Field(default=None, frozen=True)
-    month: None = Field(default=None, frozen=True)
-    day: None = Field(default=None, frozen=True)
+    year: int | None = Field(default=None, frozen=True)
+    month: int | None = Field(default=None, frozen=True)
+    day: int | None = Field(default=None, frozen=True)
+
+    @deal.pure
+    def __hash__(self) -> int:
+        return hash((self.__class__.__name__, None, None, None))
 
     @deal.pure
     def __init__(self) -> None:
@@ -78,19 +91,23 @@ class NoneDate(OptionalDate, BaseModel):
         return False
 
 
-class NoneTime(OptionalTime, BaseModel):
+class NoneTime(BaseModel, OptionalTime):
     """Empty time for cases where this may be superior to using None."""
 
     model_config = ConfigDict(frozen=True)
 
-    hour: None = Field(default=None, frozen=True)
-    minute: None = Field(default=None, frozen=True)
-    second: None = Field(default=None, frozen=True)
+    hour: int | None = Field(default=None, frozen=True)
+    minute: int | None = Field(default=None, frozen=True)
+    second: float | None = Field(default=None, frozen=True)
 
     @deal.pure
     def __init__(self) -> None:
         """Sets the attributes `hour`, `minute`, and `second` each to `None`."""
         super().__init__()
+
+    @deal.pure
+    def __hash__(self) -> int:
+        return hash((self.__class__.__name__, None, None, None))
 
     @deal.pure
     def __str__(self) -> str:
@@ -151,12 +168,16 @@ class NoneDateTime(BaseModel, OptionalDate):
 
     model_config = ConfigDict(frozen=True)
 
-    year: None = Field(default=None, frozen=True)
-    month: None = Field(default=None, frozen=True)
-    day: None = Field(default=None, frozen=True)
-    hour: None = Field(default=None, frozen=True)
-    minute: None = Field(default=None, frozen=True)
-    second: None = Field(default=None, frozen=True)
+    year: int | None = Field(default=None, frozen=True)
+    month: int | None = Field(default=None, frozen=True)
+    day: int | None = Field(default=None, frozen=True)
+    hour: int | None = Field(default=None, frozen=True)
+    minute: int | None = Field(default=None, frozen=True)
+    second: float | None = Field(default=None, frozen=True)
+
+    @deal.pure
+    def __hash__(self) -> int:
+        return hash((self.__class__.__name__, None, None, None, None, None, None))
 
     @deal.pure
     def __bool__(self) -> bool:

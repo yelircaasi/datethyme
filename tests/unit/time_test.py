@@ -2,8 +2,7 @@ from typing import Literal
 
 import pytest
 
-from datethyme import Time
-from datethyme._datethyme import Date, TimeDelta
+from datethyme import Date, Time, TimeDelta
 from datethyme.exceptions import TimeValidationError
 
 
@@ -147,7 +146,7 @@ class TestTime:
     def test_dunder_eq(
         self,
         time_a: Time,
-        time_b: Time | None | Literal["not a time"],
+        time_b: Time | Literal["not a time"] | None,
         expected: bool,
     ):
         assert (time_a == time_b) is expected

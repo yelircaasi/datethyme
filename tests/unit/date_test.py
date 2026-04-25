@@ -2,8 +2,7 @@ import datetime as stdlib_datetime
 
 import pytest
 
-from datethyme import Date, DateRange, DateTime, Time
-from datethyme._datethyme import DateTimeSpan
+from datethyme import Date, DateRange, DateTime, DateTimeSpan, Time
 
 
 class TestDate:

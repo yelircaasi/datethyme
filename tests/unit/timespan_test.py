@@ -1,6 +1,6 @@
 import pytest
 
-from datethyme._datethyme import Time, TimeSpan
+from datethyme import Time, TimeSpan
 
 TS_24_622 = Time(hour=10, minute=0)
 TS_24_623 = Time(hour=15, minute=0)

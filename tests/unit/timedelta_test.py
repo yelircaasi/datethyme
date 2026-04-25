@@ -1,4 +1,4 @@
-from datethyme._datethyme import TimeDelta
+from datethyme import TimeDelta
 
 
 class TestTimeDelta:

@@ -122,7 +122,7 @@ class DateTimePartition(PartitionProtocol):
         names: Iterable[str | None] | None = None,
     ) -> Self:
         names = names or (None,) * (len(times := tuple(times)) - 1)
-        spans = (a.span(b, name=name) for (a, b), name in zip(pairwise(times), names))
+        spans = (a.span(b) for (a, b), name in zip(pairwise(times), names))
         return cls(spans=spans, names=names)
 
     @classmethod
@@ -481,7 +481,7 @@ class ScheduleItem:
 
 
 class ScheduleItems[T](UserList[ScheduleItem]):
-    """ """
+    """TODO: fold into Entries"""
 
     def __init__(self, items: Iterable[ScheduleItem]):
         items = list(items)
@@ -527,7 +527,9 @@ class CalendarDay:
 
 
 class Agenda:
-    """Like CalendarPartition, except that start time may be after 00:00 and end time may be before 24:00."""
+    """Like CalendarPartition, except that start time may be after 00:00
+        and end time may be before 24:00.
+    """
 
 
 class Calendar: ...

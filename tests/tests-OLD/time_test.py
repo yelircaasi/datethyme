@@ -131,10 +131,10 @@ class TestTime:
         assert Time(hour=13, minute=47) <= Time(hour=24)
 
         assert Time(hour=13, minute=47) == Time(hour=13, minute=47)
-        assert not (Time(hour=13, minute=47) == Time(hour=13, minute=48))
-        assert not (Time(hour=13, minute=47) == Time(hour=9, minute=47))
-        assert not (Time(hour=13, minute=47) == Time(hour=12, minute=50))
-        assert not (Time(hour=13, minute=47) == "")
+        assert (Time(hour=13, minute=47) != Time(hour=13, minute=48))
+        assert (Time(hour=13, minute=47) != Time(hour=9, minute=47))
+        assert (Time(hour=13, minute=47) != Time(hour=12, minute=50))
+        assert (Time(hour=13, minute=47) != "")  # noqa: PLC1901
 
     def test_now(self):
         now = Time.now()

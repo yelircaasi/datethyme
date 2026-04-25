@@ -1,6 +1,5 @@
-from datethyme._null import NONE_TIME, NoneTime
-
-from datethyme._datethyme import Time
+from datethyme import Time
+from datethyme.null import NONE_TIME, NoneTime
 
 
 class TestNoneTime:

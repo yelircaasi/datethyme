@@ -583,7 +583,7 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_squeeze(
+    def test_squeeze(  # noqa: PLR0917
         self,
         original,
         earliest,
@@ -642,7 +642,7 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_squeeze_with_rollover(
+    def test_squeeze_with_rollover(  # noqa: PLR0917
         self,
         original,
         earliest,
@@ -701,7 +701,7 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_squeeze_with_rollforward(
+    def test_squeeze_with_rollforward(  # noqa: PLR0917
         self,
         original,
         earliest,

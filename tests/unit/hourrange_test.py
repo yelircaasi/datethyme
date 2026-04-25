@@ -32,7 +32,8 @@ class TestHourRange:
 
     def test_dunder_init(self):
         with pytest.raises(
-            ValueError, match="Set allow_wraparound=True to allow HourRange to pass a day boundary."
+            ValueError,
+            match=r"Set allow_wraparound=True to allow HourRange to pass a day boundary.",
         ):
             HourRange(Time(hour=23, minute=12), Time(hour=4, minute=23))
 
@@ -52,7 +53,7 @@ class TestHourRange:
     ): ...  # TODO: remove __reversed__? in any case, not the highest priority
 
     def test_index(self):
-        with pytest.raises(ValueError, match="..."):
+        with pytest.raises(ValueError, match=r"..."):
             self.hr.index[50]
 
     def test_last(self):

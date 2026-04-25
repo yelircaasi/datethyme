@@ -44,7 +44,7 @@ class TestDayRangeDated:
     def test_dunder_init(self):
         with pytest.raises(
             ValueError,
-            match="Set allow_wraparound=True to allow DayRangeDated to pass a month boundary.",
+            match=r"Set allow_wraparound=True to allow DayRangeDated to pass a month boundary.",
         ):
             DayRangeDated(
                 DateTime(year=2025, month=6, day=28, hour=10, minute=30, second=0),
@@ -75,7 +75,7 @@ class TestDayRangeDated:
         )
 
     def test_index(self):
-        with pytest.raises(ValueError, match="..."):
+        with pytest.raises(ValueError, match=r"..."):
             self.dr.index[50]
 
     def test__increment(self):

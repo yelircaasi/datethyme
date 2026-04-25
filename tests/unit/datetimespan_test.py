@@ -11,7 +11,7 @@ property-based contract tests	Hypothesis again is king here,
     but even without hypothesis you can still implement interface contracts programmatically.
 """
 
-from datethyme._datethyme import DateTime, DateTimeSpan
+from datethyme import DateTime, DateTimeSpan
 
 DTS_24_622 = DateTime(year=2024, month=6, day=22, hour=10, minute=0)
 DTS_24_623 = DateTime(year=2024, month=6, day=23, hour=15, minute=0)

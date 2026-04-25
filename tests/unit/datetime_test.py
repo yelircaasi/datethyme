@@ -19,7 +19,7 @@ def datetimes(draw):
 
 import pytest
 
-from datethyme._datethyme import Date, DateTime, Time
+from datethyme import Date, DateTime, Time
 
 
 class TestDateTime:

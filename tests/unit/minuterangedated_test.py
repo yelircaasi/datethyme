@@ -44,7 +44,7 @@ class TestMinuteRangeDated:
     def test_dunder_init(self):
         with pytest.raises(
             ValueError,
-            match="Set allow_wraparound=True to allow MinuteRangeDated to pass an hour boundary.",
+            match=r"Set allow_wraparound=True to allow MinuteRangeDated to pass an hour boundary.",
         ):
             MinuteRangeDated(
                 DateTime(year=2025, month=6, day=15, hour=10, minute=45, second=0),
@@ -75,7 +75,7 @@ class TestMinuteRangeDated:
         )
 
     def test_index(self):
-        with pytest.raises(ValueError, match="..."):
+        with pytest.raises(ValueError, match=r"..."):
             self.mr.index[50]
 
     def test__increment(self):
