@@ -6,6 +6,8 @@ from enum import StrEnum
 from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
+from .._abcs import AbstractPartition
+
 from ..core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ..protocols import DeltaProtocol, EntryProtocol, PartitionProtocol
 from ..utils import assert_xor  # TODO: import from adiumentum
@@ -20,7 +22,9 @@ T = TypeVar("T", bound=Time | DateTime | Date)
 DEFAULT_DATE = Date.parse("2000-01-01")
 
 
-class DateTimePartition(PartitionProtocol):
+# TODO: create 
+
+class DateTimePartition(AbstractPartition):
     # type DateTimeSpan = DateTimeSpan
     """
     TODO: add nesting_mode to determine how nested time partitions are
@@ -31,11 +35,15 @@ class DateTimePartition(PartitionProtocol):
         self,
         spans: Iterable[DateTimeSpan],
         names: Iterable[str | None] | None = None,
-    ):
+    ) -> None:
         if not is_contiguous(spans):
             raise ValueError
-        self._spans = spans
-        self._names = tuple(names) if names else names
+        
+        self._spans = list(spans)
+        self._names = list(names) if names else names
+
+        if names and not (len(self.spans) == len(self.names)):
+            raise ValueError
 
     @property
     def named_spans(self) -> tuple[tuple[str, DateTimeSpan], ...]:
@@ -403,7 +411,7 @@ class DateTimePartition(PartitionProtocol):
 # ================================================================================================
 
 
-class TimePartition(PartitionProtocol):
+class TimePartition(AbstractPartition):
     """
     A contiguous sequence of TimeSpan objects or TimePartition objects (recursive),
       useful for scheduling.

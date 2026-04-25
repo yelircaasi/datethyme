@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from typing import Literal, TypeVar
 
-from .protocols import AtomProtocol, SpanProtocol, TimeProtocol
+from .protocols import AtomProtocol, PartitionProtocol, SpanProtocol, TimeProtocol
 from .utils import compute_index
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
@@ -234,3 +234,11 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         min_minutes: int | float = 5,
     ) -> AbstractSpan[Atom]:
         raise NotImplementedError
+
+
+class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
+    def __init__(
+        self,
+        spans: Iterable[SpanProtocol[T]],
+        names: Iterable[str | None] | None = None,
+    ) -> None: ...

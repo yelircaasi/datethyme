@@ -5,7 +5,6 @@ from datethyme import (
     Date,
     DateRange,
     DateTime,
-    DateTimePartition,
     DateTimeSpan,
     # DateTimeValidationError,
     # DateValidationError,
@@ -17,9 +16,6 @@ from datethyme import (
     # NONE_DATE,
     # NONE_DATETIME,
     # NONE_TIME,
-    NoneDate,
-    NoneDateTime,
-    NoneTime,
     # OptionalDate,
     # OptionalDateTime,
     # OptionalTime,
@@ -27,10 +23,18 @@ from datethyme import (
     SecondRangeDated,
     Time,
     TimeDelta,
-    TimePartition,
     TimeSpan,
     # TimeValidationError,
     # utils,
+)
+from datethyme.null import (
+    NoneDate,
+    NoneDateTime,
+    NoneTime,
+)
+from datethyme.scheduling.types import (
+    DateTimePartition,
+    TimePartition,
 )
 
 nonedate = NoneDate()
