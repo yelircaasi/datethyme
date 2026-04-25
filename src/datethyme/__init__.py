@@ -1,4 +1,4 @@
-from ._datethyme import (
+from .core import (
     Date,
     DateRange,
     DateTime,
