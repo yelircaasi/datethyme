@@ -3,12 +3,13 @@ import re
 
 import pytest
 
-from datethyme import NoneTime, OptionalTime, Time, TimeValidationError
+from datethyme import Time, TimeValidationError
+from datethyme.null import NoneTime, OptionalTime
 
 
 class TestTime:
     time = Time(hour=5, minute=36)
-    nonetime = Time.none()
+    nonetime = NoneTime()
 
     def test_class_hierarchy(self):
         assert isinstance(self.time, Time)
@@ -144,11 +145,11 @@ class TestTime:
 
 
 class TestNoneTime:
-    nonetime = Time.none()
+    nonetime = NoneTime()
     time = Time(hour=5, minute=36)
 
     def test_none(self):
-        nt = Time.none()
+        nt = NoneTime()
         t = Time(hour=5, minute=36)
 
         assert isinstance(nt, NoneTime)

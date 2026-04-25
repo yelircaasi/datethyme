@@ -18,8 +18,7 @@ from __future__ import annotations
 
 import datetime as DATETIME
 import re
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterator
 from math import floor
 from typing import Any, Literal, Self, TypeVar, overload
 
@@ -46,11 +45,10 @@ from ._abcs import AbstractRange, AbstractSpan
 from .exceptions import (
     DateTimeValidationError,
 )
-from .protocols import DateProtocol, SpanProtocol, TimeProtocol
+from .protocols import DateProtocol, TimeProtocol
 from .utils import (
     DATE_TIME_REGEX,
     WeekdayLiteral,
-    compute_index,
     get_end,
     get_start,
     transfer_case,
@@ -603,7 +601,7 @@ class Time(BaseModel, TimeProtocol):
         return cls.model_validate(time_string)
 
     @classmethod
-    def if_valid(cls, time_string: str) -> Self | None:
+    def if_valid(cls, time_string: object) -> Self | None:
         """Parse a string and return an instance of Time if possible; otherwise None."""
         try:
             return cls.model_validate(time_string)
@@ -661,8 +659,14 @@ class Time(BaseModel, TimeProtocol):
     def end(cls) -> Time:
         return cls(hour=24)
 
-    def add_minutes(self, minutes: int | float) -> Time:
+    def add_hours(self, hours: int | float) -> Time:  # TODO: keep?
+        return Time.from_hours(self.to_hours() + hours)
+
+    def add_minutes(self, minutes: int | float) -> Time:  # TODO: keep?
         return Time.from_minutes(self.to_minutes() + minutes)
+
+    def add_seconds(self, seconds: int | float) -> Time:  # TODO: keep?
+        return Time.from_seconds(self.to_seconds() + seconds)
 
     def span(self, other: Time, name: str | None = None) -> TimeSpan:
         raise NotImplementedError
@@ -950,6 +954,24 @@ class DateTime(BaseModel):
     def from_ordinal(cls, ordinal: float) -> Self:
         return cls.from_seconds(ordinal, places=10)
 
+    @classmethod
+    def six(  # noqa: PLR0917
+        cls, year: int, month: int, day: int, hour: int, minute: int, second: float | int
+    ) -> Self:
+        return cls.ymdhms(year, month, day, hour, minute, second)
+
+    @classmethod
+    def ymdhms(  # noqa: PLR0917
+        cls,
+        year: int,
+        month: int,
+        day: int,
+        hour: int = 0,
+        minute: int = 0,
+        second: float | int = 0,
+    ) -> Self:
+        return cls(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
+
     def __hash__(self) -> int:
         return hash((self.year, self.month, self.day, self.hour, self.minute, self.second))
 
@@ -1130,19 +1152,19 @@ class DateTime(BaseModel):
         return 86400 - self.seconds_to_next(other)
 
     # @deal.pure
-    def hours_to(self, dateother: Time) -> float:
+    def hours_to(self, dateother: DateTime) -> float:
         t2, t1 = dateother.to_hours(), self.to_hours()
         return t2 - t1
 
     # @deal.pure
-    def hours_from(self, dateother: Time) -> float:
+    def hours_from(self, dateother: DateTime) -> float:
         t2, t1 = self.to_hours(), dateother.to_hours()
         return t2 - t1
 
     # @deal.pure
     def hours_to_next(self, other: Time) -> float:
         if other >= self.time:
-            return self.hours_to(other)
+            return self.time.hours_to(other)
         else:
             return self.time.hours_to(DAY_END) + DAY_START.hours_to(other)
 

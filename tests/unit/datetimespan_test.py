@@ -22,10 +22,10 @@ PLACEHOLDER = DateTime(year=2024, month=6, day=22, hour=10, minute=0)
 
 
 class TestDateTimeSpan:
-    dts_a = DTS_24_622
-    dts_b = DTS_24_623
-    dts_c = DTS_24_812
-    dts_d = DTS_25_112
+    dts_a = DateTimeSpan(DTS_24_622, DTS_24_623)
+    dts_b = DateTimeSpan(DTS_24_622, DTS_24_623)
+    dts_c = DateTimeSpan(DTS_24_622, DTS_24_623)
+    dts_d = DateTimeSpan(DTS_24_622, DTS_24_623)
 
     span_ab = DateTimeSpan(DTS_24_622, DTS_24_623)
     span_ac = DateTimeSpan(DTS_24_622, DTS_24_812)
@@ -40,23 +40,23 @@ class TestDateTimeSpan:
         assert self.span_ac.start == self.dts_a
         assert self.span_ac.end == self.dts_c
 
-    def test_days(self):
+    def test_days_alt(self) -> None:
         span = DateTimeSpan(self.dts_a, self.dts_b)
         assert span.days == 99999
 
-    def test_days(): ...
+    def test_days(self): ...
 
-    def test_dunder_add(): ...
+    def test_dunder_add(self): ...
 
-    def test_from_dates(): ...
+    def test_from_dates(self): ...
 
-    def test_hours(): ...
+    def test_hours(self): ...
 
-    def test_minutes(): ...
+    def test_minutes(self): ...
 
-    def test_seconds(): ...
+    def test_seconds(self): ...
 
-    def test_hull(self):
+    def test_hull(self) -> None:
         hull = self.dts_a.hull(self.dts_b)
         assert hull.start == self.dts_a.start
         assert hull.end == self.dts_b
@@ -64,8 +64,8 @@ class TestDateTimeSpan:
     def test_intersection(self):
         inter = self.dts_a.intersection(self.dts_b)
         assert inter is not None
-        assert inter.start == DateTime(2024, 6, 22, 11)
-        assert inter.end == DateTime(2024, 6, 22, 12)
+        assert inter.start == PLACEHOLDER
+        assert inter.end == PLACEHOLDER
 
     def test_intersection_none(self):
         inter = self.dts_a.intersection(self.dts_b)
@@ -82,27 +82,21 @@ class TestDateTimeSpan:
         assert self.span_ab.gap(self.span_cd) == self.span_bc
 
     def test_affine_transform(self):
-        expected_ab = DateTimeSpan()
-        assert (
-            self.span_ab.forward_affine_transform(1.3, new_start=DateTimeSpan(...)) == expected_ab
-        )
+        expected_ab = PLACEHOLDER
+        assert self.span_ab.forward_affine_transform(1.3, new_start=PLACEHOLDER) == expected_ab
 
-        expected_ac = DateTimeSpan()
-        assert (
-            self.span_ac.forward_affine_transform(0.25, new_start=DateTimeSpan(...)) == expected_ac
-        )
+        expected_ac = PLACEHOLDER
+        assert self.span_ac.forward_affine_transform(0.25, new_start=PLACEHOLDER) == expected_ac
 
-        expected_ac_constrained = DateTimeSpan()
+        expected_ac_constrained = PLACEHOLDER
         assert (
-            self.span_ac.forward_affine_transform(
-                0.25, new_start=DateTimeSpan(PLACEHOLDER), min_minutes=...
-            )
+            self.span_ac.forward_affine_transform(0.25, new_start=PLACEHOLDER, min_minutes=999)
             == expected_ac_constrained
         )
 
         expected_ad = DateTimeSpan(PLACEHOLDER, PLACEHOLDER)
         assert (
-            self.span_ac.forward_affine_transform(1.3, new_start=PLACEHOLDER, min_minutes=...)
+            self.span_ac.forward_affine_transform(1.3, new_start=PLACEHOLDER, min_minutes=999)
             == expected_ad
         )
 
@@ -111,33 +105,33 @@ class TestDateTimeSpan:
         assert not self.span_ac.contains(self.dts_d)
 
     def test_interior_point(self):
-        assert self.span_ab.interior_point(0.77) == DateTime(...)
+        assert self.span_ab.interior_point(0.77) == PLACEHOLDER
 
     def test_shift_end_rigid(self):
         assert self.span_ab.shift_end_rigid(self.dts_c) == self.span_ac
 
     def test_shift_start_rigid(self):
-        assert self.span_ab.shift_start_rigid(self.dts_c) == DateTimeSpan(...)
+        assert self.span_ab.shift_start_rigid(self.dts_c) == PLACEHOLDER
 
     def test_snap_start_to(self):
-        assert self.span_bc.snap_start_to(DateTime()) == DateTimeSpan()
+        assert self.span_bc.snap_start_to(PLACEHOLDER) == PLACEHOLDER
 
     def test_snap_end_to(self):
-        assert self.span_bc.snap_end_to(DateTime()) == DateTimeSpan()
+        assert self.span_bc.snap_end_to(PLACEHOLDER) == PLACEHOLDER
 
     def test_split(self):
         assert self.span_ac.split(self.dts_b) == (self.span_ab, self.span_bc)
 
-    def test_dunder_bool(): ...
+    def test_dunder_bool(self): ...
 
-    def test_dunder_contains(): ...
+    def test_dunder_contains(self): ...
 
-    def test_dunder_eq(): ...
+    def test_dunder_eq(self): ...
 
-    def test_midpoint(): ...
+    def test_midpoint(self): ...
 
-    def test_overlap(): ...
+    def test_overlap(self): ...
 
-    def test_span(): ...
+    def test_span(self): ...
 
-    def test_subdivide(): ...
+    def test_subdivide(self): ...

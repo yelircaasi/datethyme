@@ -152,7 +152,7 @@ class TestDate:
                 r"BaseModel.model_validate\(\) takes 2 positional arguments but 4 were given"
             ),
         ):
-            Date.model_validate(2020, 12, 20)
+            Date.model_validate((2020, 12, 20))
 
         with pytest.raises(
             DateValidationError,

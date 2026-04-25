@@ -86,7 +86,7 @@ class TestDateRange:
         assert gap.start == self.date_b  # type: ignore
         assert gap.stop == PLACEHOLDER  # type: ignore
 
-        overlap = dr1.gap(DateRange(self.date_a + 3, Date(6)))
+        overlap = dr1.gap(DateRange(self.date_a + 3, PLACEHOLDER))
         assert overlap is None
 
     def test_hull(self) -> None:
@@ -104,7 +104,7 @@ class TestDateRange:
 
     def test_intersection_alt(self) -> None:
         dr1 = DateRange(self.date_a, self.date_b)
-        dr2 = DateRange(self.date_a + 2, Date(7))
+        dr2 = DateRange(self.date_a + 2, PLACEHOLDER)
         inter = dr1.intersection(dr2)
         assert inter.start == self.date_a + 2  # type: ignore
         assert inter.stop == self.date_b  # type: ignore

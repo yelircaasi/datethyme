@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Iterator
-from typing import Callable, Literal, TypeVar
-
-from .utils import compute_index
+from collections.abc import Callable, Iterable, Iterator
+from typing import Literal, TypeVar
 
 from .protocols import AtomProtocol, SpanProtocol, TimeProtocol
+from .utils import compute_index
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
-
 
 
 class AbstractRange[Atom: AtomProtocol](ABC):
@@ -236,4 +234,3 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         min_minutes: int | float = 5,
     ) -> AbstractSpan[Atom]:
         raise NotImplementedError
-

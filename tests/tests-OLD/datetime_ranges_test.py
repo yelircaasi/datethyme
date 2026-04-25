@@ -1,21 +1,21 @@
 from datethyme import (
     DateTime,
-    DateTimeHourRange,
-    DateTimeMinuteRange,
-    DateTimeSecondRange,
+    HourRangeDated,
+    MinuteRangeDated,
+    SecondRangeDated,
 )
 
 
 class TestDateTimeDayRange:
-    range_a = DateTimeHourRange(
+    range_a = HourRangeDated(
         DateTime.parse("2025-03-03_05:30:15"), DateTime.parse("2025-6-6_14:17")
     )
 
     def test_creation(self) -> None: ...
 
 
-class TestDateTimeHourRange:
-    range_a = DateTimeHourRange(
+class TestHourRangeDated:
+    range_a = HourRangeDated(
         DateTime.parse("2025-03-03_05:30:15"),
         DateTime.parse("2025-6-6_14:17"),
     )
@@ -23,8 +23,8 @@ class TestDateTimeHourRange:
     def test_creation(self) -> None: ...
 
 
-class TestDateTimeMinuteRange:
-    range_a = DateTimeMinuteRange(
+class TestMinuteRangeDated:
+    range_a = MinuteRangeDated(
         DateTime.parse("2025-03-03_05:30:15"),
         DateTime.parse("2025-6-6_14:17"),
     )
@@ -32,8 +32,8 @@ class TestDateTimeMinuteRange:
     def test_creation(self) -> None: ...
 
 
-class TestDateTimeSecondRange:
-    range_a = DateTimeSecondRange(
+class TestSecondRangeDated:
+    range_a = SecondRangeDated(
         DateTime.parse("2025-03-03_05:30:15"),
         DateTime.parse("2025-6-6_14:17"),
     )

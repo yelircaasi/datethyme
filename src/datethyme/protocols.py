@@ -36,7 +36,6 @@ class DateProtocol(Protocol):
     def __hash__(self) -> int: ...
 
 
-
 @runtime_checkable
 class AtomProtocol(Protocol):
     def __bool__(self) -> bool: ...

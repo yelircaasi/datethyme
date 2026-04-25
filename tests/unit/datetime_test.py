@@ -154,8 +154,8 @@ class TestDateTime:
         assert repr(dt) == str(dt)
 
     def test_dunder_rshift(self):
-        dt1 = DateTime(2024, 6, 22, 10)
-        dt2 = DateTime(2024, 6, 23, 15)
+        dt1 = DateTime.ymdhms(2024, 6, 22, 10)
+        dt2 = DateTime.ymdhms(2024, 6, 23, 15)
         result = dt1 >> dt2
         assert result.start == dt1
         assert result.end == dt2
@@ -176,7 +176,7 @@ class TestDateTime:
 
     def test_from_pair(self):
         d = Date(year=2024, month=6, day=22)
-        t = Time(10, 30, 15.5)
+        t = Time.hms(10, 30, 15.5)
         dt = DateTime.from_pair(d, t)
         assert dt.date == d
         assert dt.time == t
@@ -187,12 +187,12 @@ class TestDateTime:
             (
                 DateTime(year=2024, month=6, day=22, hour=20, minute=6, second=22),
                 1,
-                Date(year=2024, month=6, day=23, hour=20, minute=6, second=22),
+                Date(year=2024, month=6, day=23),
             ),
             (
                 DateTime(year=2024, month=6, day=22, hour=20, minute=6, second=22),
                 -1,
-                Date(year=2024, month=6, day=21, hour=20, minute=6, second=22),
+                Date(year=2024, month=6, day=21),
             ),
         ],
     )
@@ -238,23 +238,23 @@ class TestDateTime:
         assert isinstance(result, DateTime)
 
     def test_hours_from(self):
-        dt1 = DateTime(2024, 6, 22, 12)
-        dt2 = DateTime(2024, 6, 22, 14)
+        dt1 = DateTime.ymdhms(2024, 6, 22, 12)
+        dt2 = DateTime.ymdhms(2024, 6, 22, 14)
         assert dt1.hours_from(dt2) == -2
         assert dt2.hours_from(dt1) == 2
 
     def test_hours_from_last(self):
-        dt1 = DateTime(2024, 6, 22, 12)
-        dt2 = DateTime(2024, 6, 22, 14)
+        dt1 = DateTime.ymdhms(2024, 6, 22, 12)
+        dt2 = Time.hms(6, 22, 14)
         assert dt1.hours_from_last(dt2) >= 0
 
     def test_hours_to(self):
-        dt1 = DateTime(2024, 6, 22, 12)
-        dt2 = DateTime(2024, 6, 22, 15)
+        dt1 = DateTime.ymdhms(2024, 6, 22, 12)
+        dt2 = DateTime.ymdhms(2024, 6, 22, 15)
         assert dt1.hours_to(dt2) == 3
 
     def test_hours_to_next(self):
-        dt1 = DateTime(2024, 6, 22, 23)
+        dt1 = DateTime.ymdhms(2024, 6, 22, 23)
         dt2 = Time(hour=12, minute=30, second=0)
         assert dt1.hours_to_next(dt2) >= 0
 
@@ -266,7 +266,7 @@ class TestDateTime:
 
     def test_minutes_from_last(self) -> None:
         dt1 = DateTime(year=2024, month=6, day=22, hour=12, minute=0)
-        dt2 = Time(year=2024, month=6, day=22, hour=12, minute=30)
+        dt2 = Time(hour=12, minute=30)
         assert dt1.minutes_from_last(dt2) >= 0
 
     def test_minutes_to(self) -> None:
@@ -276,7 +276,7 @@ class TestDateTime:
 
     def test_minutes_to_next(self) -> None:
         dt1 = DateTime(year=2024, month=6, day=22, hour=23, minute=59)
-        dt2 = Time(year=2024, month=6, day=22, hour=0, minute=1)
+        dt2 = Time(hour=0, minute=1)
         assert dt1.minutes_to_next(dt2) >= 0
 
     def test_parse(self):
