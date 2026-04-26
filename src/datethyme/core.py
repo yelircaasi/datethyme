@@ -273,9 +273,9 @@ class Date(BaseModel):
         return int(self) * 86400
 
     @classmethod
-    def parse(cls, date_string: str) -> Self:
+    def parse(cls, raw: str) -> Self:
         """Alias for `model_validate`, but expects a string."""
-        return cls.model_validate(date_string)
+        return cls.model_validate(raw)
 
     @classmethod
     def if_valid(cls, raw_date: object) -> Self | None:
@@ -468,6 +468,10 @@ class Time(BaseModel):
         return str(self)
 
     @property
+    def triplet(self) -> tuple[int, int, float]:
+        return self.hour, self.minute, self.second
+
+    @property
     def day_start(self) -> Time:
         return Time(hour=0)
 
@@ -596,8 +600,8 @@ class Time(BaseModel):
         return cls(hour=hour, minute=minute, second=second)
 
     @classmethod
-    def parse(cls, time_string: str) -> Self:
-        return cls.model_validate(time_string)
+    def parse(cls, raw: str) -> Self:
+        return cls.model_validate(raw)
 
     @classmethod
     def if_valid(cls, time_string: object) -> Self | None:
@@ -658,14 +662,14 @@ class Time(BaseModel):
     def end(cls) -> Time:
         return cls(hour=24)
 
-    def add_hours(self, hours: int | float) -> Time:  # TODO: keep?
-        return Time.from_hours(self.to_hours() + hours)
+    def add_hours(self, n: int | float) -> Time:  # TODO: keep?
+        return Time.from_hours(self.to_hours() + n)
 
-    def add_minutes(self, minutes: int | float) -> Time:  # TODO: keep?
-        return Time.from_minutes(self.to_minutes() + minutes)
+    def add_minutes(self, n: int | float) -> Time:  # TODO: keep?
+        return Time.from_minutes(self.to_minutes() + n)
 
-    def add_seconds(self, seconds: int | float) -> Time:  # TODO: keep?
-        return Time.from_seconds(self.to_seconds() + seconds)
+    def add_seconds(self, n: int | float) -> Time:  # TODO: keep?
+        return Time.from_seconds(self.to_seconds() + n)
 
     def span(self, other: Time, name: str | None = None) -> TimeSpan:
         raise NotImplementedError
@@ -830,11 +834,6 @@ class Time(BaseModel):
 
         return self.from_seconds(total)
 
-    # @staticmethod
-    # @deal.pure
-    # def none() -> "NoneTime":
-    #     return NONE_TIME
-
     @staticmethod
     def _round_to(raw_units: float, round_to: int | float, round_down: bool) -> float:
         epsilon = 0.1 * round_to * (0.5 - int(round_down))
@@ -850,6 +849,11 @@ class Time(BaseModel):
     def _ceiling(raw_units: float, increment: int | float) -> float:
         remainder = raw_units % increment
         return raw_units - remainder + (increment * bool(remainder))
+
+    # @staticmethod
+    # @deal.pure
+    # def none() -> "NoneTime":
+    #     return NONE_TIME
 
 
 DAY_START = Time(hour=0)
@@ -1074,17 +1078,20 @@ class DateTime(BaseModel):
         self.second = time.second
         return self
 
-    def round_hours(self, places: int = 0) -> Self:
-        new_time = Time.from_hours(round(self.time.to_hours(), places))
-        return self.set_time(new_time)
+    def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
+        new_time = self.time.round_hours(round_to=round_to, round_down=round_down)
+        self.hour, self.minute, self.second = new_time.triplet
+        return self
 
-    def round_minutes(self, places: int = 0) -> Self:
-        new_time = Time.from_minutes(round(self.time.to_minutes(), places))
-        return self.set_time(new_time)
+    def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
+        new_time = self.time.round_minutes(round_to=round_to, round_down=round_down)
+        self.hour, self.minute, self.second = new_time.triplet
+        return self
 
-    def round_seconds(self, places: int = 0) -> Self:
-        new_time = Time.from_seconds(round(self.time.to_seconds(), places))
-        return self.set_time(new_time)
+    def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
+        new_time = self.time.round_seconds(round_to=round_to, round_down=round_down)
+        self.hour, self.minute, self.second = new_time.triplet
+        return self
 
     def span(self, other: DateTime) -> DateTimeSpan:
         raise NotImplementedError
@@ -1300,13 +1307,13 @@ class TimeSpan(AbstractSpan[Time]):
     ):  # -> "TimePartition":
         ...
 
-    def round_hours(self, round_to: int) -> Self:
+    def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         raise NotImplementedError
 
-    def round_minutes(self, round_to: int) -> Self:
+    def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         raise NotImplementedError
 
-    def round_seconds(self, round_to: float) -> Self:
+    def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         raise NotImplementedError
 
 
@@ -1434,13 +1441,13 @@ class DateTimeSpan(AbstractSpan[DateTime]):
     ):  # -> "DateTimePartition":
         ...
 
-    def round_hours(self, round_to: int) -> Self:
+    def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         raise NotImplementedError
 
-    def round_minutes(self, round_to: int) -> Self:
+    def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         raise NotImplementedError
 
-    def round_seconds(self, round_to: float) -> Self:
+    def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         raise NotImplementedError
 
 

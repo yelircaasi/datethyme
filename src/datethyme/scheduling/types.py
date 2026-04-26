@@ -6,7 +6,7 @@ from enum import StrEnum
 from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
-from .._abcs import AbstractPartition, TimeProtocol
+from .._abcs import AbstractPartition, PartitionProtocol, TimeProtocol
 from ..core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ..protocols import DeltaProtocol, EntryProtocol
 from ..utils import assert_xor  # TODO: import from adiumentum
@@ -110,6 +110,22 @@ class DateTimePartition(AbstractPartition):
     #     return cls(meth(seq))
 
     @classmethod
+    def from_starts(
+        cls,
+        spans: dict[DateTime, str] | Iterable[DateTime],
+        start: DateTime,
+    ) -> Self:
+        raise NotImplementedError
+
+    @classmethod
+    def from_ends(
+        cls,
+        spans: dict[DateTime, str] | Iterable[DateTime],
+        start: DateTime,
+    ) -> Self:
+        raise NotImplementedError
+
+    @classmethod
     def from_pipeline(
         cls,
         segments: Iterable[DateTimeSpan],
@@ -175,6 +191,15 @@ class DateTimePartition(AbstractPartition):
         end: DateTime,
         segments: Iterable[float],
         names: Iterable[str | None] | None = None,
+    ) -> Self:
+        raise NotImplementedError
+
+    def partition_element(
+        self,
+        element_id: str,
+        other: PartitionProtocol[DateTime] | Iterable[EntryProtocol],
+        min_length: int = 1,
+        max_length: int | None = None,
     ) -> Self:
         raise NotImplementedError
 
