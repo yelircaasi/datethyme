@@ -5,11 +5,10 @@ from typing import Literal, Protocol, Self, TypeVar, runtime_checkable
 
 from pydantic import NonNegativeInt
 
-from .scheduling.types import Entry
-
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
 
+@runtime_checkable
 class IntervalType(Protocol):
     start: TimeProtocol
     end: TimeProtocol
@@ -133,6 +132,7 @@ class SpanProtocol[T: TimeProtocol](Protocol):
     ) -> SpanProtocol[T]: ...
 
 
+@runtime_checkable
 class PartitionProtocol[Atom]:
     @classmethod
     def from_starts(
@@ -151,13 +151,13 @@ class PartitionProtocol[Atom]:
     def partition_element(
         self,
         element_id: str,
-        other: PartitionProtocol[Atom] | Iterable[Entry],
+        other: PartitionProtocol[Atom] | Iterable[EntryProtocol],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self: ...
 
 
-# @runtime_checkable
+@runtime_checkable
 class EntryProtocol[D: DateProtocol](Protocol):
     # name: str
     # priority: float

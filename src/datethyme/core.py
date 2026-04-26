@@ -45,7 +45,6 @@ from ._abcs import AbstractRange, AbstractSpan
 from .exceptions import (
     DateTimeValidationError,
 )
-from .protocols import DateProtocol, TimeProtocol
 from .utils import (
     DATE_TIME_REGEX,
     WeekdayLiteral,
@@ -94,7 +93,7 @@ PairCallback = Callable[
 # ================================================================================================
 
 
-class Date(BaseModel, DateProtocol):
+class Date(BaseModel):
     """Bespoke immutable date class designed to simplify working with dates,
     in particular input parsing, date calculations, and ranges.
     """
@@ -444,7 +443,7 @@ class Date(BaseModel, DateProtocol):
     #     return NONE_DATE
 
 
-class Time(BaseModel, TimeProtocol):
+class Time(BaseModel):
     # implements TimeProtocol
     """Bespoke immutable date class designed to simplify working with times,
     in particular input parsing, time calculations, and ranges.

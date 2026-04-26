@@ -6,10 +6,9 @@ from enum import StrEnum
 from itertools import pairwise
 from typing import Literal, Self, TypeVar, Union
 
-from .._abcs import AbstractPartition
-
+from .._abcs import AbstractPartition, TimeProtocol
 from ..core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
-from ..protocols import DeltaProtocol, EntryProtocol, PartitionProtocol
+from ..protocols import DeltaProtocol, EntryProtocol
 from ..utils import assert_xor  # TODO: import from adiumentum
 from .algorithms import (
     is_contiguous,
@@ -22,7 +21,8 @@ T = TypeVar("T", bound=Time | DateTime | Date)
 DEFAULT_DATE = Date.parse("2000-01-01")
 
 
-# TODO: create 
+# TODO: create
+
 
 class DateTimePartition(AbstractPartition):
     # type DateTimeSpan = DateTimeSpan
@@ -38,7 +38,7 @@ class DateTimePartition(AbstractPartition):
     ) -> None:
         if not is_contiguous(spans):
             raise ValueError
-        
+
         self._spans = list(spans)
         self._names = list(names) if names else names
 
@@ -578,6 +578,41 @@ class Entries[T](UserList[Entry]):
 
     def __str__(self) -> str:
         return f"Entries(\n    {'\n    '.join(map(repr, self))}\n)"
+
+
+type Context = str
+
+
+class TimeSlotMixin[T: TimeProtocol]:
+    def __init__(
+        self,
+        start: T,
+        end: T,
+        require_all: set[Context] | None = None,
+        require_any: set[Context] | None = None,
+        require_none: set[Context] | None = None,
+    ) -> None:
+        self._start = start
+        self._end = end
+        self.require_all: set[Context] = require_all or set()
+        self.require_any: set[Context] = require_any or set()
+        self.require_none: set[Context] = require_none or set()
+
+    def is_valid(self, context: Context | set[Context]) -> bool:
+        context = {context} if isinstance(context, str) else context
+        all_condition = self.require_all.issubset(context)
+        any_condition = bool((not self.require_any) or self.require_any.intersection(context))
+        none_condition = not self.require_none.intersection(context)
+        return all_condition and any_condition and none_condition
+
+
+class TimeSlot(TimeSlotMixin[Time], TimeSpan): ...
+
+
+class DateTimeSlot(TimeSlotMixin[DateTime], DateTimeSpan): ...
+
+
+tb = TimeSlot(start=Time(hour=3), end=Time(hour=23))
 
 
 # migrate Entry from consilium?
