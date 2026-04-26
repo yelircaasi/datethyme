@@ -1,11 +1,10 @@
 from operator import attrgetter
 
 from datethyme import Time
-from datethyme.scheduling.types import DateTimePartition, Entries, Entry
+from datethyme.scheduling.types import DayPartition, Entries, Entry
 
-agenda = DateTimePartition.from_starts(
-    # start_name="sleep",
-    spans={
+agenda = DayPartition.from_starts(
+    {
         Time.parse("05:30"): "morning routine",
         Time.parse("06:30"): "gym",
         Time.parse("07:15"): "work (morning)",
@@ -17,7 +16,6 @@ agenda = DateTimePartition.from_starts(
         Time.parse("20:30"): "evening routine",
         Time.parse("22:30"): "sleep",
     },
-    end=Time.parse("24:00"),
 )
 
 morning_routine = Entries((

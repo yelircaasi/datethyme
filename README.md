@@ -1,7 +1,8 @@
 # datethyme
 
-TODO:
+## Roadmap
 
+- next step: clean up the types, map how everything fits together
 - add `add_hours_strict` (fail if wrap) and `add_hours_maybe` (return None if wrap)
 - add `minutes|seconds_elapsed` and `minutes|seconds_remaining` properties?
 - Create sister package thymeline?
@@ -9,7 +10,14 @@ TODO:
   and the related projects listed
 - 
 
+## Type Ontology
 
-```
-alias cpproj="cp -rf . $HOME/.cache/datethyme-latest"
-```
+- elementary types:
+  - Date
+  - Time
+  - DateTime
+- discrete range types
+
+- span types
+
+- 
