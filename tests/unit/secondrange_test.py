@@ -2,6 +2,8 @@ import pytest
 
 from datethyme import SecondRange, Time
 
+PLACEHOLDER = Time(hour=3)
+
 
 class TestSecondRange:
     sr = SecondRange(
@@ -34,7 +36,7 @@ class TestSecondRange:
 
     def test_dunder_getitem(self):
         assert self.sr[1] == Time(hour=5, minute=30, second=16)
-        assert self.sr[1:4] == SecondRange(
+        assert self.sr[1:4] == SecondRange(  # type: ignore
             Time(hour=5, minute=30, second=16), Time(hour=5, minute=30, second=19)
         )
 
@@ -62,20 +64,20 @@ class TestSecondRange:
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):
-            self.sr.index[50]
+            self.sr.index(PLACEHOLDER)
 
     def test_last(self):
         assert self.sr.last == Time(hour=5, minute=30, second=22)
         assert self.sr_inclusive.last == Time(hour=5, minute=30, second=23)
 
-    def test__restart(): ...
+    def test__restart(self): ...
 
-    def test_dunder_eq(): ...
+    def test_dunder_eq(self): ...
 
-    def test_dunder_hash(): ...
+    def test_dunder_hash(self): ...
 
-    def test_dunder_iter(): ...
+    def test_dunder_iter(self): ...
 
-    def test_dunder_next(): ...
+    def test_dunder_next(self): ...
 
-    def test_filtered(): ...
+    def test_filtered(self): ...

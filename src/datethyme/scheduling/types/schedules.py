@@ -14,7 +14,7 @@ from pydantic import (
 from ..._abcs import TimeProtocol
 from ...core import Date, Time
 from ...protocols import EntryProtocol, SpanProtocol
-from .entries import Entries
+from .entries import Entries, Entry
 from .slots import TimeSlot
 
 DEFAULT_DATE = Date.parse("2000-01-01")
@@ -59,7 +59,8 @@ class DayPartition[T: TimeProtocol](BaseModel):
         self.assert_validity()
         return self._blocks
 
-    def __contains__(self, obj: object) -> bool: ...
+    def __contains__(self, obj: object) -> bool:
+        return False # TODO
 
     @classmethod
     def from_spans(cls, spans: dict[SpanProtocol, str] | Iterable[SpanProtocol]) -> Self:
@@ -67,6 +68,15 @@ class DayPartition[T: TimeProtocol](BaseModel):
 
     @classmethod
     def from_starts(cls, starts: dict[T, str] | Iterable[T]) -> Self:
+        raise NotImplementedError
+
+    def partition_element(
+        self,
+        element_name: str | int,
+        subelements: Iterable[SpanProtocol | Entry],
+        min_length: int = 1,
+        max_length: int | None = None,
+    ) -> Self:
         raise NotImplementedError
 
 

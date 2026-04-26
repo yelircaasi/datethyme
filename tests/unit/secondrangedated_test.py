@@ -5,6 +5,8 @@ from datethyme import (
     SecondRangeDated,
 )
 
+PLACEHOLDER_DATETIME = DateTime.six(2000, 1, 1, 1, 1, 1)
+
 
 class TestSecondRangeDated:
     sr = SecondRangeDated(
@@ -35,7 +37,7 @@ class TestSecondRangeDated:
         )
 
     def test_dunder_getitem(self):
-        assert self.sr[1] == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=16)
+        assert self.sr[1] == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=16)  # type: ignore
         assert self.sr[1:4] == SecondRangeDated(
             DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=16),
             DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=19),
@@ -74,7 +76,7 @@ class TestSecondRangeDated:
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):
-            self.sr.index[50]
+            self.sr.index(PLACEHOLDER_DATETIME)
 
     def test__increment(self):
         curr = self.sr._current
@@ -83,14 +85,12 @@ class TestSecondRangeDated:
 
     def test__limit(self):
         # Assuming _limit tests some boundary or constraint functionality
-        assert self.sr._limit() == DateTime(
-            year=2025, month=6, day=15, hour=10, minute=30, second=22
-        )
+        assert self.sr._limit == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=22)
 
     def test__rem(self):
         # Assuming _rem tests remainder functionality or modulo operations
-        dt = DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=20)
-        assert self.sr._rem(dt) == 5  # 5 seconds from start
+        # dt = DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=20)
+        assert self.sr._rem == 5  # 5 seconds from start
 
     def test__restart(self): ...
 

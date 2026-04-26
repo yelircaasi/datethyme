@@ -30,7 +30,7 @@ class TestHourRange:
 
     def test_dunder_getitem(self):
         assert self.hr[1] == Time(hour=6, minute=30)
-        assert self.hr[1:4] == HourRange(Time(hour=6, minute=30), Time(hour=9, minute=30))
+        assert self.hr[1:4] == HourRange(Time(hour=6, minute=30), Time(hour=9, minute=30))  # type: ignore
 
     def test_dunder_init(self):
         with pytest.raises(

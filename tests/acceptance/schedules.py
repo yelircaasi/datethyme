@@ -18,21 +18,21 @@ agenda = DayPartition.from_starts(
     },
 )
 
-morning_routine = Entries((
+morning_routine: Entries = Entries((
     Entry("wake up", 1),
     Entry("get dressed", 5),
     Entry("workout", 10),
     Entry("shower", 15),
 ))
 
-evening_routine = Entries((
+evening_routine: Entries = Entries((
     Entry("clean up", 5),
     Entry("walk", 10),
     Entry("change clothes", 1),
     Entry("reading", 30, ideal_time=60),
 ))
 
-chore_backlog = Entries((
+chore_backlog: Entries = Entries((
     Entry("a", 5),
     Entry("b", 10, ideal_time=20),
     Entry("c", 15, min_time=10),
@@ -51,7 +51,7 @@ agenda = agenda.partition_element(
     max_length=60,
 )
 
-agenda, leftover_chores = agenda.pack_from(  # type: ignore TODO
+agenda, leftover_chores = agenda.pack_from(  # TODO # type: ignore
     "chores",
     chore_backlog,
     prefer_compress=False,

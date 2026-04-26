@@ -2,6 +2,7 @@
 
 ## Roadmap
 
+- immediate: clean up to remove all 'type: ignore' amd 'pyright: ignore' comments
 - next step: clean up the types, map how everything fits together
 - add `add_hours_strict` (fail if wrap) and `add_hours_maybe` (return None if wrap)
 - add `minutes|seconds_elapsed` and `minutes|seconds_remaining` properties?

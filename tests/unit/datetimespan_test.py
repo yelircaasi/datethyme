@@ -41,7 +41,7 @@ class TestDateTimeSpan:
         assert self.span_ac.end == self.dts_c
 
     def test_days_alt(self) -> None:
-        span = DateTimeSpan(self.dts_a, self.dts_b)
+        span = DateTimeSpan(PLACEHOLDER, PLACEHOLDER)
         assert span.days == 99999
 
     def test_days(self): ...
@@ -74,8 +74,8 @@ class TestDateTimeSpan:
     def test_gap(self):
         gap = self.dts_a.gap(self.dts_b)
         assert gap is not None
-        assert gap.start == DateTime(2024, 6, 22, 12)
-        assert gap.end == DateTime(2024, 6, 22, 13)
+        assert gap.start == DateTime.ymdhms(2024, 6, 22, 12)
+        assert gap.end == DateTime.ymdhms(2024, 6, 22, 13)
 
     def test_gap_none(self):
         assert self.span_ab.gap(self.span_ab) is None
@@ -108,10 +108,10 @@ class TestDateTimeSpan:
         assert self.span_ab.interior_point(0.77) == PLACEHOLDER
 
     def test_shift_end_rigid(self):
-        assert self.span_ab.shift_end_rigid(self.dts_c) == self.span_ac
+        assert self.span_ab.shift_end_rigid(PLACEHOLDER) == self.span_ac
 
     def test_shift_start_rigid(self):
-        assert self.span_ab.shift_start_rigid(self.dts_c) == PLACEHOLDER
+        assert self.span_ab.shift_start_rigid(PLACEHOLDER) == PLACEHOLDER
 
     def test_snap_start_to(self):
         assert self.span_bc.snap_start_to(PLACEHOLDER) == PLACEHOLDER
@@ -120,7 +120,7 @@ class TestDateTimeSpan:
         assert self.span_bc.snap_end_to(PLACEHOLDER) == PLACEHOLDER
 
     def test_split(self):
-        assert self.span_ac.split(self.dts_b) == (self.span_ab, self.span_bc)
+        assert self.span_ac.split(PLACEHOLDER) == (self.span_ab, self.span_bc)
 
     def test_dunder_bool(self): ...
 

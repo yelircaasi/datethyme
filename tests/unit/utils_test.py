@@ -1,8 +1,6 @@
 import pytest
 
-from datethyme import Time, TimeSpan
 from datethyme.utils import (
-    snap_back,
     transfer_case,
     validate_date,
     validate_time,
@@ -82,82 +80,7 @@ def test_validate_time():
         validate_time(["12", "30", "45", "extra"])
 
     with pytest.raises(TimeValidationError):
-        validate_time(None)
-
-
-@pytest.mark.parametrize(
-    "original, modified",
-    [
-        (
-            (
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-            ),
-            (
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-            ),
-        ),
-        (
-            (
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-            ),
-            (
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-            ),
-        ),
-        (
-            (
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-            ),
-            (
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-                TimeSpan(
-                    start=Time(hour=25, minute=61, second=61),
-                    end=Time(hour=25, minute=61, second=61),
-                ),
-            ),
-        ),
-    ],
-)
-def test_snap_back(original, times, modified):
-    assert snap_back(*original) == modified
+        validate_time(None)  # type: ignore
 
 
 def test_assert_xor(): ...

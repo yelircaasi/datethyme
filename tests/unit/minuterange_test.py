@@ -2,6 +2,8 @@ import pytest
 
 from datethyme import MinuteRange, Time
 
+PLACEHOLDER = Time(hour=2)
+
 
 class TestMinuteRange:
     mr = MinuteRange(start=Time(hour=5, minute=30), stop=Time(hour=5, minute=38))
@@ -38,7 +40,7 @@ class TestMinuteRange:
 
     def test_dunder_getitem(self):
         assert self.mr[1] == Time(hour=5, minute=31)
-        assert self.mr[1:4] == MinuteRange(Time(hour=5, minute=31), Time(hour=5, minute=34))
+        assert self.mr[1:4] == MinuteRange(Time(hour=5, minute=31), Time(hour=5, minute=34))  # type: ignore
 
     def test_dunder_len(self):
         assert len(self.mr) == 8
@@ -50,7 +52,7 @@ class TestMinuteRange:
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):
-            self.mr.index[50]
+            self.mr.index(PLACEHOLDER)
 
     def test_last(self):
         assert self.mr.last == Time(hour=5, minute=37)
@@ -61,14 +63,14 @@ class TestMinuteRange:
         self.mr._increment
         assert self.mr._current == (curr.add_minutes(1))
 
-    def test__restart(): ...
+    def test__restart(self): ...
 
-    def test_dunder_eq(): ...
+    def test_dunder_eq(self): ...
 
-    def test_dunder_hash(): ...
+    def test_dunder_hash(self): ...
 
-    def test_dunder_iter(): ...
+    def test_dunder_iter(self): ...
 
-    def test_dunder_next(): ...
+    def test_dunder_next(self): ...
 
-    def test_filtered(): ...
+    def test_filtered(self): ...

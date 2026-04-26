@@ -831,7 +831,7 @@ def test_stack_backward(
     original: list[Time] | list[DateTime],
     stacked: list[Time] | list[DateTime],
 ) -> None:
-    assert stack_backward(original) == stacked
+    assert stack_backward(original) == stacked  # TODO # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -1050,3 +1050,78 @@ def test_truncate(original, earliest, latest, before_inside_after):
 )
 def test_truncate_nodiscard(original, earliest, latest, truncated):
     assert truncate_nodiscard(original, earliest=earliest, latest=latest) == truncated
+
+
+@pytest.mark.parametrize(
+    "original, modified",
+    [
+        (
+            (
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+            ),
+            (
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+            ),
+        ),
+        (
+            (
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+            ),
+            (
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+            ),
+        ),
+        (
+            (
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+            ),
+            (
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+                TimeSpan(
+                    start=Time(hour=25, minute=61, second=61),
+                    end=Time(hour=25, minute=61, second=61),
+                ),
+            ),
+        ),
+    ],
+)
+def test_snap_back_alt(original, times, modified):
+    assert snap_back(*original) == modified

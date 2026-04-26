@@ -166,7 +166,7 @@ class TestTime:
         time_b: Time | None,
         expected: bool,
     ):
-        assert (time_a >= time_b) is expected
+        assert (time_a >= time_b) is expected  # type: ignore
 
     @pytest.mark.parametrize(
         "time_a,time_b,expected",
@@ -183,7 +183,7 @@ class TestTime:
         time_b: Time | None,
         expected: bool,
     ):
-        assert (time_a > time_b) is expected
+        assert (time_a > time_b) is expected  # type: ignore
 
     def test_dunder_hash(self):
         time_a = Time(hour=10, minute=30)
@@ -208,7 +208,7 @@ class TestTime:
         time_b: Time | None,
         expected: bool,
     ) -> None:
-        assert (time_a <= time_b) is expected
+        assert (time_a <= time_b) is expected  # type: ignore
 
     @pytest.mark.parametrize(
         "time_a,time_b,expected",
@@ -225,7 +225,7 @@ class TestTime:
         time_b: Time | None,
         expected: bool,
     ) -> None:
-        assert (time_a < time_b) is expected
+        assert (time_a < time_b) is expected  # type: ignore
 
     @pytest.mark.parametrize(
         "time,expected",
@@ -268,7 +268,7 @@ class TestTime:
     def test_dunder_sub(self):
         time_a = Time(hour=10, minute=30)
         time_b = Time(hour=9, minute=0)
-        delta = time_a - time_b
+        delta = time_a - time_b  # type: ignore
         assert isinstance(delta, TimeDelta)
         assert delta.seconds == 90 * 60  # 90 minutes in seconds
 
@@ -604,7 +604,7 @@ class TestTime:
         result = time.serialize_time()
         assert result == expected
 
-    def test_to_hours(): ...
+    def test_to_hours(self): ...
 
     @pytest.mark.parametrize(
         "time, expected",

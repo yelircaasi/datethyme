@@ -430,7 +430,7 @@ class DateTimePartition(AbstractPartition):
 # ================================================================================================
 
 
-class TimePartition(AbstractPartition):
+class TimePartition(AbstractPartition[Time]):
     """
     A contiguous sequence of TimeSpan objects or TimePartition objects (recursive),
       useful for scheduling.
@@ -448,6 +448,23 @@ class TimePartition(AbstractPartition):
     both can be procrustean or not
 
     """
+
+    @classmethod
+    def from_starts(cls, spans: dict[TimeSpan, str] | Iterable, end: Time) -> Self:
+        raise NotImplementedError
+
+    @classmethod
+    def from_ends(cls, spans: dict[TimeSpan, str] | Iterable, start: Time) -> Self:
+        raise NotImplementedError
+
+    def partition_element(
+        self,
+        element_id: str,
+        other: PartitionProtocol | Iterable[EntryProtocol],
+        min_length: int = 1,
+        max_length: int | None = None,
+    ) -> Self:
+        raise NotImplementedError
 
 
 # dt0 = DateTime(year=2025, month=6, day=15, hour=16)

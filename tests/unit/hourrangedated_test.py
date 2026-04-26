@@ -5,6 +5,8 @@ from datethyme import (
     HourRangeDated,
 )
 
+PLACEHOLDER_DATETIME = DateTime.six(2000, 1, 1, 1, 1, 1)
+
 
 class TestHourRangeDated:
     hr = HourRangeDated(
@@ -36,7 +38,7 @@ class TestHourRangeDated:
 
     def test_dunder_getitem(self):
         assert self.hr[1] == DateTime(year=2025, month=6, day=15, hour=11, minute=30, second=0)
-        assert self.hr[1:4] == HourRangeDated(
+        assert self.hr[1:4] == HourRangeDated(  # type: ignore
             DateTime(year=2025, month=6, day=15, hour=11, minute=30, second=0),
             DateTime(year=2025, month=6, day=15, hour=14, minute=30, second=0),
         )
@@ -76,21 +78,21 @@ class TestHourRangeDated:
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):
-            self.hr.index[50]
+            self.hr.index(PLACEHOLDER_DATETIME)
 
     def test__increment(self):
         curr = self.hr._current
         self.hr._increment
         assert self.hr._current == (curr.add_hours(1))
 
-    def test__restart(): ...
+    def test__restart(self): ...
 
-    def test_dunder_eq(): ...
+    def test_dunder_eq(self): ...
 
-    def test_dunder_hash(): ...
+    def test_dunder_hash(self): ...
 
-    def test_dunder_iter(): ...
+    def test_dunder_iter(self): ...
 
-    def test_dunder_next(): ...
+    def test_dunder_next(self): ...
 
-    def test_filtered(): ...
+    def test_filtered(self): ...

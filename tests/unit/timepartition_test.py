@@ -1,14 +1,14 @@
 import pytest
 
-from datethyme import Time, TimePartition, TimeSpan  # pyright: ignore
-
+from datethyme import Time, TimeSpan  # pyright: ignore
+from datethyme.scheduling.types import TimePartition
 REPLACE_ME = 99
 
-PARTITION_3H = TimePartition(...)
-PARTITION_5H = TimePartition(...)
-PARTITION_DAY = TimePartition(...)
-PARTITION_NESTED = TimePartition(...)
-PARTITION_DOUBLE_NESTED = TimePartition(...)
+PARTITION_3H = TimePartition([])
+PARTITION_5H = TimePartition([])
+PARTITION_DAY = TimePartition([])
+PARTITION_NESTED = TimePartition([])
+PARTITION_DOUBLE_NESTED = TimePartition([])
 
 SEQ_GAPS = (
     TimeSpan(

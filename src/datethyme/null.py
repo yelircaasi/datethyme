@@ -1,6 +1,6 @@
 """Coming soon"""
 
-from typing import Any, Self
+from typing import Self
 
 import deal
 from pydantic import (
@@ -51,16 +51,6 @@ class NoneDate(BaseModel):
         return self.__str__()
 
     @deal.pure
-    def __add__(self, _: Any) -> Self:
-        """Simply returns itself: nt + 42 == nt"""
-        return self
-
-    @deal.pure
-    def __sub__(self, _: Any) -> Self:
-        """Simply returns itself: nt - 42 == nt"""
-        return self
-
-    @deal.pure
     def __bool__(self) -> bool:
         """False in all cases."""
         return False
@@ -89,6 +79,12 @@ class NoneDate(BaseModel):
     def __ge__(self, other: object) -> bool:
         """False in all cases."""
         return False
+
+    def __add__(self, other: object) -> Self:
+        return self
+
+    def __sub__(self, other: object) -> Self:
+        return self
 
 
 class NoneTime(BaseModel, OptionalTime):
@@ -120,12 +116,12 @@ class NoneTime(BaseModel, OptionalTime):
         return self.__str__()
 
     @deal.pure
-    def __add__(self, _: Any) -> Self:
+    def __add__(self, _: object) -> Self:
         """Idempotent under addition, e.g. nt - 42 == nt"""
         return self
 
     @deal.pure
-    def __sub__(self, _: Any) -> Self:
+    def __sub__(self, _: object) -> Self:
         """Idempotent under subtraction, e.g. nt - 42 == nt"""
         return self
 
@@ -135,30 +131,30 @@ class NoneTime(BaseModel, OptionalTime):
         return False
 
     @deal.pure
-    def __eq__(self, __other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         False in all cases except when comparing with another instance of NoneTime
             (including self).
         """
-        return isinstance(__other, NoneTime)
+        return isinstance(other, NoneTime)
 
     @deal.pure
-    def __lt__(self, __other: Any) -> bool:
+    def __lt__(self, _: object) -> bool:
         """False in all cases."""
         return False
 
     @deal.pure
-    def __gt__(self, __other: Any) -> bool:
+    def __gt__(self, other: object) -> bool:
         """False in all cases."""
         return False
 
     @deal.pure
-    def __le__(self, __other: Any) -> bool:
+    def __le__(self, other: object) -> bool:
         """False in all cases."""
         return False
 
     @deal.pure
-    def __ge__(self, __other: Any) -> bool:
+    def __ge__(self, false: object) -> bool:
         """False in all cases."""
         return False
 
@@ -185,32 +181,38 @@ class NoneDateTime(BaseModel, OptionalDate):
         return False
 
     @deal.pure
-    def __eq__(self, __other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         False in all cases except when comparing with another instance of NoneDateTime
             (including self).
         """
-        return isinstance(__other, NoneDateTime)
+        return isinstance(other, NoneDateTime)
 
     @deal.pure
-    def __lt__(self, __other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
         """False in all cases."""
         return False
 
     @deal.pure
-    def __gt__(self, __other: Any) -> bool:
+    def __gt__(self, other: object) -> bool:
         """False in all cases."""
         return False
 
     @deal.pure
-    def __le__(self, __other: Any) -> bool:
+    def __le__(self, other: object) -> bool:
         """False in all cases."""
         return False
 
     @deal.pure
-    def __ge__(self, __other: Any) -> bool:
+    def __ge__(self, other: object) -> bool:
         """False in all cases."""
         return False
+
+    def __add__(self, other: object) -> Self:
+        return self
+
+    def __sub__(self, other: object) -> Self:
+        return self
 
 
 NONE_DATE = NoneDate()
