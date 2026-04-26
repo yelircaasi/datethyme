@@ -1,9 +1,10 @@
-from ..protocols import EntryProtocol, make_entry_adapter
+from ..protocols import EntryProtocol
 from .types import (
     DateTimePartition,
     Entries,
     Entry,
     TimePartition,
+    make_entry_adapter,
 )
 
 __all__ = (
