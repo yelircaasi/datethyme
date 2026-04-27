@@ -50,6 +50,7 @@ from .utils import (
     WeekdayLiteral,
     get_end,
     get_start,
+    index_getter,
     transfer_case,
     validate_date,
     validate_time,
@@ -312,7 +313,7 @@ class Date(BaseModel):
         return cls.from_ordinal(round(n / 60))
 
     @classmethod
-    def from_seconds(cls, n: float | int) -> Self:
+    def from_seconds(cls, n: float | int, places: int = 0) -> Self:
         return cls.from_ordinal(round(n))
 
     # @deal.has()
@@ -394,21 +395,21 @@ class Date(BaseModel):
         return template.format(**{p: transfer_case(p, get_string(p)) for p in placeholders})
 
     # @deal.has()
-    def range(self, end: Date | int, inclusive: bool = False) -> list[Date]:
+    def range(self, stop: Date | int, step: int = 1, inclusive: bool = False) -> DateRange:
         """Returns a list of consecutive days, default non-inclusive as is standard in Python.
         Supports reverse-order ranges."""
-        if isinstance(end, int):
-            end = self + end
-        if not isinstance(end, Date):
-            raise TypeError(f"`end` is of type `{type(end)}`; expected `{Date}`.")
+        if isinstance(stop, int):
+            stop = self + stop
+        if not isinstance(stop, Date):
+            raise TypeError(f"`end` is of type `{type(stop)}`; expected `{Date}`.")
 
-        inclusive = inclusive and (self != end)
+        inclusive = inclusive and (self != stop)
 
         date1 = self.model_copy()
-        if isinstance(end, int):
-            date2 = date1 + end
+        if isinstance(stop, int):
+            date2 = date1 + stop
         else:
-            date2 = end
+            date2 = stop
 
         reverse: bool = False
 
@@ -431,7 +432,7 @@ class Date(BaseModel):
         if reverse:
             dates.reverse()
 
-        return dates
+        return DateRange.from_sequence(dates)
 
     # @deal.pure
     def days_to(self, date2: Date) -> int:
@@ -643,8 +644,8 @@ class Time(BaseModel):
 
     @classmethod
     # @deal.has()
-    def from_seconds(cls, seconds: int | float, places: int = 0) -> Self:
-        hours, seconds = divmod(seconds, 1440.0)
+    def from_seconds(cls, n: int | float, places: int = 0) -> Self:
+        hours, seconds = divmod(n, 1440.0)
         minutes, seconds = divmod(seconds, 60.0)
         return cls(
             hour=int(hours),
@@ -849,6 +850,14 @@ class Time(BaseModel):
     def _ceiling(raw_units: float, increment: int | float) -> float:
         remainder = raw_units % increment
         return raw_units - remainder + (increment * bool(remainder))
+
+    def range(
+        self,
+        stop: Time | int,
+        step: int = 1,
+        inclusive: bool = False,
+    ) -> HourRange:
+        raise NotImplementedError
 
     # @staticmethod
     # @deal.pure
@@ -1056,7 +1065,7 @@ class DateTime(BaseModel):
         )
 
     @classmethod
-    def from_seconds(cls, n: float | int, places: int = 10) -> Self:
+    def from_seconds(cls, n: float | int, places: int = 0) -> Self:
         day_seconds, time_seconds = divmod(n, 24)
         return cls.from_pair(
             Date.from_seconds(day_seconds),
@@ -1177,6 +1186,14 @@ class DateTime(BaseModel):
     # @deal.pure
     def hours_from_last(self, other: Time) -> float:
         return 24 - self.hours_to_next(other)
+
+    def range(
+        self,
+        stop: DateTime | int,
+        step: int = 1,
+        inclusive: bool = False,
+    ) -> HourRangeDated:
+        raise NotImplementedError
 
 
 # --- SPAN TYPES ---------------------------------------------------------------------------------
@@ -1461,6 +1478,17 @@ class DateRange(AbstractRange[Date]):
         self.step = step
         self.inclusive = inclusive
 
+    @classmethod
+    def from_sequence(
+        cls, seq: list[Date] | tuple[Date], step: int = 1, inclusive: bool = False
+    ) -> Self:
+        add_me = int(not inclusive)
+        return cls(min(seq), max(seq) + add_me, step=step, inclusive=inclusive)
+
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step * 86400
+
     @property
     def last(self) -> Date:
         limit = self.stop - int(not self.inclusive)
@@ -1591,14 +1619,22 @@ class DayRangeDated(AbstractRange[DateTime]):
     def last(self) -> DateTime:
         return self.stop  # TODO
 
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step * 86400
+
     def __contains__(self, other: DateTime) -> bool:
         return False  # TODO
 
     def __len__(self) -> int:
         return 999  # TODO
 
-    def __getitem__(self, idx: int) -> DateTime:
-        return self.start  # TODO
+    @overload
+    def __getitem__(self, idx: int) -> DateTime: ...
+    @overload
+    def __getitem__(self, idx: slice) -> DayRangeDated: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __reversed__(self) -> Self:
         return self
@@ -1639,14 +1675,22 @@ class HourRange(AbstractRange[Time]):
     def last(self) -> Time:
         return self.stop  # TODO
 
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step * 3600
+
     def __contains__(self, other: Time) -> bool:
         return False  # TODO
 
     def __len__(self) -> int:
         return 999  # TODO
 
-    def __getitem__(self, idx: int) -> Time:
-        return self.start  # TODO
+    @overload
+    def __getitem__(self, idx: int) -> Time: ...
+    @overload
+    def __getitem__(self, idx: slice) -> HourRange: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __reversed__(self) -> Self:
         return self
@@ -1679,14 +1723,22 @@ class HourRangeDated(AbstractRange[DateTime]):
     def last(self) -> DateTime:
         return self.stop  # TODO
 
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step * 3600
+
     def __contains__(self, other: DateTime) -> bool:
         return False  # TODO
 
     def __len__(self) -> int:
         return 999  # TODO
 
-    def __getitem__(self, idx: int) -> DateTime:
-        return self.start  # TODO
+    @overload
+    def __getitem__(self, idx: int) -> DateTime: ...
+    @overload
+    def __getitem__(self, idx: slice) -> HourRangeDated: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __reversed__(self) -> Self:
         return self
@@ -1713,14 +1765,22 @@ class MinuteRange(AbstractRange[Time]):
     def last(self) -> Time:
         return self.stop  # TODO
 
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step * 60
+
     def __contains__(self, other: Time) -> bool:
         return False  # TODO
 
     def __len__(self) -> int:
         return 999  # TODO
 
-    def __getitem__(self, idx: int) -> Time:
-        return self.start  # TODO
+    @overload
+    def __getitem__(self, idx: int) -> Time: ...
+    @overload
+    def __getitem__(self, idx: slice) -> MinuteRange: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __reversed__(self) -> Self:
         return self
@@ -1754,6 +1814,10 @@ class MinuteRangeDated(AbstractRange[DateTime]):
     def last(self) -> DateTime:
         return self.stop  # TODO
 
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step * 60
+
     def __contains__(self, other: DateTime) -> bool:
         return False  # TODO
 
@@ -1761,18 +1825,18 @@ class MinuteRangeDated(AbstractRange[DateTime]):
         return 999  # TODO
 
     @dispatch(int)
-    def __getitem__(self, idx: int) -> DateTime:  # pyright: ignore
+    def OLD__getitem__(self, idx: int) -> DateTime:  # pyright: ignore
         if not isinstance(idx, int):
             return TypeError(f"list indices must be integers or slices, not {type(idx)}")
 
-        length = self.__len__()
+        length = len(self)
         if not (-length <= idx < length):
             raise IndexError(f"{self.__class__.__name__} index out of range")
 
         return self.start.add_seconds(idx * self.step)
 
     @dispatch(slice)
-    def __getitem__(self, slc: slice, inclusive: bool = True) -> MinuteRangeDated:
+    def OLD__getitem__(self, slc: slice, inclusive: bool = True) -> MinuteRangeDated:
         """
         Attention! The step in the slice, if provided, is with respect to the
           pre-existing step in `self`. This is accordance with the behavior of
@@ -1784,6 +1848,13 @@ class MinuteRangeDated(AbstractRange[DateTime]):
             stop=self[stop - int(inclusive)],  # pyright: ignore
             step=self.step * slc.step,
         )
+
+    @overload
+    def __getitem__(self, idx: int) -> DateTime: ...
+    @overload
+    def __getitem__(self, idx: slice) -> MinuteRangeDated: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __reversed__(self) -> Self:
         return self
@@ -1810,6 +1881,10 @@ class SecondRange(AbstractRange[Time]):
         self.inclusive = inclusive
 
     @property
+    def seconds_per_step(self) -> int:
+        return self.step
+
+    @property
     def last(self) -> Time:
         return self.stop  # TODO
 
@@ -1819,8 +1894,12 @@ class SecondRange(AbstractRange[Time]):
     def __len__(self) -> int:
         return 999  # TODO
 
-    def __getitem__(self, idx: int) -> Time:
-        return self.start  # TODO
+    @overload
+    def __getitem__(self, idx: int) -> Time: ...
+    @overload
+    def __getitem__(self, idx: slice) -> SecondRange: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __reversed__(self) -> Self:
         return self
@@ -1856,6 +1935,10 @@ class SecondRangeDated(AbstractRange[DateTime]):
             return self.stop.add_seconds(-(not self.inclusive))
         return self.stop.add_seconds(-rem)
 
+    @property
+    def seconds_per_step(self) -> int:
+        return self.step
+
     def __contains__(self, other: DateTime) -> bool:
         return (
             (self.start < other)
@@ -1867,18 +1950,18 @@ class SecondRangeDated(AbstractRange[DateTime]):
         return round(self.start.seconds_to(self.last) % self.step) + 1
 
     @dispatch(int)
-    def __getitem__(self, idx: int) -> DateTime:  # pyright: ignore
+    def OLD__getitem__(self, idx: int) -> DateTime:  # pyright: ignore
         if not isinstance(idx, int):
             return TypeError(f"list indices must be integers or slices, not {type(idx)}")
 
-        length = self.__len__()
+        length = len(self)
         if not (-length <= idx < length):
             raise IndexError(f"{self.__class__.__name__} index out of range")
 
         return self.start.add_seconds(idx * self.step)
 
     @dispatch(slice)
-    def __getitem__(
+    def OLD__getitem__(
         self, slc: slice, inclusive: bool = True, allow_wraparound: bool = True
     ) -> SecondRangeDated:  # pyright: ignore
         """
@@ -1892,6 +1975,13 @@ class SecondRangeDated(AbstractRange[DateTime]):
             stop=self[stop - int(inclusive)],  # pyright: ignore
             step=self.step * slc.step,
         )
+
+    @overload
+    def __getitem__(self, idx: int) -> DateTime: ...
+    @overload
+    def __getitem__(self, idx: slice) -> SecondRangeDated: ...
+    def __getitem__(self, idx: int | slice) -> object:
+        return index_getter(self, idx)
 
     def __iter__(self) -> Iterator[DateTime]:
         return iter(self)

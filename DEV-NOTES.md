@@ -1,3 +1,6 @@
+```
+alias cpproj="cp -rf . $HOME/.cache/datethyme-latest"
+```
 
 Running this project requires `copier`, `git`, `uv`, and `flake`. Install `nix` and
 install the others by running `nix-shell -p uv python3 git`. You can now copy the project and run the toy CLI provided out-of-the-box:

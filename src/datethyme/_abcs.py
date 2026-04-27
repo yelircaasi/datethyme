@@ -4,18 +4,22 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from typing import Literal, TypeVar
 
-from .protocols import AtomProtocol, SpanProtocol, TimeProtocol
+from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
 from .utils import compute_index
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
 
-class AbstractRange[Atom: AtomProtocol](ABC):
+class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
     start: Atom
     stop: Atom
     step: int
     inclusive: bool
     _current: Atom
+
+    @property
+    @abstractmethod
+    def seconds_per_step(self) -> int: ...
 
     @abstractmethod
     def __init__(self, start: Atom, stop: Atom, step: int = 1, inclusive: bool = True) -> None: ...

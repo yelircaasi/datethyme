@@ -12,7 +12,7 @@ from ...protocols import (
     SpanProtocol,
     TimeProtocol,
 )
-from ...utils import assert_xor  # TODO: import from adiumentum
+from ...utils import assert_xor
 from ..algorithms import (
     is_contiguous,
     stack_forward,

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import re
-from typing import Literal
+from collections.abc import Callable
+from operator import le, lt
+from typing import Literal, overload
 
 import deal
 
-from datethyme.protocols import SpanProtocol
-
 from .exceptions import DateValidationError, TimeValidationError
-from .protocols import TimeProtocol
+from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
 
 
 def assert_xor(a: bool | object | str | None, b: bool | object | str | None) -> bool:
@@ -129,3 +129,58 @@ def get_end[Atom: TimeProtocol](obj: Atom | SpanProtocol[Atom]) -> Atom:
     if isinstance(obj, TimeProtocol):
         return obj
     return obj.end
+
+
+def _get_from_range_index[T: AtomProtocol](
+    range_: RangeProtocol,
+    idx: int,
+    *,
+    seconds_per_step: int,
+    serializer: Callable[[T], int | float],
+    deserializer: Callable[[int | float], T],
+) -> T:
+    step = range_.step * seconds_per_step
+    candidate = deserializer(serializer(range_.start) + idx * step)
+    op = le if range_.inclusive else lt
+    if op(candidate, range_.stop):
+        return candidate
+    raise ValueError(f"Index {idx} out of bounds.")
+
+
+type TimeSerializer[T] = Callable[[T], int | float]
+type TimeDeserializer[T] = Callable[[int | float], T]
+
+
+@overload
+def index_getter[T: AtomProtocol](
+    range_: RangeProtocol[T],
+    slice_or_index: int,
+) -> T: ...
+@overload
+def index_getter[T: AtomProtocol](
+    range_: RangeProtocol[T],
+    slice_or_index: slice,
+) -> RangeProtocol[T]: ...
+def index_getter[T: AtomProtocol](
+    range_: RangeProtocol[T],
+    slice_or_index: int | slice,
+) -> T | RangeProtocol[T]:
+    seconds_per_step = range_.seconds_per_step
+    serializer = range_.start.__class__.to_seconds
+    deserializer = range_.start.__class__.from_seconds
+    if isinstance(slice_or_index, int):
+        step = range_.step * seconds_per_step
+        candidate = deserializer(serializer(range_.start) + slice_or_index * step)
+        op = le if range_.inclusive else lt
+        if op(candidate, range_.stop):
+            return candidate
+        raise ValueError(f"Index {slice_or_index} out of bounds.")
+
+    elif isinstance(slice_or_index, slice):
+        new_start: T = range_[slice_or_index.start]
+        new_stop: T = range_[slice_or_index.stop]
+        new_step: int = (range_.step or 1) * (slice_or_index.step or 1)
+
+        return new_start.range(new_stop, step=new_step, inclusive=range_.inclusive)
+
+    raise TypeError

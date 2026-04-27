@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Literal, Protocol, Self, TypeVar, runtime_checkable
+from typing import Literal, Protocol, Self, TypeVar, overload, runtime_checkable
 
 from pydantic import NonNegativeInt
 
@@ -48,6 +48,14 @@ class AtomProtocol(Protocol):
     def __str__(self) -> str: ...
     def to_minutes(self) -> float: ...
     def to_seconds(self) -> float: ...
+    @classmethod
+    def from_seconds(cls, n: float | int, places: int = 0) -> Self: ...
+    def range(
+        self,
+        stop: Self | int,
+        step: int = 1,
+        inclusive: bool = False,
+    ) -> RangeProtocol[Self]: ...
 
 
 @runtime_checkable
@@ -89,6 +97,22 @@ class TimeProtocol(AtomProtocol, Protocol):
     def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self: ...
 
     def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self: ...
+
+
+@runtime_checkable
+class RangeProtocol[T: AtomProtocol](Protocol):
+    start: T
+    stop: T
+    step: int
+    inclusive: bool
+
+    @property
+    def seconds_per_step(self) -> int: ...
+
+    @overload
+    def __getitem__(self, idx: int) -> T: ...
+    @overload
+    def __getitem__(self, idx: slice) -> RangeProtocol[T]: ...
 
 
 @runtime_checkable
