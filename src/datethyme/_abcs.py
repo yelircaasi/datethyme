@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from typing import Literal, TypeVar
 
+from .constants import Unit
 from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
 from .utils import compute_index
 
@@ -92,6 +93,14 @@ class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
 
     def _restart(self) -> None:
         self._current = self.start
+
+    @property
+    @abstractmethod
+    def limit(self) -> Atom: ...
+
+    @property
+    @abstractmethod
+    def remaining(self) -> float: ...
 
     # @property
     # @abstractmethod
@@ -243,4 +252,43 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         new_end: Atom | None = None,
         min_minutes: int | float = 5,
     ) -> AbstractSpan[Atom]:
+        raise NotImplementedError
+
+
+class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
+    unit: U
+
+    @property
+    def seconds_per_step(self) -> int: ...
+
+    @abstractmethod
+    def __init__(
+        self, start: T, stop: T, *, unit: U, step: int = 1, inclusive: bool = True
+    ) -> None: ...
+
+    @property
+    def last(self) -> T:
+        return self.start
+
+    def __len__(self) -> int:
+        return 999
+
+    def __contains__(self, item: T) -> bool:
+        return True
+
+    def __reversed__(self) -> Iterable[T]:
+        raise NotImplementedError
+
+    def __getitem__(self, idx) -> T:
+        raise NotImplementedError
+
+    def _increment(self) -> None:
+        raise NotImplementedError
+
+    @property
+    def limit(self) -> T:
+        raise NotImplementedError
+
+    @property
+    def remaining(self) -> float:
         raise NotImplementedError

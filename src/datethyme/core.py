@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import datetime as DATETIME
 import re
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from math import floor
 from typing import Any, Literal, Self, TypeVar, overload
 
@@ -32,7 +32,8 @@ from pydantic import (
     model_validator,
 )
 
-from ._abcs import AbstractRange, AbstractSpan
+from ._abcs import AbstractRange, AbstractSpan, AbstractTimeRange
+from .constants import Unit
 
 # from ._abcs import (
 #     AbstractDate,
@@ -50,7 +51,6 @@ from .utils import (
     WeekdayLiteral,
     get_end,
     get_start,
-    index_getter,
     transfer_case,
     validate_date,
     validate_time,
@@ -271,7 +271,7 @@ class Date(BaseModel):
         return int(self) * 1440
 
     def to_seconds(self) -> float:
-        return int(self) * 86400
+        return int(self) * Unit.DAY.seconds
 
     @classmethod
     def parse(cls, raw: str) -> Self:
@@ -306,14 +306,14 @@ class Date(BaseModel):
 
     @classmethod
     def from_hours(cls, n: float | int) -> Self:
-        return cls.from_ordinal(round(n / 3600))
+        return cls.from_ordinal(round(n / Unit.HOUR.seconds))
 
     @classmethod
     def from_minutes(cls, n: float | int) -> Self:
-        return cls.from_ordinal(round(n / 60))
+        return cls.from_ordinal(round(n / Unit.MINUTE.seconds))
 
     @classmethod
-    def from_seconds(cls, n: float | int, places: int = 0) -> Self:
+    def from_seconds(cls, n: float | int, places: int | None = 10) -> Self:
         return cls.from_ordinal(round(n))
 
     # @deal.has()
@@ -486,7 +486,7 @@ class Time(BaseModel):
 
     @property
     def full_hours(self) -> int:
-        return int(self.to_hours() // 3600)
+        return int(self.to_hours() // Unit.HOUR.seconds)
 
     @property
     def full_minutes(self) -> int:
@@ -619,39 +619,28 @@ class Time(BaseModel):
         return cls(hour=time_now.hour, minute=time_now.minute)
 
     @classmethod
-    # @deal.has()
-    def from_hours(cls, hours: int | float, places: int = 0) -> Self:
-        hours, minutes = divmod(hours, 1.0)
-        minutes, seconds = divmod(minutes * 60.0, 1.0)
-        seconds *= 60.0
-        return cls(
-            hour=int(hours),
-            minute=int(minutes),
-            second=round(seconds, places) if places else seconds,
-        )
+    def from_unit(
+        cls, unit: Unit, n: int | float, places: int | None = 10, allow_wrap: bool = True
+    ) -> Self:
+        day, hour, minute, second = unit.cascade(n)
+        if day and not allow_wrap:
+            raise ValueError
+        return cls(hour=hour, minute=minute, second=round(second, places))
 
     @classmethod
     # @deal.has()
-    def from_minutes(cls, minutes: int | float, places: int = 0) -> Self:
-        hours, minutes = divmod(minutes, 60.0)
-        minutes, seconds = divmod(minutes, 1.0)
-        seconds *= 60.0
-        return cls(
-            hour=int(hours),
-            minute=int(minutes),
-            second=round(seconds, places) if places else seconds,
-        )
+    def from_hours(cls, n: int | float, places: int | None = 10, allow_wrap: bool = True) -> Self:
+        return cls.from_unit(Unit.HOUR, n, allow_wrap=allow_wrap)
 
     @classmethod
     # @deal.has()
-    def from_seconds(cls, n: int | float, places: int = 0) -> Self:
-        hours, seconds = divmod(n, 1440.0)
-        minutes, seconds = divmod(seconds, 60.0)
-        return cls(
-            hour=int(hours),
-            minute=int(minutes),
-            second=round(seconds, places) if places else seconds,
-        )
+    def from_minutes(cls, n: int | float, places: int | None = 10, allow_wrap: bool = True) -> Self:
+        return cls.from_unit(Unit.MINUTE, n, allow_wrap=allow_wrap)
+
+    @classmethod
+    # @deal.has()
+    def from_seconds(cls, n: int | float, places: int | None = 10, allow_wrap: bool = True) -> Self:
+        return cls.from_unit(Unit.SECOND, n, allow_wrap=allow_wrap)
 
     @classmethod
     # @deal.pure
@@ -678,7 +667,7 @@ class Time(BaseModel):
     def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Time:
         raw_hours = self.to_hours()
         rounded = self._round_to(raw_units=raw_hours, round_to=round_to, round_down=round_down)
-        return self.__class__.from_hours(hours=rounded)
+        return self.__class__.from_hours(n=rounded)
 
     def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Time:
         raw_minutes = self.to_minutes()
@@ -713,18 +702,18 @@ class Time(BaseModel):
         return self.__class__.from_seconds(new_seconds)
 
     # @deal.pure
-    def to_hours(self, places: int = 0) -> float:
-        raw = self.hour + self.minute / 60 + self.second / 3600
+    def to_hours(self, places: int | None = 10) -> float:
+        raw = self.hour + self.minute / 60 + self.second / Unit.HOUR.seconds
         return round(raw, places or 1)
 
     # @deal.pure
-    def to_minutes(self, places: int = 0) -> float:
+    def to_minutes(self, places: int | None = 10) -> float:
         raw = 60.0 * self.hour + self.minute + self.second / 60.0
         return round(raw, places or 1)
 
     # @deal.pure
-    def to_seconds(self, places: int = 0) -> float:
-        raw = 3600.0 * self.hour + 60.0 * self.minute + self.second
+    def to_seconds(self, places: int | None = 10) -> float:
+        raw = Unit.HOUR.seconds * self.hour + 60.0 * self.minute + self.second
         return round(raw, places or 1)
 
     # @deal.pure
@@ -808,7 +797,7 @@ class Time(BaseModel):
         return (self.from_minutes(minutes), days)
 
     def add_seconds_wraparound(self, n: int | float) -> tuple[Time, int]:
-        days, seconds = divmod(int(self.to_seconds() + n), 86400)
+        days, seconds = divmod(int(self.to_seconds() + n), Unit.DAY.seconds)
         return (self.from_seconds(seconds), days)
 
     def add_hours_bounded(self, n: int | float) -> Time:
@@ -828,7 +817,7 @@ class Time(BaseModel):
         return self.from_minutes(total)
 
     def add_seconds_bounded(self, n: int | float) -> Time:
-        if (total := self.to_seconds() + n) > 86400:
+        if (total := self.to_seconds() + n) > Unit.DAY.seconds:
             return DAY_END
         if total < 0:
             return DAY_START
@@ -851,12 +840,14 @@ class Time(BaseModel):
         remainder = raw_units % increment
         return raw_units - remainder + (increment * bool(remainder))
 
-    def range(
+    def range[U: Unit](
         self,
         stop: Time | int,
+        *,
+        unit: U,
         step: int = 1,
         inclusive: bool = False,
-    ) -> HourRange:
+    ) -> TimeRange[U]:
         raise NotImplementedError
 
     # @staticmethod
@@ -875,11 +866,11 @@ class TimeDelta:
 
     @property
     def days(self) -> float:
-        return self._seconds / 86400.0
+        return self._seconds / Unit.DAY.seconds
 
     @property
     def hours(self) -> float:
-        return self._seconds / 3600.0
+        return self._seconds / Unit.HOUR.seconds
 
     @property
     def minutes(self) -> float:
@@ -891,11 +882,11 @@ class TimeDelta:
 
     @classmethod
     def from_days(cls, days: int | float) -> Self:
-        return cls(days * 86400)
+        return cls(days * Unit.DAY.seconds)
 
     @classmethod
     def from_hours(cls, hours: int | float) -> Self:
-        return cls(hours * 3600)
+        return cls(hours * Unit.HOUR.seconds)
 
     @classmethod
     def from_minutes(cls, minutes: int | float) -> Self:
@@ -1065,7 +1056,7 @@ class DateTime(BaseModel):
         )
 
     @classmethod
-    def from_seconds(cls, n: float | int, places: int = 0) -> Self:
+    def from_seconds(cls, n: float | int, places: int | None = 10) -> Self:
         day_seconds, time_seconds = divmod(n, 24)
         return cls.from_pair(
             Date.from_seconds(day_seconds),
@@ -1164,7 +1155,7 @@ class DateTime(BaseModel):
 
     # @deal.pure
     def seconds_from_last(self, other: Time) -> float:
-        return 86400 - self.seconds_to_next(other)
+        return Unit.DAY.seconds - self.seconds_to_next(other)
 
     # @deal.pure
     def hours_to(self, dateother: DateTime) -> float:
@@ -1187,12 +1178,14 @@ class DateTime(BaseModel):
     def hours_from_last(self, other: Time) -> float:
         return 24 - self.hours_to_next(other)
 
-    def range(
+    def range[U: Unit](  # type: ignore
         self,
         stop: DateTime | int,
+        *,
+        unit: U,
         step: int = 1,
         inclusive: bool = False,
-    ) -> HourRangeDated:
+    ) -> DateTimeRange[U]:
         raise NotImplementedError
 
 
@@ -1487,7 +1480,7 @@ class DateRange(AbstractRange[Date]):
 
     @property
     def seconds_per_step(self) -> int:
-        return self.step * 86400
+        return self.step * Unit.DAY.seconds
 
     @property
     def last(self) -> Date:
@@ -1518,6 +1511,14 @@ class DateRange(AbstractRange[Date]):
     @property
     def seconds(self) -> float:
         return 24 * 60 * 60 * len(self)
+
+    @property
+    def limit(self) -> Date:
+        raise NotImplementedError
+
+    @property
+    def remaining(self) -> float:
+        raise NotImplementedError
 
     @dispatch(int)
     def __getitem__(self, idx: int) -> Date:  # pyright: ignore
@@ -1598,404 +1599,39 @@ class DateRange(AbstractRange[Date]):
         self._current += 1
 
 
-class DayRangeDated(AbstractRange[DateTime]):
-    """ """
-
-    def __init__(
-        self,
-        start: DateTime,
-        stop: DateTime,
-        step: int = 1,
-        inclusive: bool = True,
-        allow_wraparound: bool = True,
-    ):
-        self.start = start
-        self.stop = stop
-        self.step = step
-        self.inclusive = inclusive
-        self._current = self.start
-
-    @property
-    def last(self) -> DateTime:
-        return self.stop  # TODO
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step * 86400
-
-    def __contains__(self, other: DateTime) -> bool:
-        return False  # TODO
-
-    def __len__(self) -> int:
-        return 999  # TODO
-
-    @overload
-    def __getitem__(self, idx: int) -> DateTime: ...
-    @overload
-    def __getitem__(self, idx: slice) -> DayRangeDated: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __reversed__(self) -> Self:
-        return self
-
-    def count(self, item: DateTime) -> int:
-        return int(item in self)
-
-    def _increment(self) -> None:
-        self._current = self._current.add_days(1)
-
-
-class HourRange(AbstractRange[Time]):
-    """
-    Sequence of hours, behaving roughly analogously to the built-in range object.
-
-    Example: ```
-    time0 = Time.parse("05:00")
-    time0 = Time.parse("14:00")
-    hours: TimeHourRange = time0 ** time1
-    ```
-    """
-
+class TimeRange[U: Unit](AbstractTimeRange[Time, U]):
     def __init__(
         self,
         start: Time,
         stop: Time,
-        step: int = 1,
-        inclusive: bool = True,
-        allow_wraparound: bool = True,
-    ):
-        self.start = start
-        self.stop = stop
-        self.step = step
-        self.inclusive = inclusive
-        self._current = start
-
-    @property
-    def last(self) -> Time:
-        return self.stop  # TODO
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step * 3600
-
-    def __contains__(self, other: Time) -> bool:
-        return False  # TODO
-
-    def __len__(self) -> int:
-        return 999  # TODO
-
-    @overload
-    def __getitem__(self, idx: int) -> Time: ...
-    @overload
-    def __getitem__(self, idx: slice) -> HourRange: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __reversed__(self) -> Self:
-        return self
-
-    def _increment(self) -> None:
-        self._current, _ = self._current.add_hours_wraparound(1)
-
-    def _increment_bounded(self) -> None:
-        self._current = self._current.add_hours_bounded(1)
-
-
-class HourRangeDated(AbstractRange[DateTime]):
-    """ """
-
-    def __init__(
-        self,
-        start: DateTime,
-        stop: DateTime,
-        step: int = 1,
-        inclusive: bool = True,
-        allow_wraparound: bool = True,
-    ):
-        self.start = start
-        self.stop = stop
-        self.step = step
-        self.inclusive = inclusive
-        self._current = self.start
-
-    @property
-    def last(self) -> DateTime:
-        return self.stop  # TODO
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step * 3600
-
-    def __contains__(self, other: DateTime) -> bool:
-        return False  # TODO
-
-    def __len__(self) -> int:
-        return 999  # TODO
-
-    @overload
-    def __getitem__(self, idx: int) -> DateTime: ...
-    @overload
-    def __getitem__(self, idx: slice) -> HourRangeDated: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __reversed__(self) -> Self:
-        return self
-
-    def _increment(self) -> None:
-        self._current = self._current.add_hours(1)
-
-
-class MinuteRange(AbstractRange[Time]):
-    def __init__(
-        self,
-        start: Time,
-        stop: Time,
-        step: int = 1,
-        inclusive: bool = True,
-        allow_wraparound: bool = True,
-    ):
-        self.start = start
-        self.stop = stop
-        self.step = step
-        self.inclusive = inclusive
-
-    @property
-    def last(self) -> Time:
-        return self.stop  # TODO
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step * 60
-
-    def __contains__(self, other: Time) -> bool:
-        return False  # TODO
-
-    def __len__(self) -> int:
-        return 999  # TODO
-
-    @overload
-    def __getitem__(self, idx: int) -> Time: ...
-    @overload
-    def __getitem__(self, idx: slice) -> MinuteRange: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __reversed__(self) -> Self:
-        return self
-
-    def count(self, item: Time) -> int:
-        return int(item in self)
-
-    def _increment(self) -> None:
-        self._current, _ = self._current.add_minutes_wraparound(self.step)
-
-    def _increment_bounded(self) -> None:
-        self._current = self._current.add_minutes_bounded(self.step)
-
-
-class MinuteRangeDated(AbstractRange[DateTime]):
-    def __init__(
-        self,
-        start: DateTime,
-        stop: DateTime,
-        step: int = 1,
-        inclusive: bool = True,
-        allow_wraparound: bool = True,
-    ):
-        self.start = start
-        self.stop = stop
-        self.step = step
-        self.inclusive = inclusive
-        self._current = self.start
-
-    @property
-    def last(self) -> DateTime:
-        return self.stop  # TODO
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step * 60
-
-    def __contains__(self, other: DateTime) -> bool:
-        return False  # TODO
-
-    def __len__(self) -> int:
-        return 999  # TODO
-
-    @dispatch(int)
-    def OLD__getitem__(self, idx: int) -> DateTime:  # pyright: ignore
-        if not isinstance(idx, int):
-            return TypeError(f"list indices must be integers or slices, not {type(idx)}")
-
-        length = len(self)
-        if not (-length <= idx < length):
-            raise IndexError(f"{self.__class__.__name__} index out of range")
-
-        return self.start.add_seconds(idx * self.step)
-
-    @dispatch(slice)
-    def OLD__getitem__(self, slc: slice, inclusive: bool = True) -> MinuteRangeDated:
-        """
-        Attention! The step in the slice, if provided, is with respect to the
-          pre-existing step in `self`. This is accordance with the behavior of
-          Python's built-in range().
-        """
-        start, stop, _step = slc.indices(len(self))
-        return MinuteRangeDated(
-            start=self[start],  # pyright: ignore
-            stop=self[stop - int(inclusive)],  # pyright: ignore
-            step=self.step * slc.step,
-        )
-
-    @overload
-    def __getitem__(self, idx: int) -> DateTime: ...
-    @overload
-    def __getitem__(self, idx: slice) -> MinuteRangeDated: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __reversed__(self) -> Self:
-        return self
-
-    def count(self, item: DateTime) -> int:
-        return int(item in self)
-
-    def _increment(self) -> None:
-        self._current = self._current.add_minutes(self.step)
-
-
-class SecondRange(AbstractRange[Time]):
-    def __init__(
-        self,
-        start: Time,
-        stop: Time,
+        *,
+        unit: U,
         step: int = 1,
         inclusive: bool = False,
         allow_wraparound: bool = True,
-    ):
+    ) -> None:
+        self.unit = unit
         self.start = start
         self.stop = stop
         self.step = step
         self.inclusive = inclusive
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step
-
-    @property
-    def last(self) -> Time:
-        return self.stop  # TODO
-
-    def __contains__(self, other: Time) -> bool:
-        return False  # TODO
-
-    def __len__(self) -> int:
-        return 999  # TODO
-
-    @overload
-    def __getitem__(self, idx: int) -> Time: ...
-    @overload
-    def __getitem__(self, idx: slice) -> SecondRange: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __reversed__(self) -> Self:
-        return self
-
-    def count(self, item: Time) -> int:
-        return int(item in self)
-
-    def _increment(self) -> None:
-        self._current, _ = self._current.add_seconds_wraparound(self.step)  # TODO
-
-    def _increment_bounded(self) -> None:
-        self._current = self._current.add_seconds_bounded(1)
+        self.allow_wraparound = allow_wraparound
 
 
-class SecondRangeDated(AbstractRange[DateTime]):
+class DateTimeRange[U: Unit](AbstractTimeRange[DateTime, U]):
     def __init__(
         self,
         start: DateTime,
         stop: DateTime,
+        *,
+        unit: U,
         step: int = 1,
-        inclusive: bool = True,
+        inclusive: bool = False,
         allow_wraparound: bool = True,
-    ):
+    ) -> None:
+        self.unit = unit
         self.start = start
         self.stop = stop
         self.step = step
         self.inclusive = inclusive
-
-    @property
-    def last(self) -> DateTime:
-        rem = self._rem
-        if rem == 0:
-            return self.stop.add_seconds(-(not self.inclusive))
-        return self.stop.add_seconds(-rem)
-
-    @property
-    def seconds_per_step(self) -> int:
-        return self.step
-
-    def __contains__(self, other: DateTime) -> bool:
-        return (
-            (self.start < other)
-            and (self._limit > other)
-            and (self.start.seconds_to(other) % self.step == 0)
-        )
-
-    def __len__(self) -> int:
-        return round(self.start.seconds_to(self.last) % self.step) + 1
-
-    @dispatch(int)
-    def OLD__getitem__(self, idx: int) -> DateTime:  # pyright: ignore
-        if not isinstance(idx, int):
-            return TypeError(f"list indices must be integers or slices, not {type(idx)}")
-
-        length = len(self)
-        if not (-length <= idx < length):
-            raise IndexError(f"{self.__class__.__name__} index out of range")
-
-        return self.start.add_seconds(idx * self.step)
-
-    @dispatch(slice)
-    def OLD__getitem__(
-        self, slc: slice, inclusive: bool = True, allow_wraparound: bool = True
-    ) -> SecondRangeDated:  # pyright: ignore
-        """
-        Attention! The step in the slice, if provided, is with respect to the
-          pre-existing step in `self`. This is accordance with the behavior of
-          Python's built-in range().
-        """
-        start, stop, _step = slc.indices(len(self))
-        return SecondRangeDated(
-            start=self[start],  # pyright: ignore
-            stop=self[stop - int(inclusive)],  # pyright: ignore
-            step=self.step * slc.step,
-        )
-
-    @overload
-    def __getitem__(self, idx: int) -> DateTime: ...
-    @overload
-    def __getitem__(self, idx: slice) -> SecondRangeDated: ...
-    def __getitem__(self, idx: int | slice) -> object:
-        return index_getter(self, idx)
-
-    def __iter__(self) -> Iterator[DateTime]:
-        return iter(self)
-
-    def __reversed__(self) -> SecondRangeDated:
-        raise NotImplementedError  # TODO
-
-    @property
-    def _limit(self) -> DateTime:
-        return self.stop.add_seconds(self._rem * (int(self.inclusive) - 0.5))
-
-    @property
-    def _rem(self) -> float:
-        return round(self.start.seconds_to(self.stop) % self.step, 10)
-
-    def _increment(self) -> None:
-        self._current = self._current.add_seconds(self.step)
+        self.allow_wraparound = allow_wraparound

@@ -85,12 +85,19 @@ class TestSecondRangeDated:
 
     def test__limit(self):
         # Assuming _limit tests some boundary or constraint functionality
-        assert self.sr._limit == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=22)
+        assert self.sr._limit == DateTime(  # TODO # type: ignore
+            year=2025,
+            month=6,
+            day=15,
+            hour=10,
+            minute=30,
+            second=22,
+        )
 
     def test__rem(self):
         # Assuming _rem tests remainder functionality or modulo operations
         # dt = DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=20)
-        assert self.sr._rem == 5  # 5 seconds from start
+        assert self.sr._rem == 5  # 5 seconds from start  # TODO # type: ignore
 
     def test__restart(self): ...
 

@@ -49,13 +49,27 @@ class AtomProtocol(Protocol):
     def to_minutes(self) -> float: ...
     def to_seconds(self) -> float: ...
     @classmethod
-    def from_seconds(cls, n: float | int, places: int = 0) -> Self: ...
+    def from_seconds(cls, n: float | int, places: int | None = 10) -> Self: ...
+    # @overload
     def range(
         self,
-        stop: Self | int,
-        step: int = 1,
-        inclusive: bool = False,
+        # stop: Self | int,
+        # *,
+        # unit: Unit,
+        # step: int = 1,
+        # inclusive: bool = False,
+        *args,
+        **kwargs,
     ) -> RangeProtocol[Self]: ...
+
+    # @overload
+    # def range(
+    #     self,
+    #     stop: Self | int,
+    #     *,
+    #     step: int = 1,
+    #     inclusive: bool = False,
+    # ) -> RangeProtocol[Self]: ...
 
 
 @runtime_checkable

@@ -3,13 +3,6 @@ from .core import (
     DateRange,
     DateTime,
     DateTimeSpan,
-    DayRangeDated,
-    HourRange,
-    HourRangeDated,
-    MinuteRange,
-    MinuteRangeDated,
-    SecondRange,
-    SecondRangeDated,
     Time,
     TimeDelta,
     TimeSpan,
@@ -18,6 +11,15 @@ from .exceptions import (
     DateTimeValidationError,
     DateValidationError,
     TimeValidationError,
+)
+from .extra import (
+    DayRangeDated,
+    HourRange,
+    HourRangeDated,
+    MinuteRange,
+    MinuteRangeDated,
+    SecondRange,
+    SecondRangeDated,
 )
 from .utils import (
     DATE_REGEX,
