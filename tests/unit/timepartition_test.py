@@ -1,7 +1,15 @@
 import pytest
 
 from datethyme import Time, TimeSpan  # pyright: ignore
-from datethyme.scheduling.types import TimePartition
+from datethyme.scheduling.algorithms import (
+    resolve_gaps,
+    resolve_overlaps,
+    squeeze,
+    squeeze_with_rollover,
+    stack,
+)
+from datethyme.scheduling.types import DateTimePartition as TimePartition  # TODO
+
 REPLACE_ME = 99
 
 PARTITION_3H = TimePartition([])
@@ -251,7 +259,7 @@ class TestTimePartition:
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
     def test_from_relative_lengths(self, lengths, start, end, expected):
-        partition = TimePartition.from_relative_lengths(lengths, start=start, end=end)
+        partition = TimePartition.from_relative_lengths(start=start, end=end, segments=lengths)
         assert partition == expected
 
     @pytest.mark.parametrize(
@@ -265,7 +273,7 @@ class TestTimePartition:
     )
     def test_from_durations(self, durations, start, end, names, expected):
         partition = TimePartition.from_durations(
-            durations, durations, start=start, end=end, names=names
+            durations=durations, start=start, end=end, names=names
         )
         assert partition == expected
 
@@ -278,8 +286,8 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_from_minutes_and_start(self, minutes, start, names, expected):
-        partition = TimePartition.from_minutes_and_end(minutes=minutes, start=start, names=names)
+    def test_from_minutes_and_start(self, minutes, end, names, expected):
+        partition = TimePartition.from_minutes_and_end(end=end, minutes=minutes, names=names)
         assert partition == expected
 
     @pytest.mark.parametrize(
@@ -488,7 +496,7 @@ class TestTimePartition:
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
     def test_resolve_gaps(self, original, mode, transformed):
-        assert TimePartition.resolve_gaps(original, mode=mode) == transformed
+        assert resolve_gaps(original, mode=mode) == transformed
 
     @pytest.mark.parametrize(
         "original, mode, transformed",
@@ -500,7 +508,7 @@ class TestTimePartition:
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
     def test_resolve_overlaps(self, original, mode, transformed):
-        assert TimePartition.resolve_overlaps(original, mode=mode) == transformed
+        assert resolve_overlaps(original, mode=mode) == transformed
 
     @pytest.mark.parametrize(
         "original, new_end, transformed",
@@ -577,9 +585,9 @@ class TestTimePartition:
     @pytest.mark.parametrize(
         "original, earliest, latest, gap_resolver, overlap_resolver, min_minutes, squeezed",
         [
-            (REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME),
+            (REPLACE_ME, REPLACE_ME, REPLACE_ME, None, None, REPLACE_ME, REPLACE_ME),
+            (REPLACE_ME, REPLACE_ME, REPLACE_ME, None, None, REPLACE_ME, REPLACE_ME),
+            (REPLACE_ME, REPLACE_ME, REPLACE_ME, None, None, REPLACE_ME, REPLACE_ME),
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
@@ -593,8 +601,9 @@ class TestTimePartition:
         min_minutes,
         squeezed,
     ):
-        transformed = TimePartition.squeeze(
+        transformed = squeeze(
             original,
+            mode="EQUAL",
             earliest=earliest,
             latest=latest,
             gap_resolver=gap_resolver,
@@ -652,8 +661,9 @@ class TestTimePartition:
         min_minutes,
         squeezed,
     ):
-        transformed = TimePartition.squeeze_with_rollover(
+        transformed = squeeze_with_rollover(
             original,
+            mode="EQUAL",
             earliest=earliest,
             latest=latest,
             gap_resolver=gap_resolver,
@@ -672,18 +682,8 @@ class TestTimePartition:
                 REPLACE_ME,
                 REPLACE_ME,
                 REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
-            ),
-            (
-                REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
-                REPLACE_ME,
+                None,
+                None,
                 REPLACE_ME,
                 REPLACE_ME,
                 REPLACE_ME,
@@ -692,8 +692,18 @@ class TestTimePartition:
                 REPLACE_ME,
                 REPLACE_ME,
                 REPLACE_ME,
+                None,
+                None,
                 REPLACE_ME,
                 REPLACE_ME,
+                REPLACE_ME,
+            ),
+            (
+                REPLACE_ME,
+                REPLACE_ME,
+                REPLACE_ME,
+                None,
+                None,
                 REPLACE_ME,
                 REPLACE_ME,
                 REPLACE_ME,
@@ -711,8 +721,9 @@ class TestTimePartition:
         min_minutes,
         squeezed,
     ):
-        transformed = TimePartition.squeeze_with_rollforward(
+        transformed = squeeze_with_rollover(
             original,
+            mode="PROPORTIONAL",
             earliest=earliest,
             latest=latest,
             gap_resolver=gap_resolver,
@@ -731,12 +742,12 @@ class TestTimePartition:
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
     def test_stack(self, original, mode, anchor, stacked):
-        transformed = TimePartition.stack(original, mode=mode, anchor=anchor)
+        transformed = stack(original, mode=mode, anchor=anchor)
         assert transformed == stacked
 
     def test_is_contiguous(self):
         assert TimePartition.is_contiguous(SEQ_CONTIGUOUS)
-        assert TimePartition.is_contiguous(TimePartition.stack(SEQ_GAPS, mode="FORWARD"))
+        assert TimePartition.is_contiguous(stack(SEQ_GAPS, mode="FORWARD"))
         assert not TimePartition.is_contiguous(SEQ_GAPS)
         assert not TimePartition.is_contiguous(SEQ_OVERLAPS)
         assert not TimePartition.is_contiguous(SEQ_GAPS_OVERLAPS)

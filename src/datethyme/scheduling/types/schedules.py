@@ -60,7 +60,7 @@ class DayPartition[T: TimeProtocol](BaseModel):
         return self._blocks
 
     def __contains__(self, obj: object) -> bool:
-        return False # TODO
+        return False  # TODO
 
     @classmethod
     def from_spans(cls, spans: dict[SpanProtocol, str] | Iterable[SpanProtocol]) -> Self:

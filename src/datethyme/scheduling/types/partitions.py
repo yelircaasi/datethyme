@@ -4,21 +4,27 @@ from collections.abc import Callable, Iterable, Iterator
 from itertools import pairwise
 from typing import Literal, Self, Union
 
-from ..._abcs import AbstractPartition, PartitionProtocol
 from ...core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
-from ...protocols import DeltaProtocol, EntryProtocol
+from ...protocols import (
+    DeltaProtocol,
+    EntryProtocol,
+    PartitionProtocol,
+    SpanProtocol,
+    TimeProtocol,
+)
 from ...utils import assert_xor  # TODO: import from adiumentum
 from ..algorithms import (
     is_contiguous,
     stack_forward,
 )
+from ._abcs import AbstractPartition
 
 NestedSpan = Union[TimeSpan, "TimePartition"]
 
 DEFAULT_DATE = Date.parse("2000-01-01")
 
 
-class DateTimePartition(AbstractPartition):
+class DateTimePartition(AbstractPartition[TimeProtocol]):
     # type DateTimeSpan = DateTimeSpan
     """
     TODO: add nesting_mode to determine how nested time partitions are
@@ -38,6 +44,10 @@ class DateTimePartition(AbstractPartition):
 
         if names and not (len(self.spans) == len(self.names)):
             raise ValueError
+
+    @staticmethod
+    def is_contiguous(seq: Iterable[SpanProtocol]) -> bool:
+        raise NotImplementedError
 
     @property
     def named_spans(self) -> tuple[tuple[str, DateTimeSpan], ...]:
@@ -222,7 +232,7 @@ class DateTimePartition(AbstractPartition):
     def from_minutes_and_end(
         cls,
         end: DateTime,
-        segments: Iterable[float],
+        minutes: Iterable[float],
         names: Iterable[str | None] | None = None,
     ) -> Self:
         raise NotImplementedError
@@ -343,6 +353,14 @@ class DateTimePartition(AbstractPartition):
                 for (a, b), name in zip(pairwise(times), names)
             )
         )
+
+    @classmethod
+    def eclipse_forward(cls, spans: Iterable[SpanProtocol[DateTime]]) -> Self:
+        raise NotImplementedError
+
+    @classmethod
+    def eclipse_backward(cls, spans: Iterable[SpanProtocol[DateTime]]) -> Self:
+        raise NotImplementedError
 
     # DEV ONLY -----------------------------------------------------------------------------------
     # class DateTimePartition():

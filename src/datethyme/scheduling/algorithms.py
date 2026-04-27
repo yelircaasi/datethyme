@@ -413,10 +413,13 @@ def resolve_gaps[T: TimeProtocol](
 
 def squeeze(
     seq: SpanIterable[T],
+    *,
     mode: Literal["PROPORTIONAL", "EQUAL"],
     earliest: T | None = None,
     latest: T | None = None,
     min_minutes: int | float = 5,
+    gap_resolver: Callable[[SpanProtocol[T]], SpanProtocol[T]] | None = None,
+    overlap_resolver: Callable[[SpanProtocol[T]], SpanProtocol[T]] | None = None,
 ) -> SpanTuple[T]:
     """Squeeze all elements of `seq` to fit between `earliest` and `latest`."""
     spans: SpanList[T] = []
@@ -449,10 +452,13 @@ def squeeze(
 
 def squeeze_with_rollover(
     seq: SpanIterable[T],
+    *,
     mode: Literal["PROPORTIONAL", "EQUAL"],
     earliest: T | None = None,
     latest: T | None = None,
     min_minutes: int | float = 5,
+    gap_resolver: Callable[[SpanProtocol[T]], SpanProtocol[T]] | None = None,
+    overlap_resolver: Callable[[SpanProtocol[T]], SpanProtocol[T]] | None = None,
 ) -> tuple[SpanTuple[T], SpanTuple[T]]:
     """Please write me!"""
 
