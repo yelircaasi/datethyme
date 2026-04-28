@@ -184,6 +184,9 @@ class SpanProtocol[T: TimeProtocol](DurationProtocol, Protocol):
 
 @runtime_checkable
 class PartitionProtocol[Atom](Protocol):
+    start: Atom
+    end: Atom
+
     @classmethod
     def from_starts(
         cls,
