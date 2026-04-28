@@ -8,15 +8,16 @@ from pydantic import (
     BaseModel,
     ModelWrapValidatorHandler,
     NonNegativeInt,
+    ValidationError,
     model_validator,
 )
 
 from ..._abcs import TimeProtocol
 from ...constants import AddResult
 from ...core import Date, Time
-from ...protocols import EntryProtocol, PartitionProtocol, SpanProtocol
+from ...protocols import DurationProtocol, EntryProtocol, PartitionProtocol, SpanProtocol
 from .entries import Entries, Entry
-from .slots import TimeSlot
+from .partitions import is_partitioned
 
 type ResultTriple[T] = tuple[AddResult, list[EntryProtocol], T]
 DEFAULT_DATE = Date.parse("2000-01-01")
@@ -30,7 +31,8 @@ class ScheduledEntries(BaseModel, EntryProtocol):
     name: str
     _start: Time
     _end: Time
-    _subpartition: list[EntryProtocol | ScheduledEntries | TimeSlot]
+    _subpartition: list[DurationProtocol]  # list[EntryProtocol | ScheduledEntries | TimeSlot]
+    # TODO: clean up type hierarchy/ontology -> what is needed where?
 
     @property
     def start(self) -> Time:
@@ -39,7 +41,13 @@ class ScheduledEntries(BaseModel, EntryProtocol):
     @model_validator(mode="wrap")
     @classmethod
     def assert_partitioned(cls, data: object, handler: ModelWrapValidatorHandler[Self]) -> Self:
-        return handler(data)
+        # need
+        prevalidated = handler(data)
+        members: list[DurationProtocol] = prevalidated._subpartition
+        if not is_partitioned(members):
+            msg = f"Data is not a correct partition:\n{data}"
+            raise ValidationError(msg)
+        return prevalidated
 
     @property
     def minutes(self) -> NonNegativeInt:
@@ -59,6 +67,10 @@ class EmptyBlock[T: TimeProtocol](PartitionProtocol[T]): ...
 
 
 class ChunkedDay[T: TimeProtocol](PartitionProtocol):
+    """
+    Consideration: distinguish between "not added because of conflict" (for add_fixed)
+        and "not added because of no room" (presumably only for add_flex)? -> AddResult enum
+    """
     def __init__(self, fixed: Iterable[FixedBlock]) -> None:
         self._fixed = list(fixed)
         self._flex: list[FlexBlock] = []
@@ -70,13 +82,13 @@ class ChunkedDay[T: TimeProtocol](PartitionProtocol):
         """Cases:
 
         - fits in gap
-            -> return (AddResult.ADDED,     [],                    self)
+            -> return (AddResult.ADDED,          [],                    self)
         - fits in gap with stretching or squeezing
-            -> return (AddResult.ADDED,     [],                    self)
+            -> return (AddResult.ADDED_MUTATED,  [],                    self)
         - conflict with fixed
-            -> return (AddResult.NOT_ADDED, [Entry],               self)
+            -> return (AddResult.NOT_ADDED,      [Entry],               self)
         - displaces incumbent flex entries
-            -> return (AddResult.DISPLACE,  [<displaced entries>], Self)
+            -> return (AddResult.DISPLACE,       [<displaced entries>], Self)
 
         """
         success = AddResult.ADDED
@@ -84,16 +96,16 @@ class ChunkedDay[T: TimeProtocol](PartitionProtocol):
         return success, popped, self
 
     def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
-        """Cases:
+        """Cases: TODO
 
         - fits in gap
-            -> return (AddResult.ADDED,     [],                    self)
+            -> return (AddResult.ADDED,          [],                    self)
         - fits in gap with stretching or squeezing
-            -> return (AddResult.ADDED,     [],                    self)
-        - conflict with fixed
-            -> return (AddResult.NOT_ADDED, [Entry],               self)
-        - displaces incumbent flex entries
-            -> return (AddResult.DISPLACE,  [<displaced entries>], Self)
+            -> return (AddResult.ADDED_MUTATED,  [],                    self)
+        - does not fit in any suitable gap
+            -> return (AddResult.NOT_ADDED,      [Entry],               self)
+        - displaces incumbent flex entries (via priority)
+            -> return (AddResult.DISPLACE,       [<displaced entries>], Self)
 
         """
         success = AddResult.ADDED

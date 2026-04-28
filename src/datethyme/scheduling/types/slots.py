@@ -34,6 +34,22 @@ class TimeSlotMixin[T: TimeProtocol]:
         self._require_any: ReceivingSet = require_any or set()
         self._require_none: ReceivingSet = require_none or set()
 
+    @final
+    @classmethod
+    def locked(cls, start: T, end: T) -> Self:
+        return cls(start, end, require_all=frozenset({SENTINEL}))
+
+    @final
+    @classmethod
+    def locked_open(cls, start: T, end: T) -> Self:
+        return cls(
+            start,
+            end,
+            require_all=frozenset(),
+            require_any=frozenset(),
+            require_none=frozenset(),
+        )
+
     @property
     def start(self) -> T:
         return self._start
@@ -42,7 +58,7 @@ class TimeSlotMixin[T: TimeProtocol]:
     def end(self) -> T:
         return self._end
 
-    def is_valid(self, context: Context | set[Context]) -> bool:
+    def can_receive(self, context: Context | set[Context]) -> bool:
         contexts = {context} if isinstance(context, str) else context
         if None in contexts:
             msg = (
@@ -54,18 +70,6 @@ class TimeSlotMixin[T: TimeProtocol]:
         any_condition = bool((not self._require_any) or self._require_any.intersection(context))
         none_condition = not self._require_none.intersection(context)
         return all_condition and any_condition and none_condition
-
-    @final
-    @classmethod
-    def locked(cls, start: T, end: T) -> Self:
-        return cls(start, end, require_all=frozenset({SENTINEL}))
-
-    @final
-    @classmethod
-    def locked_open(cls, start: T, end: T) -> Self:
-        return cls(
-            start, end, require_all=frozenset(), require_any=frozenset(), require_none=frozenset()
-        )
 
     def add_requirement(self, type_: Literal["all", "any", "none"], context: Context) -> Self:
         attrname = f"_require_{type_}"

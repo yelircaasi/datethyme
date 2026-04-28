@@ -130,7 +130,13 @@ class RangeProtocol[T: AtomProtocol](Protocol):
 
 
 @runtime_checkable
-class SpanProtocol[T: TimeProtocol](Protocol):
+class DurationProtocol(Protocol):
+    start: TimeProtocol
+    end: TimeProtocol
+
+
+@runtime_checkable
+class SpanProtocol[T: TimeProtocol](DurationProtocol, Protocol):
     @property
     def start(self) -> T: ...
     @property

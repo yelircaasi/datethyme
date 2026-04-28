@@ -8,6 +8,7 @@ from typing import NamedTuple, cast, overload
 
 class AddResult(Enum):
     ADDED = auto()
+    ADDED_MODIFIED = auto()
     DISPLACE = auto()
     NOT_ADDED = auto()
 

@@ -7,6 +7,7 @@ from typing import Literal, Self, Union
 from ...core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ...protocols import (
     DeltaProtocol,
+    DurationProtocol,
     EntryProtocol,
     PartitionProtocol,
     SpanProtocol,
@@ -22,6 +23,14 @@ from ._abcs import AbstractPartition
 NestedSpan = Union[TimeSpan, "TimePartition"]
 
 DEFAULT_DATE = Date.parse("2000-01-01")
+
+
+def is_partitioned(spans: Iterable[DurationProtocol]) -> bool:
+    sorted_spans: list[DurationProtocol] = sorted(spans, key=lambda s: s.start)
+    for first, second in pairwise(sorted_spans):
+        if not first.end == second.start:
+            return False
+    return True
 
 
 class DateTimePartition(AbstractPartition[TimeProtocol]):
