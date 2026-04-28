@@ -2,7 +2,7 @@ from operator import attrgetter
 
 from datethyme import Time
 from datethyme.scheduling.types import DayPartition, Entries, Entry
-
+from datethyme.partition import TimeProtocol, DateProtocol
 agenda = DayPartition.from_starts(
     {
         Time.parse("05:30"): "morning routine",

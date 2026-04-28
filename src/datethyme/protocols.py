@@ -5,7 +5,11 @@ from typing import Literal, Protocol, Self, TypeVar, overload, runtime_checkable
 
 from pydantic import NonNegativeInt
 
+from .constants import AddResult
+
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
+type ResultTriple[T] = tuple[AddResult, list[EntryProtocol], T]
+type TimeBlock = SpanProtocol | PartitionProtocol
 
 
 @runtime_checkable
@@ -256,7 +260,8 @@ class EntryProtocol[D: DateProtocol](Protocol):
     @property
     def earliest_date(self) -> D | None: ...
 
-class TimeBlockProtocol(PartitionProtocol, Protocol):
-    ...
+class TimeBlockProtocol[T: TimeProtocol](PartitionProtocol, Protocol):
+    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]: ...
+    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]: ...
 
 class EntriesProtocol(Protocol): ...

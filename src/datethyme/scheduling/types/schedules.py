@@ -15,12 +15,10 @@ from pydantic import (
 from ..._abcs import TimeProtocol
 from ...constants import AddResult
 from ...core import Date, Time, TimeSpan
-from ...protocols import DurationProtocol, EntryProtocol, PartitionProtocol, SpanProtocol
+from ...protocols import DurationProtocol, EntryProtocol, PartitionProtocol, ResultTriple, SpanProtocol, TimeBlockProtocol
 from .entries import Entries, Entry
 from .partitions import is_partitioned
 
-type TimeBlock = SpanProtocol | PartitionProtocol
-type ResultTriple[T] = tuple[AddResult, list[EntryProtocol], T]
 DEFAULT_DATE = Date.parse("2000-01-01")
 
 
@@ -58,13 +56,13 @@ class ScheduledEntry(BaseModel, EntryProtocol):
     def assert_validity(self) -> None: ...
 
 
-class FixedBlock[T: TimeProtocol](PartitionProtocol[T], ScheduledEntry): ...
+class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry): ...
 
 
-class FlexBlock[T: TimeProtocol](PartitionProtocol[T], ScheduledEntry): ...
+class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry): ...
 
 
-class EmptyBlock[T: TimeProtocol](PartitionProtocol[T]): ...
+class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T]): ...
 
 
 class DayPartition[T: TimeProtocol](PartitionProtocol):
@@ -120,7 +118,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol):
     def assert_validity(self) -> None: ...
 
     @property
-    def blocks(self) -> list[TimeBlock]:
+    def blocks(self) -> list[TimeBlockProtocol]:
         self.assert_validity()
         return sorted(self._fixed + self._fixed + self._fixed, key=lambda x: (x.start, x.end))
 
