@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
+from functools import lru_cache
 from typing import Literal, TypeVar
 
 from .constants import Unit
@@ -109,6 +110,15 @@ class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
 
 class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
     @property
+    @lru_cache
+    def stable_random_id(self) -> str:
+        return str(hash(self))[:8]
+
+    @property
+    def name(self) -> str:
+        return f"Span{self.stable_random_id}[{self.start!s}-{self.end!s})]"
+
+    @property
     @abstractmethod
     def start(self) -> Atom: ...
 
@@ -124,10 +134,6 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
 
     def __hash__(self) -> int:
         return hash((self.start, self.end))
-
-    @property
-    def name(self) -> str:
-        return "TODO"
 
     @property
     @abstractmethod

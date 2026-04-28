@@ -138,6 +138,8 @@ class DurationProtocol(Protocol):
 @runtime_checkable
 class SpanProtocol[T: TimeProtocol](DurationProtocol, Protocol):
     @property
+    def name(self) -> str: ...
+    @property
     def start(self) -> T: ...
     @property
     def end(self) -> T: ...
@@ -183,7 +185,7 @@ class SpanProtocol[T: TimeProtocol](DurationProtocol, Protocol):
 
 
 @runtime_checkable
-class PartitionProtocol[Atom](Protocol):
+class PartitionProtocol[Atom](SpanProtocol, Protocol):
     start: Atom
     end: Atom
 
@@ -254,5 +256,7 @@ class EntryProtocol[D: DateProtocol](Protocol):
     @property
     def earliest_date(self) -> D | None: ...
 
+class TimeBlockProtocol(PartitionProtocol, Protocol):
+    ...
 
 class EntriesProtocol(Protocol): ...
