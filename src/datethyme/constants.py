@@ -3,13 +3,23 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 from functools import lru_cache
-from typing import cast, overload
+from typing import NamedTuple, cast, overload
+
+
+class AddResult(Enum):
+    ADDED = auto()
+    DISPLACE = auto()
+    NOT_ADDED = auto()
 
 
 @dataclass
 class _RecipeMixin:
     stretch: Stretch
     squeeze: Squeeze
+
+
+class Snap(NamedTuple):
+    within: int = 10
 
 
 class Squeeze(StrEnum):

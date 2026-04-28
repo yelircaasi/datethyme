@@ -12,11 +12,13 @@ from pydantic import (
 )
 
 from ..._abcs import TimeProtocol
+from ...constants import AddResult
 from ...core import Date, Time
-from ...protocols import EntryProtocol, SpanProtocol
+from ...protocols import EntryProtocol, PartitionProtocol, SpanProtocol
 from .entries import Entries, Entry
 from .slots import TimeSlot
 
+type ResultTriple[T] = tuple[AddResult, list[EntryProtocol], T]
 DEFAULT_DATE = Date.parse("2000-01-01")
 
 
@@ -45,6 +47,58 @@ class ScheduledEntries(BaseModel, EntryProtocol):
         return round(self._start.minutes_to(self._end))
 
     def assert_validity(self) -> None: ...
+
+
+class FixedBlock[T: TimeProtocol](PartitionProtocol[T]): ...
+
+
+class FlexBlock[T: TimeProtocol](PartitionProtocol[T]): ...
+
+
+class EmptyBlock[T: TimeProtocol](PartitionProtocol[T]): ...
+
+
+class ChunkedDay[T: TimeProtocol](PartitionProtocol):
+    def __init__(self, fixed: Iterable[FixedBlock]) -> None:
+        self._fixed = list(fixed)
+        self._flex: list[FlexBlock] = []
+        self._gaps: list[EmptyBlock] = []
+
+    def assert_partitioned(self) -> None: ...
+
+    def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]:
+        """Cases:
+
+        - fits in gap
+            -> return (AddResult.ADDED,     [],                    self)
+        - fits in gap with stretching or squeezing
+            -> return (AddResult.ADDED,     [],                    self)
+        - conflict with fixed
+            -> return (AddResult.NOT_ADDED, [Entry],               self)
+        - displaces incumbent flex entries
+            -> return (AddResult.DISPLACE,  [<displaced entries>], Self)
+
+        """
+        success = AddResult.ADDED
+        popped: list[EntryProtocol] = []
+        return success, popped, self
+
+    def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
+        """Cases:
+
+        - fits in gap
+            -> return (AddResult.ADDED,     [],                    self)
+        - fits in gap with stretching or squeezing
+            -> return (AddResult.ADDED,     [],                    self)
+        - conflict with fixed
+            -> return (AddResult.NOT_ADDED, [Entry],               self)
+        - displaces incumbent flex entries
+            -> return (AddResult.DISPLACE,  [<displaced entries>], Self)
+
+        """
+        success = AddResult.ADDED
+        popped: list[EntryProtocol] = []
+        return success, popped, self
 
 
 class DayPartition[T: TimeProtocol](BaseModel):
