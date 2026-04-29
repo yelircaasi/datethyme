@@ -1,3 +1,4 @@
+# noqa: Unreliable floating point equality comparison
 from datethyme import TimeDelta
 
 

@@ -115,6 +115,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         return str(hash(self))[:8]
 
     @property
+    @lru_cache
     def name(self) -> str:
         return f"Span{self.stable_random_id}[{self.start!s}-{self.end!s})]"
 

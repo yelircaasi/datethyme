@@ -15,9 +15,16 @@ from pydantic import (
 from ..._abcs import TimeProtocol
 from ...constants import AddResult
 from ...core import Date, Time, TimeSpan
-from ...protocols import DurationProtocol, EntryProtocol, PartitionProtocol, ResultTriple, SpanProtocol, TimeBlockProtocol
+from ...protocols import (
+    DurationProtocol,
+    EntryProtocol,
+    PartitionProtocol,
+    ResultTriple,
+    SpanProtocol,
+    TimeBlockProtocol,
+)
+from ..utils import is_partitioned
 from .entries import Entries, Entry
-from .partitions import is_partitioned
 
 DEFAULT_DATE = Date.parse("2000-01-01")
 
@@ -113,7 +120,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol):
         popped: list[EntryProtocol] = []
         return success, popped, self
 
-    _blocks: list[TimeBlock]
+    _blocks: list[TimeBlockProtocol]
 
     def assert_validity(self) -> None: ...
 

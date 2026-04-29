@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 
 from ..constants import Recipe
-
 from ..protocols import EntryProtocol
 from .types import Calendar
 

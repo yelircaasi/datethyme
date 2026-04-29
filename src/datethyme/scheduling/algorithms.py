@@ -38,7 +38,7 @@ type PairCallback[TP: TimeProtocol] = Callable[
 """Transform one pair of spans into another pair of the same type."""
 
 
-def snap_forward(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def snap_forward[T: TimeProtocol](first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end >= second.start:
@@ -46,7 +46,7 @@ def snap_forward(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]
     return first.snap_end_to(second.start), second
 
 
-def snap_back(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def snap_back[T: TimeProtocol](first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end >= second.start:
@@ -54,7 +54,9 @@ def snap_back(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
     return first, second.snap_start_to(first.end)
 
 
-def snap_between(span: SpanProtocol[T], earliest: T | None, latest: T | None) -> SpanProtocol[T]:
+def snap_between[T: TimeProtocol](
+    span: SpanProtocol[T], earliest: T | None, latest: T | None
+) -> SpanProtocol[T]:
     """Please write me!"""
 
     earliest_none = earliest is None
@@ -123,7 +125,7 @@ def get_total_length[T: TimeProtocol](seq: SpanIterable[T]) -> float:
     return sum(lengths)
 
 
-def stack_forward(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
+def stack_forward[T: TimeProtocol](seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
     """Please write me!"""
 
     spans: SpanList[T] = []
@@ -136,7 +138,7 @@ def stack_forward(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
     return spans
 
 
-def stack_backward(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
+def stack_backward[T: TimeProtocol](seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
     """Please write me!"""
 
     spans: SpanList[T] = []
@@ -149,7 +151,9 @@ def stack_backward(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]
     return spans
 
 
-def stack_from_middle(seq: SpanIterable[T], anchor: T | None = None) -> SpanList[T]:
+def stack_from_middle[T: TimeProtocol](
+    seq: SpanIterable[T], anchor: T | None = None
+) -> SpanList[T]:
     """Please write me!"""
 
     spans: SpanList[T] = []
@@ -191,7 +195,9 @@ def apply_pairwise[T: TimeProtocol](
     return spans
 
 
-def split_overlap_equal(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def split_overlap_equal[T: TimeProtocol](
+    first: SpanProtocol[T], second: SpanProtocol[T]
+) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end <= second.start:
@@ -204,7 +210,9 @@ def split_overlap_equal(first: SpanProtocol[T], second: SpanProtocol[T]) -> Span
     )
 
 
-def split_overlap_proportional(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def split_overlap_proportional[T: TimeProtocol](
+    first: SpanProtocol[T], second: SpanProtocol[T]
+) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end <= second.start:
@@ -218,7 +226,7 @@ def split_overlap_proportional(first: SpanProtocol[T], second: SpanProtocol[T]) 
     return first.snap_end_to(new_border), second.snap_start_to(new_border)
 
 
-def split_overlap_inverse_proportional(
+def split_overlap_inverse_proportional[T: TimeProtocol](
     first: SpanProtocol[T], second: SpanProtocol[T]
 ) -> SpanPair[T]:
     """Please write me!"""
@@ -234,7 +242,9 @@ def split_overlap_inverse_proportional(
     return first.snap_end_to(new_border), second.snap_start_to(new_border)
 
 
-def split_gap_equal(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def split_gap_equal[T: TimeProtocol](
+    first: SpanProtocol[T], second: SpanProtocol[T]
+) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end >= second.start:
@@ -247,7 +257,9 @@ def split_gap_equal(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair
     )
 
 
-def split_gap_proportional(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def split_gap_proportional[T: TimeProtocol](
+    first: SpanProtocol[T], second: SpanProtocol[T]
+) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end >= second.start:
@@ -262,7 +274,9 @@ def split_gap_proportional(first: SpanProtocol[T], second: SpanProtocol[T]) -> S
     return new_first, new_second
 
 
-def split_gap_inverse_proportional(first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
+def split_gap_inverse_proportional[T: TimeProtocol](
+    first: SpanProtocol[T], second: SpanProtocol[T]
+) -> SpanPair[T]:
     """Please write me!"""
 
     if first.end >= second.start:
@@ -277,7 +291,7 @@ def split_gap_inverse_proportional(first: SpanProtocol[T], second: SpanProtocol[
     return new_first, new_second
 
 
-def truncate(
+def truncate[T: TimeProtocol](
     seq: SpanIterable[T], earliest: T, latest: T
 ) -> tuple[SpanList[T], SpanList[T], SpanList[T]]:
     """Please write me!"""
@@ -411,7 +425,7 @@ def resolve_gaps[T: TimeProtocol](
     raise ValueError(f"Invalid mode for method 'resolve_gaps': '{mode}'")
 
 
-def squeeze(
+def squeeze[T: TimeProtocol](
     seq: SpanIterable[T],
     *,
     mode: Literal["PROPORTIONAL", "EQUAL"],
@@ -450,7 +464,7 @@ def squeeze(
     return tuple(spans)
 
 
-def squeeze_with_rollover(
+def squeeze_with_rollover[T: TimeProtocol](
     seq: SpanIterable[T],
     *,
     mode: Literal["PROPORTIONAL", "EQUAL"],
