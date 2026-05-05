@@ -1,8 +1,8 @@
-# datethyme.TimePartition
+# datethyme.scheduling.types.TimePartition
 
 This is the documentation page for the `TimePartition` class.
 
-## ::: datethyme.TimePartition
+## ::: datethyme.scheduling.types.TimePartition
     handler: python
     options:
         summary: false

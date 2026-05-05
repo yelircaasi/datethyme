@@ -2,7 +2,7 @@
 
 This is the documentation page for the `DateTimePartition` class.
 
-## ::: datethyme.DateTimePartition
+## ::: datethyme.scheduling.types.DateTimePartition
     handler: python
     options:
         summary: false

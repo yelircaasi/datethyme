@@ -1,8 +1,8 @@
-# datethyme.ScheduleItem
+# datethyme.scheduling.types
 
-This is the documentation page for the `ScheduleItem` class and its container type, `ScheduleItems`.
+This is the documentation page for the `Entry` class and its container type, `Entries`.
 
-## ::: datethyme.ScheduleItem
+## ::: datethyme.scheduling.types.Entry
     handler: python
     options:
         summary: false
@@ -10,7 +10,7 @@ This is the documentation page for the `ScheduleItem` class and its container ty
         show_root_heading: true
         show_source: false
 
-## ::: datethyme.ScheduleItems
+## ::: datethyme.scheduling.types.Entries
     handler: python
     options:
         summary: false
