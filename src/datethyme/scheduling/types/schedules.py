@@ -33,12 +33,14 @@ class ScheduledEntry(BaseModel, EntryProtocol):
     """Like CalendarPartition, except that start time may be after 00:00
     and end time may be before 24:00.
     """
-
-    name: str
     _start: Time
     _end: Time
     _subentries: list[DurationProtocol]  # list[EntryProtocol | ScheduledEntries | TimeSlot]
     # TODO: clean up type hierarchy/ontology -> what is needed where?
+
+    @property
+    def name(self) -> str:
+        raise NotImplementedError
 
     @property
     def start(self) -> Time:
@@ -143,7 +145,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol):
     def partition_element(
         self,
         element_name: str | int,
-        subelements: Iterable[SpanProtocol | Entry],
+        subelements: PartitionProtocol[T] | Iterable[SpanProtocol[T] | Entry],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self:

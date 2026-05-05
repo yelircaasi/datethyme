@@ -64,7 +64,7 @@ class Recipe(_RecipeMixin, Enum):
 
 
 class Unit(Enum):
-    """TODO: Rewrite using dataclass mixin?"""
+    """"""
 
     SECOND = 1
     MINUTE = 60
@@ -108,9 +108,9 @@ class Unit(Enum):
         raise ValueError
 
     @overload
-    def divmod(self, dividend: float, by: Unit) -> tuple[int, float]: ...
-    @overload
     def divmod(self, dividend: int, by: Unit) -> tuple[int, int]: ...
+    @overload
+    def divmod(self, dividend: float, by: Unit) -> tuple[int, float]: ...
     def divmod(self, dividend: int | float, by: Unit) -> tuple[int, int | float]:
         x_per_self: int = self._n_per_self(by)
         q, r = divmod(dividend, x_per_self)

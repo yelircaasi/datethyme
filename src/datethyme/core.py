@@ -317,7 +317,7 @@ class Date(BaseModel):
         return cls.from_ordinal(round(n))
 
     # @deal.has()
-    def format(self, template: str) -> str:  # TODO
+    def format(self, template: str) -> str:
         """Returns a the date written out in long form."""
 
         def get_string(placeholder: str) -> str:  # noqa: PLR0911
@@ -652,13 +652,13 @@ class Time(BaseModel):
     def end(cls) -> Time:
         return cls(hour=24)
 
-    def add_hours(self, n: int | float) -> Time:  # TODO: keep?
+    def add_hours(self, n: int | float) -> Time:
         return Time.from_hours(self.to_hours() + n)
 
-    def add_minutes(self, n: int | float) -> Time:  # TODO: keep?
+    def add_minutes(self, n: int | float) -> Time:
         return Time.from_minutes(self.to_minutes() + n)
 
-    def add_seconds(self, n: int | float) -> Time:  # TODO: keep?
+    def add_seconds(self, n: int | float) -> Time:
         return Time.from_seconds(self.to_seconds() + n)
 
     def span(self, other: Time, name: str | None = None) -> TimeSpan:
@@ -1178,7 +1178,7 @@ class DateTime(BaseModel):
     def hours_from_last(self, other: Time) -> float:
         return 24 - self.hours_to_next(other)
 
-    def range[U: Unit](  # type: ignore
+    def range[U: Unit](
         self,
         stop: DateTime | int,
         *,
@@ -1254,8 +1254,8 @@ class TimeSpan(AbstractSpan[Time]):
     def gap(
         self, other: Time | TimeSpan, strict: bool = False
     ) -> TimeSpan | None:  # alias end_to_start
-        start: Time = get_start(other)  # TODO # type: ignore
-        end: Time = get_end(other)  # TODO # type: ignore
+        start: Time = get_start(other)
+        end: Time = get_end(other)
         if self.start > end:
             return TimeSpan(end, self.start)
         if start > self.end:
@@ -1263,10 +1263,10 @@ class TimeSpan(AbstractSpan[Time]):
         return None
 
     def hull(
-        self, other: Time | AbstractSpan[Time], strict: bool = False
+        self, other: Time | TimeSpan, strict: bool = False
     ) -> TimeSpan:  # alias outer, union, cover
-        start = get_start(other)  # TODO # type: ignore
-        end = get_end(other)  # TODO # type: ignore
+        start = get_start(other)
+        end = get_end(other)
         return TimeSpan(min(self.start, start), max(self.end, end))
 
     def intersection(self, other: TimeSpan, strict: bool = False) -> TimeSpan | None:  # alias inner
@@ -1616,6 +1616,7 @@ class TimeRange[U: Unit](AbstractTimeRange[Time, U]):
         self.step = step
         self.inclusive = inclusive
         self.allow_wraparound = allow_wraparound
+    
 
 
 class DateTimeRange[U: Unit](AbstractTimeRange[DateTime, U]):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from functools import lru_cache
-from typing import Literal, TypeVar
+from typing import Literal, TypeVar, overload
 
 from .constants import Unit
 from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
@@ -40,7 +40,13 @@ class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
     def __reversed__(self) -> Iterable[Atom]: ...
 
     @abstractmethod
-    def __getitem__(self, idx) -> Atom: ...
+    @overload
+    def __getitem__(self, idx: int) -> Atom: ...
+    @abstractmethod
+    @overload
+    def __getitem__(self, idx: slice) -> RangeProtocol[Atom]: ...
+    @abstractmethod
+    def __getitem__(self, idx) -> Atom | RangeProtocol[Atom]: ...
 
     def __iter__(self) -> Iterator[Atom]:
         self._restart()
@@ -266,7 +272,8 @@ class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
     unit: U
 
     @property
-    def seconds_per_step(self) -> int: ...
+    def seconds_per_step(self) -> int:
+        return self.unit.seconds
 
     @abstractmethod
     def __init__(
@@ -275,10 +282,10 @@ class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
 
     @property
     def last(self) -> T:
-        return self.start
+        raise NotImplementedError
 
     def __len__(self) -> int:
-        return 999
+        raise NotImplementedError
 
     def __contains__(self, item: T) -> bool:
         return True
@@ -286,7 +293,14 @@ class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
     def __reversed__(self) -> Iterable[T]:
         raise NotImplementedError
 
-    def __getitem__(self, idx) -> T:
+    # def __getitem__(self, idx) -> T:
+    #     raise NotImplementedError
+
+    @overload
+    def __getitem__(self, idx: int) -> T: ...
+    @overload
+    def __getitem__(self, idx: slice) -> RangeProtocol[T]: ...
+    def __getitem__(self, idx) -> T | RangeProtocol[T]:
         raise NotImplementedError
 
     def _increment(self) -> None:

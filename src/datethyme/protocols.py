@@ -135,8 +135,10 @@ class RangeProtocol[T: AtomProtocol](Protocol):
 
 @runtime_checkable
 class DurationProtocol(Protocol):
-    start: TimeProtocol
-    end: TimeProtocol
+    @property
+    def start(self) -> TimeProtocol: ...
+    @property
+    def end(self) -> TimeProtocol: ...
 
 
 @runtime_checkable
@@ -193,11 +195,11 @@ class SpanProtocol[T: TimeProtocol](DurationProtocol, Protocol):
         min_minutes: int | float = 5,
     ) -> SpanProtocol[T]: ...
 
-    def hull(self, other: SpanProtocol[T]) -> SpanProtocol[T]: ...
+    def hull(self, other: T | SpanProtocol[T], strict: bool = False) -> SpanProtocol[T]: ...
 
 
 @runtime_checkable
-class PartitionProtocol[Atom](SpanProtocol, Protocol):
+class PartitionProtocol[Atom: TimeProtocol](SpanProtocol, Protocol):
     start: Atom
     end: Atom
 
@@ -218,7 +220,7 @@ class PartitionProtocol[Atom](SpanProtocol, Protocol):
     def partition_element(
         self,
         element_id: str,
-        other: PartitionProtocol[Atom] | Iterable[EntryProtocol],
+        subelements: PartitionProtocol[Atom] | Iterable[SpanProtocol[Atom] | EntryProtocol],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self: ...
@@ -226,14 +228,6 @@ class PartitionProtocol[Atom](SpanProtocol, Protocol):
 
 @runtime_checkable
 class EntryProtocol[D: DateProtocol](Protocol):
-    # name: str
-    # priority: float
-    # min_time: NonNegativeInt
-    # normal_time: NonNegativeInt
-    # ideal_time: NonNegativeInt
-    # max_time: NonNegativeInt
-    # contexts: set[str]
-    # dependencies: set[str]
 
     @property
     def name(self) -> str: ...
