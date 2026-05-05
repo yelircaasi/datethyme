@@ -6,7 +6,6 @@ from functools import lru_cache
 from itertools import pairwise
 from typing import Literal, Self
 
-from ...core import TimeSpan
 from ...protocols import (
     DeltaProtocol,
     EntryProtocol,

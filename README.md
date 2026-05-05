@@ -8,6 +8,7 @@
 - 72 `NotImplementedError`s
 - go through and fix all `__getitem__` methods in one fell swoop
 - 8 `cast`s (review whether necessary)
+- support time zone info (at least enough for conversion back to zoned stdlib types)
 - make optimal use of `deal` (-> figure out what that will be)
 - make optimal use of `hypothesis` (-> figure out what that will be)
 - move all valuable code out of` _ranges_old.py` into newer type-parametrized classes

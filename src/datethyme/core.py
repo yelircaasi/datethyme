@@ -23,7 +23,6 @@ from math import floor
 from typing import Any, Literal, Self, TypeVar, overload
 
 # import deal
-from multipledispatch import dispatch
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -540,7 +539,7 @@ class Time(BaseModel):
 
     def __add__(self, mins: int | float) -> Time:
         return Time.from_minutes(min(1440, max(0, self.to_minutes() + mins)))
-    
+
     @overload
     def __sub__(self, subtrahend: Time) -> TimeDelta: ...
     @overload
@@ -864,6 +863,22 @@ class TimeDelta:
     @property
     def days(self) -> float:
         return self._seconds / Unit.DAY.seconds
+    
+    @property
+    def full_days(self) -> float:
+        return int(self.days)
+    
+    @property
+    def full_hours(self) -> float:
+        return int(self.hours)
+    
+    @property
+    def full_minutes(self) -> float:
+        return int(self.minutes)
+    
+    @property
+    def full_seconds(self) -> float:
+        return int(self.seconds)
 
     @property
     def hours(self) -> float:
@@ -913,9 +928,7 @@ class DateTime(BaseModel):
     @classmethod
     # @deal.has()
     # @deal.raises(DateTimeValidationError, DateValidationError, TimeValidationError)
-    def validate_datetime(
-        cls, raw_datetime: str | dict | list | tuple
-    ) -> dict[str, int | float]:
+    def validate_datetime(cls, raw_datetime: str | dict | list | tuple) -> dict[str, int | float]:
         if isinstance(raw_datetime, dict):
             return validate_date(raw_datetime) | validate_time(raw_datetime)
 

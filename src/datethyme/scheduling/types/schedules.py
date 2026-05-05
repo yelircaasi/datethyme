@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import Iterable
-from typing import Self, overload
+from typing import Self, Sequence, overload
 
 from pydantic import (
     BaseModel,
@@ -29,13 +29,13 @@ from .entries import Entries, Entry
 DEFAULT_DATE = Date.parse("2000-01-01")
 
 
-class ScheduledEntry(BaseModel, EntryProtocol):
+class ScheduledEntry[T: TimeProtocol](BaseModel):
     """Like CalendarPartition, except that start time may be after 00:00
     and end time may be before 24:00.
     """
 
-    _start: Time
-    _end: Time
+    _start: T
+    _end: T
     _subentries: list[DurationProtocol]  # list[EntryProtocol | ScheduledEntries | TimeSlot]
     # TODO: clean up type hierarchy/ontology -> what is needed where?
 
@@ -44,7 +44,7 @@ class ScheduledEntry(BaseModel, EntryProtocol):
         raise NotImplementedError
 
     @property
-    def start(self) -> Time:
+    def start(self) -> T:
         return self._start
 
     @model_validator(mode="wrap")
@@ -66,26 +66,51 @@ class ScheduledEntry(BaseModel, EntryProtocol):
     def assert_validity(self) -> None: ...
 
 
-class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry): ...
+class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry):
+    start: T
+    end: T
+
+    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
+        raise NotImplementedError
+    
+    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
+        raise NotImplementedError
 
 
-class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry): ...
+class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry):
+    start: T
+    end: T
+
+    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
+        raise NotImplementedError
+    
+    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
+        raise NotImplementedError
 
 
-class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T]): ...
+class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T]):
+    start: T
+    end: T
+
+    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
+        raise NotImplementedError
+    
+    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
+        raise NotImplementedError
 
 
-class DayPartition[T: TimeProtocol](PartitionProtocol):
+class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
     """Special case of [Date]TimePartition beginning at 00:00 and ending at 24:00 on the same day.
 
     Consideration: distinguish between "not added because of conflict" (for add_fixed)
         and "not added because of no room" (presumably only for add_flex)? -> AddResult enum
     """
 
-    def __init__(self, fixed: Iterable[FixedBlock]) -> None:
-        self._fixed = list(fixed)
-        self._flex: list[FlexBlock] = []
-        self._gaps: list[EmptyBlock] = []
+    def __init__(self, fixed: Iterable[FixedBlock[T]]) -> None:
+        self._fixed: list[FixedBlock[T]] = list(fixed)
+        self._flex: list[FlexBlock[T]] = []
+        self._gaps: list[EmptyBlock[T]] = []
+        self.end: T
 
     def assert_partitioned(self) -> None: ...
 
@@ -128,9 +153,10 @@ class DayPartition[T: TimeProtocol](PartitionProtocol):
     def assert_validity(self) -> None: ...
 
     @property
-    def blocks(self) -> list[TimeBlockProtocol]:
+    def blocks(self) -> list[TimeBlockProtocol[T]]:
         self.assert_validity()
-        return sorted(self._fixed + self._fixed + self._fixed, key=lambda x: (x.start, x.end))
+        all_blocks: Sequence[FixedBlock[T] | FlexBlock[T] | EmptyBlock[T]] = (self._fixed + self._fixed + self._fixed)
+        return sorted(all_blocks, key=lambda x: (x.start, x.end))
 
     def __contains__(self, obj: object) -> bool:
         return False  # TODO

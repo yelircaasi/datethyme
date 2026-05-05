@@ -112,8 +112,7 @@ class TimePartition(AbstractPartition[Time]):
             raise ValueError
         return cls(
             spans=(
-                TimeSpan(start=a, end=b, name=name)
-                for (a, b), name in zip(pairwise(times), names)
+                TimeSpan(start=a, end=b, name=name) for (a, b), name in zip(pairwise(times), names)
             )
         )
 

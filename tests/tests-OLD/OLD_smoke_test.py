@@ -1,4 +1,4 @@
-from datethyme import Date, DateTime, Time
+from datethyme import Date, DateTime, Time, TimeDelta
 
 t0 = Time.parse("00:37")
 t1 = Time.parse("05:15:30.345")
