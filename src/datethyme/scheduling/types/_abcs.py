@@ -60,7 +60,7 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
 
     @property
     def span(self) -> SpanProtocol[T]:
-        return self.start.to(self.end)  # TODO # type: ignore
+        return self.start.to(self.end)
 
     @property
     def midpoint(self) -> T:
@@ -313,7 +313,8 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     ) -> Self:
         new_length = scale_factor * self.minutes
         new_start = new_start or self.start
-        result = self.__class__(new_start, new_start.add_minutes(new_length))  # type: ignore
+        raise NotImplementedError
+        result = self.__class__(new_start, new_start.add_minutes(new_length))
 
         if result.minutes < min_minutes:
             raise ValueError
@@ -327,7 +328,8 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     ) -> Self:
         new_length = scale_factor * self.minutes
         new_end = new_end or self.start
-        result = self.__class__(new_end.add_minutes(-new_length), new_end)  # type: ignore
+        raise NotImplementedError
+        result = self.__class__(new_end.add_minutes(-new_length), new_end)
 
         if result.minutes < min_minutes:
             raise ValueError
@@ -335,7 +337,7 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
 
     def reordered(self, orderer: Callable[[SpanProtocol[T]], int | float | str | T]) -> Self:
         reordered = sorted(self.spans, key=orderer)
-        return self.__class__.from_partition(stack_forward(reordered))  # type: ignore
+        return self.__class__.from_partition(stack_forward(reordered))
 
     # FROM TimePartition -------------------------------------------------
 
@@ -387,12 +389,12 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
             indent = " " * level
             print(f"{indent:<12} {event.start} — {event.name.title()}")
 
-        def format_span(span: TimeSpan):
+        def format_span(span: SpanProtocol):
             return f"{span.start} - {span.name}"
 
         return (
             "TimePartition(\n    "
-            f"{'\n    '.join(map(format_span, self.spans))}"  # TODO # type: ignore
+            f"{'\n    '.join(map(format_span, self.spans))}"
             f"\n    {self.end} - <END>\n)"
         )
 

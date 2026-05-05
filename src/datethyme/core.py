@@ -109,7 +109,7 @@ class Date(BaseModel):
     @classmethod
     # @deal.has()
     # @deal.raises(DateValidationError)
-    def validate_raw_date(cls, raw_date: str | dict | list | tuple) -> dict[str, str | int | float]:
+    def validate_raw_date(cls, raw_date: str | dict | list | tuple) -> dict[str, int | float]:
         return validate_date(raw_date)
 
     @model_serializer
@@ -460,7 +460,7 @@ class Time(BaseModel):
     @classmethod
     # @deal.has()
     # @deal.raises(TimeValidationError)
-    def validate_time(cls, raw_time: str | dict | list | tuple) -> dict[str, str | int | float]:
+    def validate_time(cls, raw_time: str | dict | list | tuple) -> dict[str, int | float]:
         return validate_time(raw_time)
 
     @model_serializer
@@ -540,20 +540,17 @@ class Time(BaseModel):
 
     def __add__(self, mins: int | float) -> Time:
         return Time.from_minutes(min(1440, max(0, self.to_minutes() + mins)))
-
-    @dispatch(BaseModel)
-    def __sub__(self, subtrahend: Time) -> TimeDelta:  # pyright: ignore
-        if not isinstance(subtrahend, Time):
-            raise TypeError
-        return TimeDelta(self.to_seconds() - subtrahend.to_seconds())
-
-    @dispatch(int)
-    def __sub__(self, mins: int) -> Time:  # pyright: ignore
-        return self._sub(mins)
-
-    @dispatch(float)
-    def __sub__(self, mins: int) -> Time:
-        return self._sub(mins)
+    
+    @overload
+    def __sub__(self, subtrahend: Time) -> TimeDelta: ...
+    @overload
+    def __sub__(self, subtrahend: int) -> Time: ...
+    def __sub__(self, subtrahend: Time | int) -> Time | TimeDelta:
+        if isinstance(subtrahend, Time):
+            return TimeDelta(self.to_seconds() - subtrahend.to_seconds())
+        if isinstance(subtrahend, int | float):
+            return self._sub(subtrahend)
+        raise TypeError
 
     def _sub(self, mins: int | float) -> Time:
         return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
@@ -918,7 +915,7 @@ class DateTime(BaseModel):
     # @deal.raises(DateTimeValidationError, DateValidationError, TimeValidationError)
     def validate_datetime(
         cls, raw_datetime: str | dict | list | tuple
-    ) -> dict[str, str | int | float]:
+    ) -> dict[str, int | float]:
         if isinstance(raw_datetime, dict):
             return validate_date(raw_datetime) | validate_time(raw_datetime)
 
@@ -1520,23 +1517,24 @@ class DateRange(AbstractRange[Date]):
     def remaining(self) -> float:
         raise NotImplementedError
 
-    @dispatch(int)
-    def __getitem__(self, idx: int) -> Date:  # pyright: ignore
+    @overload
+    def __getitem__(self, idx: int) -> Date: ...
+    @overload
+    def __getitem__(self, idx: slice) -> DateRange: ...
+    def __getitem__(self, idx: int | slice) -> Date | DateRange:
+        if isinstance(idx, slice):
+            start, stop, step = idx.indices(len(self))
+            return DateRange(
+                self.start + start * self.step,
+                self.start + stop * self.step,
+                self.step * step,
+            )
         if idx < 0:
             idx += len(self)
         d = self.start + idx * self.step
         if d in self:
             return d
         raise ValueError(f"Index out of range for {self:r!}")
-
-    @dispatch(slice)
-    def __getitem__(self, sli: slice) -> DateRange:  # pyright: ignore
-        start, stop, step = sli.indices(len(self))
-        return DateRange(
-            self.start + start * self.step,
-            self.start + stop * self.step,
-            self.step * step,
-        )
 
     def __len__(self):
         if self.step > 0:

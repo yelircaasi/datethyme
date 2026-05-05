@@ -16,6 +16,7 @@ agenda = DayPartition.from_starts(
         Time.parse("20:30"): "evening routine",
         Time.parse("22:30"): "sleep",
     },
+    end=Time.parse("23:00")
 )
 
 morning_routine: Entries = Entries((

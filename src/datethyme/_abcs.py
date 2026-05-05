@@ -53,7 +53,7 @@ class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
         return self
 
     def __next__(self) -> Atom:
-        if self._current < self.stop:  # pyright: ignore
+        if self._current < self.stop:
             self._increment()
             return self._current
         else:
