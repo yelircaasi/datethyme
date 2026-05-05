@@ -195,7 +195,7 @@ class SpanProtocol[T: TimeProtocol](DurationProtocol, Protocol):
         min_minutes: int | float = 5,
     ) -> SpanProtocol[T]: ...
 
-    def hull(self, other: T | SpanProtocol[T], strict: bool = False) -> SpanProtocol[T]: ...
+    def hull(self, other: T | Self, strict: bool = False) -> SpanProtocol[T]: ...
 
 
 @runtime_checkable
@@ -228,7 +228,6 @@ class PartitionProtocol[Atom: TimeProtocol](SpanProtocol, Protocol):
 
 @runtime_checkable
 class EntryProtocol[D: DateProtocol](Protocol):
-
     @property
     def name(self) -> str: ...
 

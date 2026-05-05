@@ -1616,7 +1616,6 @@ class TimeRange[U: Unit](AbstractTimeRange[Time, U]):
         self.step = step
         self.inclusive = inclusive
         self.allow_wraparound = allow_wraparound
-    
 
 
 class DateTimeRange[U: Unit](AbstractTimeRange[DateTime, U]):

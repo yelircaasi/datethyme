@@ -33,6 +33,7 @@ class ScheduledEntry(BaseModel, EntryProtocol):
     """Like CalendarPartition, except that start time may be after 00:00
     and end time may be before 24:00.
     """
+
     _start: Time
     _end: Time
     _subentries: list[DurationProtocol]  # list[EntryProtocol | ScheduledEntries | TimeSlot]
@@ -135,17 +136,19 @@ class DayPartition[T: TimeProtocol](PartitionProtocol):
         return False  # TODO
 
     @classmethod
-    def from_spans(cls, spans: dict[SpanProtocol, str] | Iterable[SpanProtocol]) -> Self:
+    def from_spans(
+        cls, spans: dict[T | SpanProtocol[T], str] | Iterable[T | SpanProtocol[T]], end: T
+    ) -> Self:
         raise NotImplementedError
 
     @classmethod
-    def from_starts(cls, starts: dict[T, str] | Iterable[T]) -> Self:
+    def from_starts(cls, starts: dict[T, str] | Iterable[T], end: T) -> Self:
         raise NotImplementedError
 
     def partition_element(
         self,
         element_name: str | int,
-        subelements: PartitionProtocol[T] | Iterable[SpanProtocol[T] | Entry],
+        subelements: PartitionProtocol[T] | Iterable[SpanProtocol[T] | EntryProtocol],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self:

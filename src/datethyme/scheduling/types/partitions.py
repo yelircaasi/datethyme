@@ -9,7 +9,7 @@ from ...protocols import (
     EntryProtocol,
     PartitionProtocol,
 )
-from ._abcs import AbstractPartition
+from ._abcs import AbstractPartition, SpanProtocol
 
 NestedSpan = Union[TimeSpan, "TimePartition"]
 
@@ -51,7 +51,9 @@ class DateTimePartition(AbstractPartition[DateTime]):
         )
 
     @staticmethod
-    def format_span(span: DateTimeSpan | DateTimePartition, indent: int = 0):
+    def format_span(
+        span: SpanProtocol[DateTime] | PartitionProtocol[DateTime], indent: int = 0
+    ) -> str:
         prefix = indent * " "
         if isinstance(span, DateTimeSpan):
             return f"{prefix}{span.start} - {id(span)}"
@@ -93,7 +95,7 @@ class TimePartition(AbstractPartition[Time]):
     def partition_element(
         self,
         element_id: str,
-        other: PartitionProtocol | Iterable[EntryProtocol],
+        other: PartitionProtocol[Time] | Iterable[SpanProtocol[Time] | EntryProtocol],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self:
@@ -116,7 +118,7 @@ class TimePartition(AbstractPartition[Time]):
         )
 
     @staticmethod
-    def format_span(span: TimeSpan | TimePartition, indent: int = 0):
+    def format_span(span: SpanProtocol[Time] | PartitionProtocol[Time], indent: int = 0) -> str:
         prefix = indent * " "
         if isinstance(span, TimeSpan):
             return f"{prefix}{span.start} - {id(span)}"

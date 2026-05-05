@@ -206,22 +206,22 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     def partition_element(
         self,
         element_id: str,
-        other: PartitionProtocol[T] | Iterable[EntryProtocol],
+        other: PartitionProtocol[T] | Iterable[SpanProtocol[T] | EntryProtocol],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self:
         raise NotImplementedError
 
-    def round_hours(self, round_to: int) -> Self:
+    def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         return self.__class__(
             spans=tuple(span.round_hours(round_to) for span in self.spans),
             names=tuple(span.name for span in self.spans),
         )
 
-    def round_minutes(self, round_to: int) -> Self:
+    def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         return self.__class__(spans=tuple(span.round_minutes(round_to) for span in self.spans))
 
-    def round_seconds(self, round_to: float) -> Self:
+    def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         return self.__class__(span.round_seconds(round_to) for span in self.spans)
 
     @classmethod
