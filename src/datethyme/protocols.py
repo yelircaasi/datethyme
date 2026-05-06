@@ -263,6 +263,11 @@ class EntryProtocol[D: DateProtocol](Protocol):
 
 
 @runtime_checkable
+class EntryAdapterProtocol[D: DateProtocol](Protocol):
+    def __init__(self, foreign: object) -> None: ...
+
+
+@runtime_checkable
 class TimeBlockProtocol[T: TimeProtocol](PartitionProtocol, Protocol):
     def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]: ...
     def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]: ...

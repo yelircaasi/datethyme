@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 
 from pydantic import NonNegativeInt
 
-from ...protocols import DateProtocol, EntriesProtocol, EntryProtocol
+from ...protocols import DateProtocol, EntriesProtocol, EntryAdapterProtocol, EntryProtocol
 
 
 def make_entry_adapter[T: object, D: DateProtocol](
@@ -20,8 +20,8 @@ def make_entry_adapter[T: object, D: DateProtocol](
     get_dependencies: Callable[[T], set[str]],
     get_due_date: Callable[[T], D | None],
     get_earliest_date: Callable[[T], D | None],
-) -> type[EntryProtocol]:
-    class EntryAdapter(EntryProtocol):
+) -> type[EntryAdapterProtocol]:
+    class EntryAdapter(EntryAdapterProtocol):
         def __init__(
             self,
             entry: T,
@@ -75,9 +75,8 @@ def make_entry_adapter[T: object, D: DateProtocol](
     return EntryAdapter
 
 
-def make_entries_adapter[T: Iterable[EntryProtocol]](
-    # TODO
-) -> type[EntriesProtocol]:
+def make_entries_adapter[T: Iterable[EntryProtocol]]() -> type[EntriesProtocol]:
     class EntriesAdapter: ...
 
+    raise NotImplementedError
     return EntriesAdapter

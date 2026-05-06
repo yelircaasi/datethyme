@@ -7,13 +7,17 @@ from datethyme.utils import (
 )
 
 
-class DateValidationError(ValueError):  # TODO
+class DateValidationError(ValueError):
+    """Could be a bit more like standard pydantic validation error."""
+
     @classmethod
     def from_value(cls, val):
         return cls(f"Invalid date: {val}")
 
 
-class TimeValidationError(ValueError):  # TODO
+class TimeValidationError(ValueError):
+    """Could be a bit more like standard pydantic validation error."""
+
     @classmethod
     def from_value(cls, val):
         return cls(f"Invalid time: {val}")

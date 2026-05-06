@@ -1,5 +1,5 @@
 """
-# with pytest.raises(ValueError) as exc_info: TODO
+# with pytest.raises(ValueError) as exc_info:
 #     process_string(42)
 # assert str(exc_info.value) == expected_message
 """
@@ -19,7 +19,7 @@ class TestHourRange:
         inclusive=True,
     )
 
-    def test_dunder_contains(self):
+    def test_dunder_contains(self) -> None:
         assert Time(hour=7, minute=30) in self.hr
         assert Time(hour=13, minute=30) not in self.hr
         assert Time(hour=9, minute=31) not in self.hr
@@ -28,11 +28,11 @@ class TestHourRange:
             stop=time445,
         )
 
-    def test_dunder_getitem(self):
+    def test_dunder_getitem(self) -> None:
         assert self.hr[1] == Time(hour=6, minute=30)
         assert self.hr[1:4] == HourRange(Time(hour=6, minute=30), Time(hour=9, minute=30))  # type: ignore
 
-    def test_dunder_init(self):
+    def test_dunder_init(self) -> None:
         with pytest.raises(
             ValueError,
             match=r"Set allow_wraparound=True to allow HourRange to pass a day boundary.",
@@ -46,13 +46,13 @@ class TestHourRange:
         )
         assert len(hr_wrap) == 2
 
-    def test_dunder_len(self):
+    def test_dunder_len(self) -> None:
         assert len(self.hr) == 8
         assert len(self.hr_inclusive) == 9
 
     def test_dunder_reversed(
         self,
-    ): ...  # TODO: remove __reversed__? in any case, not the highest priority
+    ): ...  # remove __reversed__? in any case, not the highest priority
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):

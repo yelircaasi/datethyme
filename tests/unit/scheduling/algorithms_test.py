@@ -1,7 +1,9 @@
 import pytest
 
 from datethyme import DateTime, DateTimeSpan, Time, TimeSpan
+from datethyme.protocols import TimeProtocol
 from datethyme.scheduling.algorithms import (
+    SpanIterable,
     apply_pairwise,
     earliest_start,
     get_relative_lengths,
@@ -827,11 +829,11 @@ def test_split_overlap_proportional(
         ),
     ],
 )
-def test_stack_backward(
-    original: list[Time] | list[DateTime],
-    stacked: list[Time] | list[DateTime],
+def test_stack_backward[T: TimeProtocol](
+    original: SpanIterable[T],
+    stacked: list[T],
 ) -> None:
-    assert stack_backward(original) == stacked  # TODO # type: ignore
+    assert stack_backward(original) == stacked
 
 
 @pytest.mark.parametrize(

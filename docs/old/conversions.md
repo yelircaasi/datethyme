@@ -75,8 +75,6 @@ For other `#!python datethyme` types, the `#!python **` is not defined.
 
 Range creation using the operator `#!python **` is defined only for date ranges because for unit-specific time ranges, it is ambiguous and needs additional information to be passed as parameters to the relevant methods. However, it is defined for already-instantiated time range types.
 
-TODO
-
 | `#!python **`             | `#!python HourRange` | `#!python HourRangeDated` | `#!python Date` | `#!python Time` | `#!python DateTime`  | `#!python DateRange` |
 | :------------------------ | :-----------------:   | :-----------------------: | :-----------------: | :-----------------: | :-----------------: | :---------------------: |
 | `#!python HourRange`      | `#!python HourRange`  | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  |
@@ -85,10 +83,6 @@ TODO
 | `#!python Time`           | `#!python ___`        | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  |
 | `#!python DateTime`       | `#!python ___`        | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  |
 | `#!python DateRange`      | `#!python ___`        | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  | `#!python ___`  |
-
-TODO: minutes
-
-TODO: seconds
 
 ### Range Extension
 

@@ -8,7 +8,7 @@ from datethyme.scheduling.algorithms import (
     squeeze_with_rollover,
     stack,
 )
-from datethyme.scheduling.types import DateTimePartition as TimePartition  # TODO
+from datethyme.scheduling.types import DateTimePartition as TimePartition
 
 REPLACE_ME = 99
 
@@ -113,9 +113,9 @@ SEQ_UNORDERED = (
 class TestTimePartition:
     def test_dunder_init(self): ...
 
-    def test_dunder_init_error(self):
-        with pytest.raises(TypeError):  # TODO
-            ...
+    def test_dunder_init_error(self) -> None:
+        with pytest.raises(TypeError):
+            raise NotImplementedError
 
     @pytest.mark.parametrize(
         "partition, midpoint",
@@ -126,7 +126,7 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_midpoint(self, partition, midpoint):
+    def test_midpoint(self, partition, midpoint) -> None:
         assert partition.midpoint == midpoint
 
     @pytest.mark.parametrize(
@@ -357,8 +357,8 @@ class TestTimePartition:
         assert result == transformed
 
     def test_affine_transform_errors(self):
-        with pytest.raises(ValueError):  # TODO
-            ...
+        with pytest.raises(ValueError):
+            raise NotImplementedError
 
     @pytest.mark.parametrize(
         "partition, maybe_contained, is_contained",

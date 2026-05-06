@@ -76,7 +76,7 @@ class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
         return len(self.__class__(self.start, item, step=self.step, inclusive=False))
 
     def index_ALTERNATIVE(self, item: Atom, tolerance: float = 1e-8) -> int:
-        """TODO: Determine superior indexing approach."""
+        """Is this the superior indexing approach?"""
         return compute_index(
             start=round(item.to_seconds()),
             current=round(self.start.to_seconds()),

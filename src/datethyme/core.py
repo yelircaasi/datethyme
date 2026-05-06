@@ -3,7 +3,6 @@ Next step: go from AbstractRange[T] to BaseRange[T] and implement everything com
     that can be implemented in a generic manner; leave the rest to the respective subclasses.
 
 Do the same for AbstractSpan[T] -> BaseSpan[T] and AbstractPartition[T] -> BasePartition[T]
-TODO: add x_to_next and x_from_last methods for all time-related objects
 
 add add_x and maybe also subtract_x for time increments
 
@@ -1353,7 +1352,7 @@ class DateTimeSpan(AbstractSpan[DateTime]):
 
     @property
     def name(self) -> str:
-        return self._name or "TODO"
+        return self._name or "PLACEHOLDER"
 
     @property
     def days(self) -> float:
@@ -1372,7 +1371,7 @@ class DateTimeSpan(AbstractSpan[DateTime]):
         return 99999
 
     def __add__(self, other: Date | Time | DateTime) -> DateTimeSpan:
-        return self  # TODO
+        raise NotImplementedError
 
     def __hash__(self) -> int:
         return hash((self._start, self._end, self._name))

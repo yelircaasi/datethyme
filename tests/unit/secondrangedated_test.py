@@ -72,20 +72,20 @@ class TestSecondRangeDated:
 
     def test_dunder_reversed(
         self,
-    ): ...  # TODO: remove __reversed__? in any case, not the highest priority
+    ): ...  # remove __reversed__? in any case, not the highest priority
 
-    def test_index(self):
+    def test_index(self) -> None:
         with pytest.raises(ValueError, match=r"..."):
             self.sr.index(PLACEHOLDER_DATETIME)
 
-    def test__increment(self):
+    def test__increment(self) -> None:
         curr = self.sr._current
         self.sr._increment
         assert self.sr._current == (curr.add_seconds(1))
 
     def test__limit(self):
         # Assuming _limit tests some boundary or constraint functionality
-        assert self.sr._limit == DateTime(  # TODO # type: ignore
+        assert self.sr.limit == DateTime(
             year=2025,
             month=6,
             day=15,
@@ -94,10 +94,10 @@ class TestSecondRangeDated:
             second=22,
         )
 
-    def test__rem(self):
+    def test__rem(self) -> None:
         # Assuming _rem tests remainder functionality or modulo operations
         # dt = DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=20)
-        assert self.sr._rem == 5  # 5 seconds from start  # TODO # type: ignore
+        assert self.sr.remaining == 5  # 5 seconds from start
 
     def test__restart(self): ...
 

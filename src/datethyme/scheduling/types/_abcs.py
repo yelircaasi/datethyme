@@ -304,7 +304,7 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     def index_from_T(self, point: T) -> int | None:
         raise NotImplementedError
 
-    def forward_affine_transform(  # TODO
+    def forward_affine_transform(
         self,
         scale_factor: float,
         new_start: T | None = None,
@@ -319,7 +319,7 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
             raise ValueError
         return result
 
-    def backward_affine_transform(  # TODO
+    def backward_affine_transform(
         self,
         scale_factor: float,
         new_end: T | None = None,
@@ -372,10 +372,10 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     def iter_nested(self) -> Iterator[tuple[int, SpanProtocol[T]]]:
         raise NotImplementedError
 
-    def __str__(self):
-        return "TODO: "  # {self}"
+    def __str__(self) -> str:
+        return "PLACEHOLDER"  # {self}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # change _spans to spans later
         return (
             f"TimePartition(\n    "

@@ -18,10 +18,7 @@ DEFAULT_DATE = Date.parse("2000-01-01")
 
 class DateTimePartition(AbstractPartition[DateTime]):
     # type DateTimeSpan = DateTimeSpan
-    """
-    TODO: add nesting_mode to determine how nested time partitions are
-    resized under different operations
-    """
+    """ """
 
     @property
     def passes_day_boundary(self) -> bool:

@@ -66,7 +66,7 @@ class TestDayRangeDated:
 
     def test_dunder_reversed(
         self,
-    ): ...  # TODO: remove __reversed__? in any case, not the highest priority
+    ): ...  # remove __reversed__? in any case, not the highest priority
 
     def test_count(self):
         assert (

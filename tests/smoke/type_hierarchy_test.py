@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from datethyme import (
     DateRange,
     DateTimeSpan,
@@ -17,7 +19,7 @@ from datethyme.protocols import (
     SpanProtocol,
     TimeBlockProtocol,
 )
-from datethyme.scheduling import DateTimePartition, TimePartition
+from datethyme.scheduling import DateTimePartition, TimePartition, make_entry_adapter
 from datethyme.scheduling.types import (
     Calendar,
     CalendarDay,
@@ -31,7 +33,24 @@ from datethyme.scheduling.types import (
 
 def test_entryprotocol_conformity() -> None:
     assert isinstance(ScheduledEntry, EntryProtocol)
-    # TODO: use entry adapter and ensure that it conforms to EntryProtocol
+
+    class ForeignEntry: ...
+
+    EntryType = make_entry_adapter(
+        get_name=attrgetter("PLACEHOLDER"),
+        get_projects=attrgetter("PLACEHOLDER"),
+        get_priority=attrgetter("PLACEHOLDER"),
+        get_min_time=attrgetter("PLACEHOLDER"),
+        get_normal_time=attrgetter("PLACEHOLDER"),
+        get_ideal_time=attrgetter("PLACEHOLDER"),
+        get_max_time=attrgetter("PLACEHOLDER"),
+        get_contexts=attrgetter("PLACEHOLDER"),
+        get_dependencies=attrgetter("PLACEHOLDER"),
+        get_due_date=attrgetter("PLACEHOLDER"),
+        get_earliest_date=attrgetter("PLACEHOLDER"),
+    )
+    foreign = ForeignEntry()
+    assert isinstance(EntryType(foreign), EntryProtocol)
 
 
 def test_rangeprotocol_conformity() -> None:

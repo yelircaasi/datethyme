@@ -37,7 +37,6 @@ class ScheduledEntry[T: TimeProtocol](BaseModel):
     _start: T
     _end: T
     _subentries: list[DurationProtocol]  # list[EntryProtocol | ScheduledEntries | TimeSlot]
-    # TODO: clean up type hierarchy/ontology -> what is needed where?
 
     @property
     def name(self) -> str:
@@ -132,7 +131,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
         return success, popped, self
 
     def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
-        """Cases: TODO
+        """Cases:
 
         - fits in gap
             -> return (AddResult.ADDED,          [],                    self)
@@ -146,6 +145,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
         """
         success = AddResult.ADDED
         popped: list[EntryProtocol] = []
+        raise NotImplementedError
         return success, popped, self
 
     _blocks: list[TimeBlockProtocol]
@@ -161,7 +161,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
         return sorted(all_blocks, key=lambda x: (x.start, x.end))
 
     def __contains__(self, obj: object) -> bool:
-        return False  # TODO
+        raise NotImplementedError
 
     @classmethod
     def from_spans(

@@ -1,5 +1,5 @@
 {
-    description = "TODO: rewrite: A flake to use a Python poetry project in an FHS environment when poetry2nix is uncooperative";
+    description = "Python development flake.";
     inputs = {
         nixpkgs = {
             url = "github:nixos/nixpkgs/a77b87719ff11d3d7ea2439c406361b6b0c4c56a"; # 2025-10-01

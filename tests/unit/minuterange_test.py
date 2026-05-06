@@ -48,7 +48,9 @@ class TestMinuteRange:
 
     def test_dunder_reversed(
         self,
-    ): ...  # TODO: remove __reversed__? in any case, not the highest priority
+    ) -> None:
+        # remove __reversed__? in any case, not the highest priority
+        raise NotImplementedError
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):

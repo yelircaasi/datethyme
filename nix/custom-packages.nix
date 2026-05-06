@@ -1,4 +1,3 @@
-# TODO: add structlint
 {pkgs}: let
     lib = pkgs.lib;
 
@@ -15,8 +14,6 @@
             pygments
         ])
     );
-
-    # TODO: package mdsf if version on nixpkgs is not bumped soon, or make PR to nixpkgs
 
     pythonMdformat = python.withPackages (
         p: [p.mdformat p.mdformat-mkdocs]

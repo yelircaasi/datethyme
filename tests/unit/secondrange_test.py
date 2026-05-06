@@ -60,7 +60,7 @@ class TestSecondRange:
 
     def test_dunder_reversed(
         self,
-    ): ...  # TODO: remove __reversed__? in any case, not the highest priority
+    ): ...  # remove __reversed__? in any case, not the highest priority
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):
