@@ -1,4 +1,14 @@
-from datethyme import DateRange, DateTimeSpan, HourRange, HourRangeDated, MinuteRange, MinuteRangeDated, SecondRange, SecondRangeDated, TimeSpan
+from datethyme import (
+    DateRange,
+    DateTimeSpan,
+    HourRange,
+    HourRangeDated,
+    MinuteRange,
+    MinuteRangeDated,
+    SecondRange,
+    SecondRangeDated,
+    TimeSpan,
+)
 from datethyme.core import DateTimeRange, TimeRange
 from datethyme.protocols import (
     EntryProtocol,
@@ -18,9 +28,11 @@ from datethyme.scheduling.types import (
     ScheduledEntry,
 )
 
+
 def test_entryprotocol_conformity() -> None:
     assert isinstance(ScheduledEntry, EntryProtocol)
     # TODO: use entry adapter and ensure that it conforms to EntryProtocol
+
 
 def test_rangeprotocol_conformity() -> None:
     assert isinstance(DateRange, RangeProtocol)
@@ -32,6 +44,7 @@ def test_rangeprotocol_conformity() -> None:
     assert isinstance(SecondRangeDated, RangeProtocol)
     assert isinstance(MinuteRangeDated, RangeProtocol)
     assert isinstance(HourRangeDated, RangeProtocol)
+
 
 def test_spanprotocol_conformity() -> None:
     assert isinstance(TimeSpan, SpanProtocol)

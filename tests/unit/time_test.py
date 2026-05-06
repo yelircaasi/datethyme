@@ -1,3 +1,4 @@
+from math import isclose
 from typing import Literal
 
 import pytest
@@ -42,7 +43,7 @@ class TestTime:
         time_with_seconds = Time.parse("09:15:30.500")
         assert time_with_seconds.hour == 9
         assert time_with_seconds.minute == 15
-        assert time_with_seconds.second == 30.5
+        assert isclose(time_with_seconds.second, 30.5)
 
     @pytest.mark.parametrize(
         "hours, expected",

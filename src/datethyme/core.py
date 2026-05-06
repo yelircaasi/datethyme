@@ -863,19 +863,19 @@ class TimeDelta:
     @property
     def days(self) -> float:
         return self._seconds / Unit.DAY.seconds
-    
+
     @property
     def full_days(self) -> float:
         return int(self.days)
-    
+
     @property
     def full_hours(self) -> float:
         return int(self.hours)
-    
+
     @property
     def full_minutes(self) -> float:
         return int(self.minutes)
-    
+
     @property
     def full_seconds(self) -> float:
         return int(self.seconds)

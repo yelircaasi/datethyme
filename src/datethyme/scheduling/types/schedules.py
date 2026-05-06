@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Iterable
-from typing import Self, Sequence, overload
+from collections.abc import Iterable, Sequence
+from typing import Self, overload
 
 from pydantic import (
     BaseModel,
@@ -72,7 +72,7 @@ class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry):
 
     def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
         raise NotImplementedError
-    
+
     def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
         raise NotImplementedError
 
@@ -83,7 +83,7 @@ class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry):
 
     def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
         raise NotImplementedError
-    
+
     def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
         raise NotImplementedError
 
@@ -94,7 +94,7 @@ class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T]):
 
     def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
         raise NotImplementedError
-    
+
     def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
         raise NotImplementedError
 
@@ -155,7 +155,9 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
     @property
     def blocks(self) -> list[TimeBlockProtocol[T]]:
         self.assert_validity()
-        all_blocks: Sequence[FixedBlock[T] | FlexBlock[T] | EmptyBlock[T]] = (self._fixed + self._fixed + self._fixed)
+        all_blocks: Sequence[FixedBlock[T] | FlexBlock[T] | EmptyBlock[T]] = (
+            self._fixed + self._fixed + self._fixed
+        )
         return sorted(all_blocks, key=lambda x: (x.start, x.end))
 
     def __contains__(self, obj: object) -> bool:

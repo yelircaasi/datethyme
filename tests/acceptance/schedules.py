@@ -51,8 +51,8 @@ agenda = agenda.partition_element(
     min_length=5,
     max_length=60,
 )
-
-agenda, leftover_chores = agenda.pack_from(  # TODO # type: ignore
+# TODO: implement
+agenda, leftover_chores = agenda.pack_from(  # type: ignore
     "chores",
     chore_backlog,
     prefer_compress=False,
