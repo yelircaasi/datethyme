@@ -7,7 +7,7 @@ from pydantic import NonNegativeInt
 from ...protocols import DateProtocol, EntriesProtocol, EntryProtocol
 
 
-def make_entry_adapter[T: object, D: DateProtocol](  # noqa: C901 (too complex)
+def make_entry_adapter[T: object, D: DateProtocol](
     *,
     get_name: Callable[[T], str],
     get_projects: Callable[[T], set[str]],

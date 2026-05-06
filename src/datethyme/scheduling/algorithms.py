@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from functools import partial
 from itertools import pairwise
-from typing import Literal, TypeVar, cast, overload
+from typing import Literal, TypeVar, overload
 
 from ..protocols import SpanProtocol, TimeProtocol
 
@@ -72,20 +72,24 @@ def snap_between[T: TimeProtocol](
     raise ValueError
 
 
-def earliest_start[T: TimeProtocol](seq: SpanIterable[T] | Iterable[T]) -> T:
-    """Please write me!"""
+def get_point_or_start[T: TimeProtocol](val: T | SpanProtocol[T]) -> T:
+    if isinstance(val, SpanProtocol):
+        return val.start
+    return val
 
-    if all(map(lambda inst: isinstance(inst, TimeProtocol), seq)):
-        return min(cast(Iterable[T], seq))
-    return min([t.start for t in cast(SpanIterable[T], seq)])
+
+def get_point_or_end[T: TimeProtocol](val: T | SpanProtocol[T]) -> T:
+    if isinstance(val, SpanProtocol):
+        return val.end
+    return val
+
+
+def earliest_start[T: TimeProtocol](seq: Iterable[T] | Iterable[SpanProtocol[T]]) -> T:
+    return min(map(get_point_or_start, seq))
 
 
 def latest_end[T: TimeProtocol](seq: Iterable[T] | SpanIterable[T]) -> T:
-    """Please write me!"""
-
-    if all(map(lambda inst: isinstance(inst, TimeProtocol), seq)):
-        return max(cast(Iterable, seq))
-    return max([t.end for t in cast(SpanIterable, seq)])
+    return max(map(get_point_or_end, seq))
 
 
 @overload
@@ -321,7 +325,7 @@ def truncate[T: TimeProtocol](
 
 
 def truncate_nodiscard[T: TimeProtocol](
-    seq: SpanIterable[T], earliest: TimeProtocol, latest: TimeProtocol
+    seq: SpanIterable[T], earliest: T, latest: T
 ) -> SpanList[T] | None:
     """Please write me!"""
 
@@ -333,10 +337,7 @@ def truncate_nodiscard[T: TimeProtocol](
         return None
     if max(seq, key=lambda s: s.start) >= latest:
         return None
-    truncator = cast(
-        Callable[[SpanProtocol[T]], SpanProtocol[T]],
-        partial(snap_between, earliest=earliest, latest=latest),
-    )
+    truncator = partial(snap_between, earliest=earliest, latest=latest)
     truncated: SpanIterable[T] = map(truncator, seq)
     return list(filter(bool, truncated))
 

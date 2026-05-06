@@ -2,12 +2,12 @@
 
 ## Roadmap
 
-- 81 `TODO`s
-- 71 ignore comments
-- 8 `noqa` comments (not necessary to remove all; just review carefully)
-- 72 `NotImplementedError`s
+- 50 `TODO`s
+- 55 ignore comments
+- [x] 8 `noqa` comments (not necessary to remove all; just review carefully)
+- 85 `NotImplementedError`s
 - go through and fix all `__getitem__` methods in one fell swoop
-- 8 `cast`s (review whether necessary)
+- [x] 10 `cast`s (review whether necessary)
 - support time zone info (at least enough for conversion back to zoned stdlib types)
 - make optimal use of `deal` (-> figure out what that will be)
 - make optimal use of `hypothesis` (-> figure out what that will be)

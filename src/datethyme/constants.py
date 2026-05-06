@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 from functools import lru_cache
-from typing import NamedTuple, cast, overload
+from typing import NamedTuple, overload
 
 
 class AddResult(Enum):
@@ -108,26 +108,26 @@ class Unit(Enum):
         raise ValueError
 
     @overload
-    def divmod(self, dividend: int, by: Unit) -> tuple[int, int]: ...
+    def divmod_by(self, by: Unit, dividend: int) -> tuple[int, int]: ...
     @overload
-    def divmod(self, dividend: float, by: Unit) -> tuple[int, float]: ...
-    def divmod(self, dividend: int | float, by: Unit) -> tuple[int, int | float]:
+    def divmod_by(self, by: Unit, dividend: float) -> tuple[int, float]: ...
+    def divmod_by(self, by: Unit, dividend: int | float) -> tuple[int, int | float]:
         x_per_self: int = self._n_per_self(by)
         q, r = divmod(dividend, x_per_self)
         remainder = int(r) if isinstance(dividend, int) else float(r)
         return int(q), remainder
 
-    def divmod_hours[T: int | float](self, dividend: T) -> tuple[int, T]:
-        q, r = self.divmod(dividend, by=Unit.HOUR)
-        return q, cast(T, r)
+    # def divmod_hours[T: int | float](self, dividend: T) -> tuple[int, T]:
+    #     q, r = self.divmod_by(dividend, by=Unit.HOUR)
+    #     return q, r
 
-    def divmod_minutes[T: int | float](self, dividend: T) -> tuple[int, T]:
-        q, r = self.divmod(dividend, by=Unit.MINUTE)
-        return q, cast(T, r)
+    # def divmod_minutes[T: int | float](self, dividend: T) -> tuple[int, T]:
+    #     q, r = self.divmod_by(dividend, by=Unit.MINUTE)
+    #     return q, r
 
-    def divmod_seconds[T: int | float](self, dividend: T) -> tuple[int, T]:
-        q, r = self.divmod(dividend, by=Unit.SECOND)
-        return q, cast(T, r)
+    # def divmod_seconds[T: int | float](self, dividend: T) -> tuple[int, T]:
+    #     q, r = self.divmod_by(dividend, by=Unit.SECOND)
+    #     return q, r
 
     def _n_per_self(self, other: Unit) -> int:
         match other:
@@ -144,7 +144,7 @@ class Unit(Enum):
         """Perform cascading modular division at each of our four time resolutions of interest."""
         days, hours, minutes = 0, 0, 0
         seconds = float(self.seconds * value)
-        minutes, seconds = Unit.MINUTE.divmod_seconds(value)
-        hours, minutes = Unit.HOUR.divmod_minutes(minutes)
-        days, hours = Unit.DAY.divmod_hours(hours)
+        minutes, seconds = Unit.MINUTE.divmod_by(Unit.SECOND, value)
+        hours, minutes = Unit.HOUR.divmod_by(Unit.MINUTE, minutes)
+        days, hours = Unit.DAY.divmod_by(Unit.DAY, hours)
         return (days, hours, minutes, float(seconds))

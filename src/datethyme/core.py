@@ -319,7 +319,7 @@ class Date(BaseModel):
     def format(self, template: str) -> str:
         """Returns a the date written out in long form."""
 
-        def get_string(placeholder: str) -> str:  # noqa: PLR0911
+        def get_string(placeholder: str) -> str:
             normalized = placeholder.lower()
             match normalized:
                 case "weekday":
@@ -968,13 +968,13 @@ class DateTime(BaseModel):
         return cls.from_seconds(ordinal, places=10)
 
     @classmethod
-    def six(  # noqa: PLR0917
+    def six(
         cls, year: int, month: int, day: int, hour: int, minute: int, second: float | int
     ) -> Self:
         return cls.ymdhms(year, month, day, hour, minute, second)
 
     @classmethod
-    def ymdhms(  # noqa: PLR0917
+    def ymdhms(
         cls,
         year: int,
         month: int,

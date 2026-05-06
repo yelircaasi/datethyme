@@ -235,6 +235,10 @@ select = [
     "RUF",
 ]
 ignore = [
+    "PLC1901", # == ''
+    "PLR0917", # too-many-positional-arguments
+    "C901",    # too complex
+    "PLR0911", # too-many-return-statements
     "PLR6301", # Unused self parameter
     "PLR0904", # Too many public methods
     "N812",    # lowercase-imported-as-non-lowercase
