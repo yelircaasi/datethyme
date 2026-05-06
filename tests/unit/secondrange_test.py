@@ -36,7 +36,7 @@ class TestSecondRange:
 
     def test_dunder_getitem(self):
         assert self.sr[1] == Time(hour=5, minute=30, second=16)
-        assert self.sr[1:4] == SecondRange(  # type: ignore
+        assert self.sr[1:4] == SecondRange(
             Time(hour=5, minute=30, second=16), Time(hour=5, minute=30, second=19)
         )
 

@@ -1,17 +1,4 @@
-"""
-Next step: go from AbstractRange[T] to BaseRange[T] and implement everything common
-    that can be implemented in a generic manner; leave the rest to the respective subclasses.
-
-Do the same for AbstractSpan[T] -> BaseSpan[T] and AbstractPartition[T] -> BasePartition[T]
-
-add add_x and maybe also subtract_x for time increments
-
-make Date.start -> DateTime [00:00] and Date.end -> DateTime [24:00]
-
-add next_second, last_second, next_minute, ... to time classes
-
-add representation as 12-hour time and .format(...) for DateTime and Time analogous to Date.format()
-"""
+""" """
 
 from __future__ import annotations
 

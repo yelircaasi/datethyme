@@ -37,7 +37,7 @@ class TestMinuteRangeDated:
         )
 
     def test_dunder_getitem(self):
-        assert self.mr[1] == DateTime(year=2025, month=6, day=15, hour=10, minute=31, second=0)  # type: ignore
+        assert self.mr[1] == DateTime(year=2025, month=6, day=15, hour=10, minute=31, second=0)
         assert self.mr[1:4] == MinuteRangeDated(
             DateTime(year=2025, month=6, day=15, hour=10, minute=31, second=0),
             DateTime(year=2025, month=6, day=15, hour=10, minute=34, second=0),

@@ -38,7 +38,7 @@ class TestHourRangeDated:
 
     def test_dunder_getitem(self):
         assert self.hr[1] == DateTime(year=2025, month=6, day=15, hour=11, minute=30, second=0)
-        assert self.hr[1:4] == HourRangeDated(  # type: ignore
+        assert self.hr[1:4] == HourRangeDated(
             DateTime(year=2025, month=6, day=15, hour=11, minute=30, second=0),
             DateTime(year=2025, month=6, day=15, hour=14, minute=30, second=0),
         )

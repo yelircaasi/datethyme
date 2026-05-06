@@ -2,10 +2,10 @@
 
 ## Roadmap
 
-- [ ] 50 `TODO`s
-- [ ] 55 ignore comments
+- [x] 50 `TODO`s
+- [ ] 2 ignore comments
 - [x] 8 `noqa` comments (not necessary to remove all; just review carefully)
-- [ ] 85 `NotImplementedError`s
+- [ ] 94 `NotImplementedError`s
 - go through and fix all `__getitem__` methods in one fell swoop
 - [x] 10 `cast`s (review whether necessary)
 - [ ] clean up type hierarchy/ontology -> what is needed where? -> esp. wrt ScheduledEntry, scheduling

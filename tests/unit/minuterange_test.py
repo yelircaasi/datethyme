@@ -40,7 +40,7 @@ class TestMinuteRange:
 
     def test_dunder_getitem(self):
         assert self.mr[1] == Time(hour=5, minute=31)
-        assert self.mr[1:4] == MinuteRange(Time(hour=5, minute=31), Time(hour=5, minute=34))  # type: ignore
+        assert self.mr[1:4] == MinuteRange(Time(hour=5, minute=31), Time(hour=5, minute=34))
 
     def test_dunder_len(self):
         assert len(self.mr) == 8

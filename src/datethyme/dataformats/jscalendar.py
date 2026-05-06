@@ -1,4 +1,4 @@
-"""TODO implement jscalendar package in repo jscalendar-py"""
+""""""
 
 from ..scheduling.types import Calendar
 

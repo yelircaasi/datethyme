@@ -1,6 +1,6 @@
 import pytest
 
-from datethyme import Time, TimeSpan  # pyright: ignore
+from datethyme import Time, TimeSpan
 from datethyme.scheduling.algorithms import (
     resolve_gaps,
     resolve_overlaps,

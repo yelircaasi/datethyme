@@ -19,13 +19,13 @@ class TestSecondRangeDated:
         inclusive=True,
     )
 
-    def test_last(self):
+    def test_last(self) -> None:
         assert self.sr.last == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=22)
         assert self.sr_inclusive.last == DateTime(
             year=2025, month=6, day=15, hour=10, minute=30, second=23
         )
 
-    def test_dunder_contains(self):
+    def test_dunder_contains(self) -> None:
         assert DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=17) in self.sr
         assert DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=23) not in self.sr
         assert DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=24) not in self.sr
@@ -36,14 +36,14 @@ class TestSecondRangeDated:
             stop=dt1015,
         )
 
-    def test_dunder_getitem(self):
-        assert self.sr[1] == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=16)  # type: ignore
+    def test_dunder_getitem(self) -> None:
+        assert self.sr[1] == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=16)
         assert self.sr[1:4] == SecondRangeDated(
             DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=16),
             DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=19),
         )
 
-    def test_dunder_init(self):
+    def test_dunder_init(self) -> None:
         with pytest.raises(
             ValueError,
             match=r"Set allow_wraparound=True to allow SecondRangeDated to pass a minute boundary.",
@@ -60,7 +60,7 @@ class TestSecondRangeDated:
         )
         assert len(sr_wrap) == 30
 
-    def test_dunder_iter_alt(self):
+    def test_dunder_iter_alt(self) -> None:
         seconds = list(self.sr)
         assert len(seconds) == 8
         assert seconds[0] == DateTime(year=2025, month=6, day=15, hour=10, minute=30, second=15)
