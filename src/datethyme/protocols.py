@@ -8,7 +8,7 @@ from pydantic import NonNegativeInt
 from .constants import AddResult
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
-type ResultTriple[T] = tuple[AddResult, list[EntryProtocol], T]
+type ResultTriple[T] = tuple[AddResult, T, list[EntryProtocol]]
 type TimeBlock = SpanProtocol | PartitionProtocol
 
 
@@ -227,6 +227,8 @@ class PartitionProtocol[Atom: TimeProtocol](SpanProtocol, Protocol):
         max_length: int | None = None,
     ) -> Self: ...
 
+    def shift_seconds(self, n: int | float) -> Self: ...
+
 
 @runtime_checkable
 class EntryProtocol[D: DateProtocol](Protocol):
@@ -270,7 +272,7 @@ class EntryAdapterProtocol[D: DateProtocol](Protocol):
 
 
 @runtime_checkable
-class TimeBlockProtocol[T: TimeProtocol](PartitionProtocol, Protocol):
+class TimeBlockProtocol[T: TimeProtocol](SpanProtocol, Protocol):
     def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]: ...
     def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]: ...
 

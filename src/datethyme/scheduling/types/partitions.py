@@ -6,7 +6,6 @@ from typing import Self, Union
 
 from ...core import Date, DateRange, DateTime, DateTimeSpan, Time, TimeSpan
 from ...protocols import (
-    EntryProtocol,
     PartitionProtocol,
 )
 from ._abcs import AbstractPartition, SpanProtocol
@@ -80,15 +79,6 @@ class TimePartition(AbstractPartition[Time]):
     both can be procrustean or not
 
     """
-
-    def partition_element(
-        self,
-        element_id: str,
-        other: PartitionProtocol[Time] | Iterable[SpanProtocol[Time] | EntryProtocol],
-        min_length: int = 1,
-        max_length: int | None = None,
-    ) -> Self:
-        raise NotImplementedError
 
     @classmethod
     def from_times(

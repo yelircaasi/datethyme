@@ -4,8 +4,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from functools import lru_cache
 from itertools import pairwise
-from typing import Literal, Self
+from typing import Self
 
+from ...exceptions import TemporalLogicError
 from ...protocols import (
     DeltaProtocol,
     EntryProtocol,
@@ -34,6 +35,12 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
 
         if names and not (len(self.spans) == len(self.names)):
             raise ValueError
+
+    def __getitem__(self, idx: str) -> SpanProtocol[T]:
+        for span in self._spans:
+            if span.name == idx:
+                return span
+        raise IndexError
 
     @property
     @lru_cache
@@ -181,34 +188,42 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
         return cls(spans=segments, names=names)
 
     @classmethod
-    def from_durations(
+    def from_minutes(
         cls,
         *,
-        durations: Iterable[int | float],
-        start: T | None,
-        end: T | None,
+        minute_durations: Iterable[int | float],
+        start: T | None = None,
+        end: T | None = None,
         names: Iterable[str | None] | None = None,
     ) -> Self:
         anchor_start = assert_xor(start, end)
-        if anchor_start:
-            raise NotImplementedError
-        else:
-            raise NotImplementedError
+        if not anchor_start:
+            total = sum(minute_durations)
+            assert end
+            start = end.add_minutes(-total)
+        spans = []
+        assert start
+        current: T = start
+        for duration in minute_durations:
+            spans.append(current.span(current.add_minutes(duration)))
+        return cls(spans)
 
     @classmethod
     def from_deltas(
         cls,
         *,
-        durations: Iterable[DeltaProtocol],
+        deltas: Iterable[DeltaProtocol],
         start: T | None,
         end: T | None,
         names: Iterable[str | None] | None = None,
     ) -> Self:
-        anchor_start = assert_xor(start, end)
-        if anchor_start:
-            raise NotImplementedError
-        else:
-            raise NotImplementedError
+        minute_durations = [x.minutes for x in deltas]
+        return cls.from_minutes(
+            minute_durations=minute_durations,
+            start=start,
+            end=end,
+            names=names,
+        )
 
     @classmethod
     def from_relative_lengths(
@@ -218,16 +233,30 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
         segments: Iterable[float],
         names: Iterable[str | None] | None = None,
     ) -> Self:
-        raise NotImplementedError
+        total_weight = sum(segments)
+        total_minutes = start.minutes_to(end)
+        minute_durations = [seg * total_minutes / total_weight for seg in segments]
+        return cls.from_minutes(
+            minute_durations=minute_durations,
+            start=start,
+            end=end,
+            names=names,
+        )
 
     def partition_element(
         self,
         element_id: str,
-        other: PartitionProtocol[T] | Iterable[SpanProtocol[T] | EntryProtocol],
+        subelements: PartitionProtocol[T] | Iterable[SpanProtocol[T] | EntryProtocol],
         min_length: int = 1,
         max_length: int | None = None,
     ) -> Self:
-        raise NotImplementedError
+        element = self[element_id]
+        print(element)
+        if isinstance(subelements, PartitionProtocol):
+            ...
+        elif isinstance(subelements, EntryProtocol):
+            ...
+        return self
 
     def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         return self.__class__(
@@ -240,24 +269,6 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
 
     def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
         return self.__class__(span.round_seconds(round_to) for span in self.spans)
-
-    @classmethod
-    def from_minutes_and_start(
-        cls,
-        start: T,
-        segments: Iterable[float],
-        names: Iterable[str | None] | None = None,
-    ) -> Self:
-        raise NotImplementedError
-
-    @classmethod
-    def from_minutes_and_end(
-        cls,
-        end: T,
-        minutes: Iterable[float],
-        names: Iterable[str | None] | None = None,
-    ) -> Self:
-        raise NotImplementedError
 
     def contains(
         self,
@@ -286,20 +297,62 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
 
     def overlap(self, other, strict: bool = False) -> PartitionProtocol[T] | None: ...
 
-    def shift_end_rigid(self, new_end: T) -> PartitionProtocol[T]:
-        raise NotImplementedError
+    def shift_end_rigid(self, new_end: T) -> Self:
+        new_spans = []
+        shift = self.end.seconds_to(new_end)
+        for span in self._spans:
+            new_span = span.__class__(  # could implement .shift_seconds()
+                start=span.start.add_seconds(shift),
+                end=span.end.add_seconds(shift),
+            )
+            new_spans.append(new_span)
+        return self
 
-    def shift_start_rigid(self, new_start: T) -> PartitionProtocol[T]:
-        raise NotImplementedError
+    def shift_seconds(self, n: int | float) -> Self:
+        new_spans = []
+        for span in self._spans:
+            new_span = span.__class__(  # could implement .shift_seconds()
+                start=span.start.add_seconds(n),
+                end=span.end.add_seconds(n),
+            )
+            new_spans.append(new_span)
+        self._spans = new_spans
+        return self
 
-    def snap_end_to(self, new_end: T) -> PartitionProtocol[T]:
-        raise NotImplementedError
+    def shift_start_rigid(self, new_start: T) -> Self:
+        shift = self.end.seconds_to(new_start)
+        return self.shift_seconds(shift)
 
-    def snap_start_to(self, new_start: T) -> PartitionProtocol[T]:
-        raise NotImplementedError
+    def snap_end_to(self, new_end: T) -> Self:
+        self._end = new_end
+        return self
+
+    def snap_start_to(self, new_start: T) -> Self:
+        # may be better to add checks
+        self._start = new_start
+        return self
 
     def split(self, cut_point: T) -> tuple[PartitionProtocol[T], PartitionProtocol[T]]:
-        raise NotImplementedError
+        if not self.start <= cut_point <= self.end:
+            raise TemporalLogicError
+        first = []
+        second = []
+        trouble = []
+        for span in self.spans:
+            if span.end <= cut_point:
+                first.append(span)
+            elif span.start <= cut_point:
+                second.append(span)
+            else:
+                trouble.append(span)
+        if trouble:
+            if len(trouble) > 1:
+                raise TemporalLogicError
+            span_to_cut = trouble[0]
+            first.append(span_to_cut.start.span(cut_point))
+            second.insert(0, cut_point.span(span_to_cut.end))
+
+        return self.__class__(first), self.__class__(second)
 
     def span_containing(self, point: T) -> SpanProtocol[T] | None:
         for span in self._spans:
@@ -307,20 +360,25 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
                 return span
         return None
 
-    def insert(
-        self,
-        span_start: T | int,
-        new_span: SpanProtocol[T],
-        mode: Literal["SQUEEZE", "PUSH_BACK", "PUSH_FORWARD"],
-        split_incumbent: bool = True,
-    ) -> PartitionProtocol[T]:
-        raise NotImplementedError
+    # def insert(
+    #     self,
+    #     span_start: T | int,
+    #     new_span: SpanProtocol[T],
+    #     mode: Literal["SQUEEZE", "PUSH_BACK", "PUSH_FORWARD"],
+    #     split_incumbent: bool = True,
+    # ) -> PartitionProtocol[T]:
 
     def index_from_name(self, name: str) -> int | None:
-        raise NotImplementedError
+        for i, span in enumerate(self.spans):
+            if span.name == name:
+                return i
+        return None
 
-    def index_from_T(self, point: T) -> int | None:
-        raise NotImplementedError
+    def index_from_time(self, point: T) -> int | None:
+        for i, span in enumerate(self.spans):
+            if span.start <= point < span.end:
+                return i
+        return None
 
     def forward_affine_transform(
         self,
@@ -328,14 +386,22 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
         new_start: T | None = None,
         min_minutes: int | float = 5,
     ) -> Self:
-        new_length = scale_factor * self.minutes
-        new_start = new_start or self.start
-        raise NotImplementedError
-        result = self.__class__(new_start, new_start.add_minutes(new_length))
+        new_spans = []
+        current = new_start or self.start
+        for span in self._spans:
+            new_span = span.forward_affine_transform(
+                scale_factor=scale_factor,
+                new_start=current,
+                min_minutes=min_minutes,
+            )
+            new_spans.append(new_span)
+            current = new_span.end
+        self._spans = new_spans
 
-        if result.minutes < min_minutes:
+        if self.minutes < min_minutes:
             raise ValueError
-        return result
+
+        return self
 
     def backward_affine_transform(
         self,
@@ -343,14 +409,22 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
         new_end: T | None = None,
         min_minutes: int | float = 5,
     ) -> Self:
-        new_length = scale_factor * self.minutes
-        new_end = new_end or self.start
-        raise NotImplementedError
-        result = self.__class__(new_end.add_minutes(-new_length), new_end)
+        new_spans = []
+        current = new_end or self.start
+        for span in self._spans[::-1]:
+            new_span = span.forward_affine_transform(
+                scale_factor=scale_factor,
+                new_start=current,
+                min_minutes=min_minutes,
+            )
+            new_spans.append(new_span)
+            current = new_span.end
+        self._spans = new_spans
 
-        if result.minutes < min_minutes:
+        if self.minutes < min_minutes:
             raise ValueError
-        return result
+
+        return self
 
     def reordered(self, orderer: Callable[[SpanProtocol[T]], int | float | str | T]) -> Self:
         reordered = sorted(self.spans, key=orderer)
@@ -361,14 +435,6 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     @property
     @abstractmethod
     def passes_day_boundary(self) -> bool: ...
-
-    @classmethod
-    def eclipse_forward(cls, spans: Iterable[SpanProtocol[T]]) -> Self:
-        raise NotImplementedError
-
-    @classmethod
-    def eclipse_backward(cls, spans: Iterable[SpanProtocol[T]]) -> Self:
-        raise NotImplementedError
 
     # DEV ONLY -----------------------------------------------------------------------------------
     # class PartitionProtocol[T]():
@@ -388,7 +454,13 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     # --------------------------------------------------------------------------------------------
 
     def iter_nested(self) -> Iterator[tuple[int, SpanProtocol[T]]]:
-        raise NotImplementedError
+        denested = []
+        for span in self._spans:
+            if isinstance(span, AbstractPartition):
+                denested.extend(list(span.iter_nested()))
+            else:
+                denested.append(span)
+        return iter(denested)
 
     def __str__(self) -> str:
         return "PLACEHOLDER"  # {self}"

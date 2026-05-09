@@ -286,15 +286,25 @@ class AbstractTimeRange[T: TimeProtocol, U: Unit](AbstractRange[T]):
     def __reversed__(self) -> Iterable[T]:
         return self.__class__(self.last, self.start.add_seconds(-1e-3), unit=self.unit)
 
-    # def __getitem__(self, idx) -> T:
-    #     raise NotImplementedError
-
     @overload
     def __getitem__(self, idx: int) -> T: ...
     @overload
     def __getitem__(self, idx: slice) -> RangeProtocol[T]: ...
     def __getitem__(self, idx) -> T | RangeProtocol[T]:
-        raise NotImplementedError
+        if isinstance(idx, slice):
+            start, stop, step = idx.indices(len(self))
+            return self.__class__(
+                self.start.add_seconds(start * step * self.seconds_per_step),
+                self.start.add_seconds(stop * step * self.seconds_per_step),
+                unit=self.unit,
+                step=self.step * step,
+            )
+        if idx < 0:
+            idx += len(self)
+        d = self.start + idx * self.step
+        if d in self:
+            return d
+        raise ValueError(f"Index out of range for {self:r!}")
 
     def _increment(self) -> None:
         self._current.add_seconds(self.seconds_per_step)
@@ -305,4 +315,4 @@ class AbstractTimeRange[T: TimeProtocol, U: Unit](AbstractRange[T]):
 
     @property
     def remaining(self) -> float:
-        raise NotImplementedError
+        return round(self._current.seconds_to(self.last) / self.seconds_per_step)

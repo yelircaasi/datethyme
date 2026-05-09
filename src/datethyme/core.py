@@ -465,9 +465,9 @@ class Time(BaseModel):
     def day_end(self) -> Time:
         return Time(hour=24)
 
-    @property
-    def seconds(self) -> float:
-        raise NotImplementedError
+    # @property
+    # def seconds(self) -> float:
+    #     raise NotImplementedError
 
     @property
     def full_hours(self) -> int:
@@ -1207,7 +1207,7 @@ class TimeSpan(AbstractSpan[Time]):
 
     @property
     def name(self) -> str:
-        return self._name or f"TimeSpan[id{id(self)}]"
+        return self._name or f"TimeSpan[id{hash(self)}]"
 
     @property
     def id(self) -> str:

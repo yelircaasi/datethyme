@@ -115,7 +115,7 @@ class TestTimePartition:
 
     def test_dunder_init_error(self) -> None:
         with pytest.raises(TypeError):
-            raise NotImplementedError
+            raise ValueError
 
     @pytest.mark.parametrize(
         "partition, midpoint",
@@ -271,23 +271,10 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_from_durations(self, durations, start, end, names, expected):
-        partition = TimePartition.from_durations(
-            durations=durations, start=start, end=end, names=names
+    def test_from_minutes(self, durations, start, end, names, expected):
+        partition = TimePartition.from_minutes(
+            minute_durations=durations, start=start, end=end, names=names
         )
-        assert partition == expected
-
-    @pytest.mark.parametrize(
-        "minutes, start, names, expected",
-        [
-            (REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME, REPLACE_ME, REPLACE_ME),
-        ],
-        ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
-    )
-    def test_from_minutes_and_start(self, minutes, end, names, expected):
-        partition = TimePartition.from_minutes_and_end(end=end, minutes=minutes, names=names)
         assert partition == expected
 
     @pytest.mark.parametrize(
@@ -300,7 +287,7 @@ class TestTimePartition:
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
     def test_from_minutes_and_end(self, minutes, end, names, expected):
-        partition = TimePartition.from_minutes_and_end(minutes=minutes, end=end, names=names)
+        partition = TimePartition.from_minutes(minute_durations=minutes, end=end, names=names)
         assert partition == expected
 
     @pytest.mark.parametrize(
@@ -450,30 +437,6 @@ class TestTimePartition:
         assert partition.passes_day_boundary == does_pass
 
     # STATIC ------------------------------------------------------------------------------------
-
-    @pytest.mark.parametrize(
-        "sequence, transformed",
-        [
-            (REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME),
-        ],
-        ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
-    )
-    def test_eclipse_backward(self, sequence, transformed):
-        assert TimePartition.eclipse_backward(sequence) == transformed
-
-    @pytest.mark.parametrize(
-        "sequence, transformed",
-        [
-            (REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME),
-            (REPLACE_ME, REPLACE_ME),
-        ],
-        ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
-    )
-    def test_eclipse_forward(self, sequence, transformed):
-        assert TimePartition.eclipse_forward(sequence) == transformed
 
     @pytest.mark.parametrize(
         "original, reorderer, transformed",

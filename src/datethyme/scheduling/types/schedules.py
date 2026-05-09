@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import Iterable, Sequence
+from itertools import pairwise
 from typing import Self, overload
 
 from pydantic import (
@@ -24,7 +25,7 @@ from ...protocols import (
     TimeBlockProtocol,
 )
 from ..utils import is_partitioned
-from .entries import Entries, Entry
+from .entries import Entries
 
 DEFAULT_DATE = Date.parse("2000-01-01")
 
@@ -37,10 +38,11 @@ class ScheduledEntry[T: TimeProtocol](BaseModel):
     _start: T
     _end: T
     _subentries: list[DurationProtocol]  # list[EntryProtocol | ScheduledEntries | TimeSlot]
+    _name: str | None = None
 
     @property
     def name(self) -> str:
-        raise NotImplementedError
+        return self._name or f"TimeSpan[id{str(hash(self))[:16]}]"
 
     @property
     def start(self) -> T:
@@ -65,37 +67,52 @@ class ScheduledEntry[T: TimeProtocol](BaseModel):
     def assert_validity(self) -> None: ...
 
 
-class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry):
-    start: T
-    end: T
+class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry, TimeSpan):
+    _start: T
+    _end: T
+    _name: str | None = None
 
-    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
-        raise NotImplementedError
+    def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
+        result = AddResult.NOT_ADDED
+        remaining: list[EntryProtocol] = [entry]
+        return result, self, remaining
 
-    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
-        raise NotImplementedError
-
-
-class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry):
-    start: T
-    end: T
-
-    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
-        raise NotImplementedError
-
-    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
-        raise NotImplementedError
+    def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]:
+        result = AddResult.NOT_ADDED
+        remaining: list[EntryProtocol] = [entry]
+        return result, self, remaining
 
 
-class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T]):
-    start: T
-    end: T
+class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], ScheduledEntry, TimeSpan):
+    _start: T
+    _end: T
+    _name: str | None = None
 
-    def add_flex(self, entry: SpanProtocol) -> ResultTriple[T]:
-        raise NotImplementedError
+    def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
+        result = AddResult.NOT_ADDED
+        remaining: list[EntryProtocol] = [entry]
+        return result, self, remaining
 
-    def add_fixed(self, entry: SpanProtocol, earliest: T, latest: T) -> ResultTriple[T]:
-        raise NotImplementedError
+    def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]:
+        result = AddResult.NOT_ADDED
+        remaining: list[EntryProtocol] = [entry]
+        return result, self, remaining
+
+
+class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T], TimeSpan):
+    _start: T
+    _end: T
+    _name: str | None = None
+
+    def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
+        result = AddResult.NOT_ADDED
+        remaining: list[EntryProtocol] = [entry]
+        return result, self, remaining
+
+    def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]:
+        result = AddResult.NOT_ADDED
+        remaining: list[EntryProtocol] = [entry]
+        return result, self, remaining
 
 
 class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
@@ -128,7 +145,7 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
         """
         success = AddResult.ADDED
         popped: list[EntryProtocol] = []
-        return success, popped, self
+        return success, self, popped
 
     def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
         """Cases:
@@ -143,10 +160,9 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
             -> return (AddResult.DISPLACE,       [<displaced entries>], Self)
 
         """
-        success = AddResult.ADDED
+        result = AddResult.NOT_ADDED
         popped: list[EntryProtocol] = []
-        raise NotImplementedError
-        return success, popped, self
+        return result, self, popped
 
     _blocks: list[TimeBlockProtocol]
 
@@ -161,35 +177,48 @@ class DayPartition[T: TimeProtocol](PartitionProtocol[T]):
         return sorted(all_blocks, key=lambda x: (x.start, x.end))
 
     def __contains__(self, obj: object) -> bool:
-        raise NotImplementedError
+        if type(obj) is type(self.start):
+            return self.start <= obj <= self.end
+        if isinstance(obj, str):
+            return any(block.name == obj for block in self.blocks)
+        raise TypeError
 
     @classmethod
     def from_spans(
-        cls, spans: dict[T | SpanProtocol[T], str] | Iterable[T | SpanProtocol[T]], end: T
+        cls, spans: dict[SpanProtocol[T], str] | Iterable[SpanProtocol[T]], end: T
     ) -> Self:
-        raise NotImplementedError
+        return cls(fixed=[])
+        # should be: return cls((FixedBlock(span.start, span.end) for span in spans))
+        # needs FixedBlock to implement all required methods
 
     @classmethod
     def from_starts(cls, starts: dict[T, str] | Iterable[T], end: T) -> Self:
-        raise NotImplementedError
+        names_ = tuple(starts.values()) if isinstance(starts, dict) else None
+        starts = tuple(starts)
 
-    def partition_element(
-        self,
-        element_name: str | int,
-        subelements: PartitionProtocol[T] | Iterable[SpanProtocol[T] | EntryProtocol],
-        min_length: int = 1,
-        max_length: int | None = None,
-    ) -> Self:
-        raise NotImplementedError
+        names = names_[:-1] if names_ else [None] * (len(starts) - 1)
+        other_spans = []
+        for i, (start_, end_) in enumerate(pairwise(starts)):
+            block = FixedBlock(_start=start_, _end=end_, _name=names[i], _subentries=[])
+            other_spans.append(block)
+
+        other_spans.append(FixedBlock(_start=starts[0], _end=end, _name=names[-1], _subentries=[]))
+
+        return cls(fixed=other_spans)
 
     @overload
-    def __getitem__(self, idx: str) -> Entry | None: ...  # by ID
+    def __getitem__(self, idx: str) -> TimeBlockProtocol | None: ...  # by ID
     @overload
-    def __getitem__(self, idx: Time) -> Entry | None: ...  # by point time
+    def __getitem__(self, idx: Time) -> TimeBlockProtocol | None: ...  # by point time
     @overload
-    def __getitem__(self, idx: TimeSpan) -> list[Entry]: ...  # by time span
-    def __getitem__(self, idx) -> Entry | list[Entry] | None:
-        raise NotImplementedError
+    def __getitem__(self, idx: TimeSpan) -> list[TimeBlockProtocol]: ...  # by time span
+    def __getitem__(self, idx) -> TimeBlockProtocol | list[TimeBlockProtocol] | None:
+        if isinstance(idx, str):
+            for block in self.blocks:
+                if block.name == idx:
+                    return block
+            raise IndexError
+        raise ValueError
 
 
 class CalendarDay:
