@@ -20,6 +20,8 @@ class Entry(EntryProtocol):
         min_time: int | None = None,
         ideal_time: int | None = None,
         max_time: int | None = None,
+        due_date: Date | None = None,
+        earliest_date: Date | None = None,
     ):
         self._name = name
         self._projects = projects
@@ -30,6 +32,8 @@ class Entry(EntryProtocol):
         self._min_time = min_time
         self._max_time = max_time
         self._dependencies = dependencies
+        self._due_date = due_date
+        self._earliest_date = earliest_date
 
     @property
     def name(self) -> str:
@@ -77,11 +81,11 @@ class Entry(EntryProtocol):
 
     @property
     def due_date(self) -> Date | None:
-        raise NotImplementedError
+        return self._due_date
 
     @property
     def earliest_date(self) -> Date | None:
-        raise NotImplementedError
+        return self._earliest_date
 
     def __repr__(self) -> str:
         return (

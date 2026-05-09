@@ -243,19 +243,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         scale_factor: float,
         new_start: Atom | None = None,
         min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]:
-        raise NotImplementedError
-        # new_length = scale_factor * self.minutes
-        # if new_start and not new_end:
-        #     result = self.__class__(new_start, new_start.add_minutes(new_length))
-        # elif new_end and not new_start:
-        #     result = self.__class__(new_end.add_minutes(new_length), new_end)
-        # else:
-        #     raise ValueError
-
-        # if result.minutes < min_minutes:
-        #     raise ValueError
-        # return result
+    ) -> AbstractSpan[Atom]: ...
 
     @abstractmethod
     def backward_affine_transform(
@@ -264,11 +252,10 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         scale_factor: float,
         new_end: Atom | None = None,
         min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]:
-        raise NotImplementedError
+    ) -> AbstractSpan[Atom]: ...
 
 
-class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
+class AbstractTimeRange[T: TimeProtocol, U: Unit](AbstractRange[T]):
     unit: U
 
     @property
@@ -280,18 +267,24 @@ class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
         self, start: T, stop: T, *, unit: U, step: int = 1, inclusive: bool = True
     ) -> None: ...
 
+    def _divmod_seconds(self) -> tuple[int, float]:
+        total_seconds = self.start.seconds_to(self.stop)
+        steps, rem = divmod(total_seconds, self.seconds_per_step)
+        return int(steps), rem
+
     @property
     def last(self) -> T:
-        raise NotImplementedError
+        remainder_seconds = self._divmod_seconds()[1]
+        return self.stop.add_seconds(-remainder_seconds)
 
     def __len__(self) -> int:
-        raise NotImplementedError
+        return self._divmod_seconds()[0]
 
     def __contains__(self, item: T) -> bool:
         return True
 
     def __reversed__(self) -> Iterable[T]:
-        raise NotImplementedError
+        return self.__class__(self.last, self.start.add_seconds(-1e-3), unit=self.unit)
 
     # def __getitem__(self, idx) -> T:
     #     raise NotImplementedError
@@ -304,11 +297,11 @@ class AbstractTimeRange[T: AtomProtocol, U: Unit](AbstractRange[T]):
         raise NotImplementedError
 
     def _increment(self) -> None:
-        raise NotImplementedError
+        self._current.add_seconds(self.seconds_per_step)
 
     @property
     def limit(self) -> T:
-        raise NotImplementedError
+        return self.last.add_seconds(self.seconds_per_step)
 
     @property
     def remaining(self) -> float:

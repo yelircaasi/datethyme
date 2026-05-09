@@ -81,14 +81,6 @@ class TimePartition(AbstractPartition[Time]):
 
     """
 
-    @classmethod
-    def from_starts(cls, spans: dict[TimeSpan, str] | Iterable, end: Time) -> Self:
-        raise NotImplementedError
-
-    @classmethod
-    def from_ends(cls, spans: dict[TimeSpan, str] | Iterable, start: Time) -> Self:
-        raise NotImplementedError
-
     def partition_element(
         self,
         element_id: str,

@@ -50,7 +50,7 @@ class TestMinuteRange:
         self,
     ) -> None:
         # remove __reversed__? in any case, not the highest priority
-        raise NotImplementedError
+        assert reversed(self.mr) == "PLACEHOLDER"
 
     def test_index(self):
         with pytest.raises(ValueError, match=r"..."):

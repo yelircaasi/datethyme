@@ -47,7 +47,7 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
 
     @staticmethod
     def is_contiguous(seq: Iterable[SpanProtocol]) -> bool:
-        raise NotImplementedError
+        return is_contiguous(seq)
 
     @property
     def named_spans(self) -> tuple[tuple[str, SpanProtocol[T]], ...]:
@@ -120,18 +120,36 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     @classmethod
     def from_starts(
         cls,
-        spans: dict[T, str] | Iterable[T],
-        start: T,
+        starts: dict[T, str] | Iterable[T],
+        end: T,
     ) -> Self:
-        raise NotImplementedError
+        names = tuple(starts.values()) if isinstance(starts, dict) else None
+        starts = tuple(starts)
+        last_span = starts[0].span(end)
+        span_class: type[SpanProtocol[T]] = last_span.__class__
+
+        def make_span(tup: tuple[T, T]) -> SpanProtocol[T]:
+            return span_class(start=tup[0], end=tup[1])
+
+        other_spans = map(make_span, pairwise(starts))
+        return cls(spans=(*other_spans, last_span), names=names)
 
     @classmethod
     def from_ends(
         cls,
-        spans: dict[T, str] | Iterable[T],
+        ends: dict[T, str] | Iterable[T],
         start: T,
     ) -> Self:
-        raise NotImplementedError
+        names = tuple(ends.values()) if isinstance(ends, dict) else None
+        ends = tuple(ends)
+        first_span = start.span(ends[0])
+        span_class: type[SpanProtocol[T]] = first_span.__class__
+
+        def make_span(tup: tuple[T, T]) -> SpanProtocol[T]:
+            return span_class(start=tup[0], end=tup[1])
+
+        other_spans = map(make_span, pairwise(ends))
+        return cls(spans=(first_span, *other_spans), names=names)
 
     @classmethod
     def from_pipeline(

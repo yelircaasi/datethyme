@@ -1133,8 +1133,8 @@ class DateTime(BaseModel):
         return 1440 - self.minutes_to_next(other)
 
     # @deal.pure
-    def seconds_to(self, dateother: DateTime) -> float:
-        t2, t1 = dateother.to_minutes(), self.to_minutes()
+    def seconds_to(self, other: DateTime) -> float:
+        t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
     # @deal.pure
@@ -1277,36 +1277,52 @@ class TimeSpan(AbstractSpan[Time]):
         new_start: Time | None = None,
         min_minutes: int | float = 5,
     ) -> TimeSpan:
-        raise NotImplementedError
+        self._start = new_start or self.start
+        self._end = self._start + max(min_minutes, scale_factor * self.minutes)
+        return self
 
     def backward_affine_transform(
         self,
         scale_factor: float,
         new_end: Time | None = None,
-        min_minutes: int | float = 5,
+        min_minutes: int = 5,
     ) -> TimeSpan:
-        raise NotImplementedError
+        self._end = new_end or self._end
+        self._start = self._end - int(max(min_minutes, scale_factor * self.minutes))
+        return self
 
     def contains(self, other, include_start: bool = True, include_end: bool = False) -> bool:
         raise NotImplementedError
 
     def snap_start_to(self, new_start: Time) -> TimeSpan:
-        raise NotImplementedError
+        if new_start < self.start:
+            self._start = new_start
+            return self
+        raise ValueError
 
     def split(self, cut_point: Time) -> tuple[TimeSpan, TimeSpan]:
-        raise NotImplementedError
+        if not self.start <= cut_point <= self.end:
+            raise ValueError
+        return TimeSpan(self.start, cut_point), TimeSpan(cut_point, self.end)
 
     def snap_end_to(self, new_end: Time) -> TimeSpan:
         raise NotImplementedError
 
-    def shift_start_rigid(self, new_start: Time) -> TimeSpan:
-        raise NotImplementedError
+    def shift_start_rigid(self, new_start: Time) -> Self:
+        shift = self.start.seconds_to(new_start)
+        self._start = new_start
+        self._end = self.end.add_seconds(shift)
+        return self
 
     def shift_end_rigid(self, new_end: Time) -> TimeSpan:
-        raise NotImplementedError
+        shift = self.end.seconds_to(new_end)
+        self._end = new_end
+        self._start = self.start.add_seconds(shift)
+        return self
 
-    def interior_point(self, alpha: float) -> Time:
-        raise NotImplementedError
+    def interior_point(self, alpha: float, round_seconds_to: int = 3) -> Time:
+        seconds_from_start = round(alpha * self.seconds, round_seconds_to)
+        return self.start.add_seconds(seconds_from_start)
 
     def subdivide(
         self,
@@ -1314,13 +1330,19 @@ class TimeSpan(AbstractSpan[Time]):
         ...
 
     def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        raise NotImplementedError
+        self._start = self._start.round_hours(round_to=round_to, round_down=round_down)
+        self._end = self._end.round_hours(round_to=round_to, round_down=round_down)
+        return self
 
     def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        raise NotImplementedError
+        self._start = self._start.round_minutes(round_to=round_to, round_down=round_down)
+        self._end = self._end.round_minutes(round_to=round_to, round_down=round_down)
+        return self
 
     def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        raise NotImplementedError
+        self._start = self._start.round_seconds(round_to=round_to, round_down=round_down)
+        self._end = self._end.round_seconds(round_to=round_to, round_down=round_down)
+        return self
 
 
 class DateTimeSpan(AbstractSpan[DateTime]):

@@ -8,5 +8,4 @@ def convert_to_jscalendar(cal: Calendar) -> str:
 
 
 def convert_from_jscalendar(raw: str) -> Calendar:
-    raise NotImplementedError
     return Calendar()

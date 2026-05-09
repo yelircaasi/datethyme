@@ -357,8 +357,9 @@ class TestTimePartition:
         assert result == transformed
 
     def test_affine_transform_errors(self):
-        with pytest.raises(ValueError):
-            raise NotImplementedError
+        with pytest.raises(ValueError, match=r""):
+            assert TimePartition(spans=[]).forward_affine_transform(0.5) == TimePartition(spans=[])
+            assert TimePartition(spans=[]).backward_affine_transform(0.5) == TimePartition(spans=[])
 
     @pytest.mark.parametrize(
         "partition, maybe_contained, is_contained",

@@ -78,5 +78,4 @@ def make_entry_adapter[T: object, D: DateProtocol](
 def make_entries_adapter[T: Iterable[EntryProtocol]]() -> type[EntriesProtocol]:
     class EntriesAdapter: ...
 
-    raise NotImplementedError
     return EntriesAdapter
