@@ -83,20 +83,20 @@ class TestDateTimeSpan:
 
     def test_affine_transform(self):
         expected_ab = PLACEHOLDER
-        assert self.span_ab.forward_affine_transform(1.3, new_start=PLACEHOLDER) == expected_ab
+        assert self.span_ab.forward_affine_transform(scale_factor=1.3, new_start=PLACEHOLDER) == expected_ab
 
         expected_ac = PLACEHOLDER
-        assert self.span_ac.forward_affine_transform(0.25, new_start=PLACEHOLDER) == expected_ac
+        assert self.span_ac.forward_affine_transform(scale_factor=0.25, new_start=PLACEHOLDER) == expected_ac
 
         expected_ac_constrained = PLACEHOLDER
         assert (
-            self.span_ac.forward_affine_transform(0.25, new_start=PLACEHOLDER, min_minutes=999)
+            self.span_ac.forward_affine_transform(scale_factor=0.25, new_start=PLACEHOLDER, min_minutes=999)
             == expected_ac_constrained
         )
 
         expected_ad = DateTimeSpan(PLACEHOLDER, PLACEHOLDER)
         assert (
-            self.span_ac.forward_affine_transform(1.3, new_start=PLACEHOLDER, min_minutes=999)
+            self.span_ac.forward_affine_transform(scale_factor=1.3, new_start=PLACEHOLDER, min_minutes=999)
             == expected_ad
         )
 

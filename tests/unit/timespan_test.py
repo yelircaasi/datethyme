@@ -109,16 +109,16 @@ class TestTimeSpan:
 
     def test_affine_transform(self) -> None:
         expected_ab = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
-        transform_ab = self.span_ab.forward_affine_transform(1.3, new_start=PLACEHOLDER_TIME)
+        transform_ab = self.span_ab.forward_affine_transform(scale_factor=1.3, new_start=PLACEHOLDER_TIME)
         assert transform_ab == expected_ab
 
         expected_ac = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
-        transform_ac = self.span_ac.forward_affine_transform(0.25, new_start=PLACEHOLDER_TIME)
+        transform_ac = self.span_ac.forward_affine_transform(scale_factor=0.25, new_start=PLACEHOLDER_TIME)
         assert transform_ac == expected_ac
 
         expected_ac_constrained = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
         transform_ac_constrained = self.span_ac.forward_affine_transform(
-            0.25,
+            scale_factor=0.25,
             new_start=PLACEHOLDER_TIME,
             min_minutes=999,
         )
@@ -126,7 +126,7 @@ class TestTimeSpan:
 
         expected_ad = TimeSpan(PLACEHOLDER_TIME, PLACEHOLDER_TIME)
         transformed_ad = self.span_ac.forward_affine_transform(
-            1.3,
+            scale_factor=1.3,
             new_start=PLACEHOLDER_TIME,
             min_minutes=999,
         )

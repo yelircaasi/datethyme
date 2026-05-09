@@ -30,6 +30,7 @@ from .constants import Unit
 # from ._null import NONE_DATE, NONE_TIME, NoneDate, NoneTime
 from .exceptions import (
     DateTimeValidationError,
+    TemporalLogicError,
 )
 from .utils import (
     DATE_TIME_REGEX,
@@ -465,10 +466,6 @@ class Time(BaseModel):
     def day_end(self) -> Time:
         return Time(hour=24)
 
-    # @property
-    # def seconds(self) -> float:
-    #     raise NotImplementedError
-
     @property
     def full_hours(self) -> int:
         return int(self.to_hours() // Unit.HOUR.seconds)
@@ -644,7 +641,7 @@ class Time(BaseModel):
         return Time.from_seconds(self.to_seconds() + n)
 
     def span(self, other: Time, name: str | None = None) -> TimeSpan:
-        raise NotImplementedError
+        return TimeSpan(start=self, end=other, name=name)
 
     def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Time:
         raw_hours = self.to_hours()
@@ -830,12 +827,24 @@ class Time(BaseModel):
         step: int = 1,
         inclusive: bool = False,
     ) -> TimeRange[U]:
-        raise NotImplementedError
+        stop_time = (self.add(unit, stop)) if isinstance(stop, int) else stop
+        return TimeRange(self, stop=stop_time, unit=unit, step=step, inclusive=inclusive)
 
     # @staticmethod
     # @deal.pure
     # def none() -> "NoneTime":
     #     return NONE_TIME
+
+    def add(self, unit: Unit, n: int | float) -> Time:
+        match unit:
+            case Unit.SECOND:
+                return self.add_seconds(n)
+            case Unit.MINUTE:
+                return self.add_minutes(n)
+            case Unit.HOUR:
+                return self.add_hours(n)
+            case Unit.DAY:
+                return self.add_hours(n * 24)
 
 
 DAY_START = Time(hour=0)
@@ -1090,7 +1099,8 @@ class DateTime(BaseModel):
         return self
 
     def span(self, other: DateTime) -> DateTimeSpan:
-        raise NotImplementedError
+        (a, b) = sorted((self, other))
+        return DateTimeSpan(start=a, end=b)
 
     def to(self, other: DateTime) -> DateTimeSpan:
         return self.span(other)
@@ -1182,7 +1192,19 @@ class DateTime(BaseModel):
         step: int = 1,
         inclusive: bool = False,
     ) -> DateTimeRange[U]:
-        raise NotImplementedError
+        stop_datetime: DateTime = self.add(unit, stop) if isinstance(stop, int) else stop
+        return DateTimeRange(start=self, stop=stop_datetime, unit=unit, step=step, inclusive=inclusive)
+
+    def add(self, unit: Unit, n: int | float) -> DateTime:
+        match unit:
+            case Unit.SECOND:
+                return self.add_seconds(n)
+            case Unit.MINUTE:
+                return self.add_minutes(n)
+            case Unit.HOUR:
+                return self.add_hours(n)
+            case Unit.DAY:
+                return self.add_hours(n * 24)
 
 
 # --- SPAN TYPES ---------------------------------------------------------------------------------
@@ -1244,20 +1266,6 @@ class TimeSpan(AbstractSpan[Time]):
     def __bool__(self) -> bool:
         return self.end > self.start
 
-    def overlap(self, other: AbstractSpan[Time], strict: bool = False) -> TimeSpan | None:
-        raise NotImplementedError
-
-    def gap(
-        self, other: Time | TimeSpan, strict: bool = False
-    ) -> TimeSpan | None:  # alias end_to_start
-        start: Time = get_start(other)
-        end: Time = get_end(other)
-        if self.start > end:
-            return TimeSpan(end, self.start)
-        if start > self.end:
-            return TimeSpan(self.end, start)
-        return None
-
     def hull(
         self, other: Time | TimeSpan, strict: bool = False
     ) -> TimeSpan:  # alias outer, union, cover
@@ -1271,78 +1279,10 @@ class TimeSpan(AbstractSpan[Time]):
             return TimeSpan(second.start, min((first.end, second.end)))
         return None
 
-    def forward_affine_transform(
-        self,
-        scale_factor: float,
-        new_start: Time | None = None,
-        min_minutes: int | float = 5,
-    ) -> TimeSpan:
-        self._start = new_start or self.start
-        self._end = self._start + max(min_minutes, scale_factor * self.minutes)
-        return self
-
-    def backward_affine_transform(
-        self,
-        scale_factor: float,
-        new_end: Time | None = None,
-        min_minutes: int = 5,
-    ) -> TimeSpan:
-        self._end = new_end or self._end
-        self._start = self._end - int(max(min_minutes, scale_factor * self.minutes))
-        return self
-
-    def contains(self, other, include_start: bool = True, include_end: bool = False) -> bool:
-        raise NotImplementedError
-
-    def snap_start_to(self, new_start: Time) -> TimeSpan:
-        if new_start < self.start:
-            self._start = new_start
-            return self
-        raise ValueError
-
-    def split(self, cut_point: Time) -> tuple[TimeSpan, TimeSpan]:
-        if not self.start <= cut_point <= self.end:
-            raise ValueError
-        return TimeSpan(self.start, cut_point), TimeSpan(cut_point, self.end)
-
-    def snap_end_to(self, new_end: Time) -> TimeSpan:
-        raise NotImplementedError
-
-    def shift_start_rigid(self, new_start: Time) -> Self:
-        shift = self.start.seconds_to(new_start)
-        self._start = new_start
-        self._end = self.end.add_seconds(shift)
-        return self
-
-    def shift_end_rigid(self, new_end: Time) -> TimeSpan:
-        shift = self.end.seconds_to(new_end)
-        self._end = new_end
-        self._start = self.start.add_seconds(shift)
-        return self
-
-    def interior_point(self, alpha: float, round_seconds_to: int = 3) -> Time:
-        seconds_from_start = round(alpha * self.seconds, round_seconds_to)
-        return self.start.add_seconds(seconds_from_start)
-
     def subdivide(
         self,
     ):  # -> "TimePartition":
         ...
-
-    def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        self._start = self._start.round_hours(round_to=round_to, round_down=round_down)
-        self._end = self._end.round_hours(round_to=round_to, round_down=round_down)
-        return self
-
-    def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        self._start = self._start.round_minutes(round_to=round_to, round_down=round_down)
-        self._end = self._end.round_minutes(round_to=round_to, round_down=round_down)
-        return self
-
-    def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        self._start = self._start.round_seconds(round_to=round_to, round_down=round_down)
-        self._end = self._end.round_seconds(round_to=round_to, round_down=round_down)
-        return self
 
 
 class DateTimeSpan(AbstractSpan[DateTime]):
@@ -1379,8 +1319,8 @@ class DateTimeSpan(AbstractSpan[DateTime]):
     def seconds(self) -> float:
         return 99999
 
-    def __add__(self, other: Date | Time | DateTime) -> DateTimeSpan:
-        raise NotImplementedError
+    # def __add__(self, other: Date | Time | DateTime) -> DateTimeSpan:
+    #     raise N otImplementedError
 
     def __hash__(self) -> int:
         return hash((self._start, self._end, self._name))
@@ -1404,79 +1344,10 @@ class DateTimeSpan(AbstractSpan[DateTime]):
     def from_dates(cls, start: Date, end: Date) -> Self:
         return cls(start=start.datetime, end=end.datetime)
 
-    def gap(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan | None:
-        # alias end_to_start
-        if self.start > other.end:
-            return DateTimeSpan(other.end, self.start)
-        if other.start > self.end:
-            return DateTimeSpan(other.end, self.start)
-        return None
-
-    def overlap(self, other: AbstractSpan[DateTime], strict: bool = False) -> DateTimeSpan | None:
-        raise NotImplementedError
-
-    def hull(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan:
-        # alias outer, union, cover
-        return DateTimeSpan(min(self.start, other.start), max(self.end, other.end))
-
-    def intersection(self, other: DateTimeSpan, strict: bool = False) -> DateTimeSpan | None:
-        # alias inner
-        if self.start > other.end:
-            return DateTimeSpan(other.end, self.start)
-        if other.start > self.end:
-            return DateTimeSpan(other.end, self.start)
-        return None
-
-    def forward_affine_transform(
-        self,
-        scale_factor: float,
-        new_start: DateTime | None = None,
-        min_minutes: int | float = 5,
-    ) -> TimeSpan:
-        raise NotImplementedError
-
-    def backward_affine_transform(
-        self,
-        scale_factor: float,
-        new_end: DateTime | None = None,
-        min_minutes: int | float = 5,
-    ) -> TimeSpan:
-        raise NotImplementedError
-
-    def contains(self, other, include_start: bool = True, include_end: bool = True) -> bool:
-        raise NotImplementedError
-
-    def snap_start_to(self, new_start: DateTime) -> DateTimeSpan:
-        raise NotImplementedError
-
-    def split(self, cut_point: DateTime) -> tuple[DateTimeSpan, DateTimeSpan]:
-        raise NotImplementedError
-
-    def snap_end_to(self, new_end: DateTime) -> DateTimeSpan:
-        raise NotImplementedError
-
-    def shift_start_rigid(self, new_start: DateTime) -> DateTimeSpan:
-        raise NotImplementedError
-
-    def shift_end_rigid(self, new_end: DateTime) -> DateTimeSpan:
-        raise NotImplementedError
-
-    def interior_point(self, alpha: float) -> DateTime:
-        raise NotImplementedError
-
     def subdivide(
         self,
     ):  # -> "DateTimePartition":
         ...
-
-    def round_hours(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        raise NotImplementedError
-
-    def round_minutes(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        raise NotImplementedError
-
-    def round_seconds(self, round_to: int | float = 1, round_down: bool = False) -> Self:
-        raise NotImplementedError
 
 
 # --- RANGE TYPES --------------------------------------------------------------------------------
@@ -1532,11 +1403,11 @@ class DateRange(AbstractRange[Date]):
 
     @property
     def limit(self) -> Date:
-        raise NotImplementedError
+        return self.last + 1
 
     @property
     def remaining(self) -> float:
-        raise NotImplementedError
+        return self.last - self._current
 
     @overload
     def __getitem__(self, idx: int) -> Date: ...
@@ -1592,7 +1463,13 @@ class DateRange(AbstractRange[Date]):
         return int(d in self)
 
     def overlap(self, other: DateRange, strict: bool = False) -> DateRange | None:
-        raise NotImplementedError
+        start = max(self.start, other.start)
+        stop = min(self.stop, other.stop)
+        if (stop < start):
+            if strict:
+                raise TemporalLogicError
+            return None
+        return self.__class__(start=start, stop=stop)
 
     def gap(self, other: DateRange, strict: bool = False) -> DateRange | None:
         # alias end_to_start

@@ -3,11 +3,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from functools import lru_cache
-from typing import Literal, TypeVar, overload
+from operator import le, lt
+from typing import Literal, Self, TypeVar, overload
+
+from .exceptions import TemporalLogicError
 
 from .constants import Unit
 from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
-from .utils import compute_index
+from .utils import compute_index, get_end, get_start
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
@@ -173,86 +176,130 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
     def __bool__(self) -> bool:
         return self.end > self.start
 
-    @abstractmethod
     def round_hours(
         self, round_to: int | float = 0, round_down: bool = False
-    ) -> AbstractSpan[Atom]: ...
+    ) -> AbstractSpan[Atom]:
+        self._start = self._start.round_hours(round_to=round_to, round_down=round_down)
+        self._end = self._end.round_hours(round_to=round_to, round_down=round_down)
+        return self
 
-    @abstractmethod
     def round_minutes(
         self, round_to: int | float = 0, round_down: bool = False
-    ) -> AbstractSpan[Atom]: ...
+    ) -> AbstractSpan[Atom]:
+        self._start = self._start.round_minutes(round_to=round_to, round_down=round_down)
+        self._end = self._end.round_minutes(round_to=round_to, round_down=round_down)
+        return self
 
-    @abstractmethod
     def round_seconds(
         self, round_to: float = 0, round_down: bool = False
-    ) -> AbstractSpan[Atom]: ...
+    ) -> AbstractSpan[Atom]:
+        self._start = self._start.round_seconds(round_to=round_to, round_down=round_down)
+        self._end = self._end.round_seconds(round_to=round_to, round_down=round_down)
+        return self
 
-    @abstractmethod
-    def intersection(self, other, strict: bool = False) -> AbstractSpan[Atom] | None: ...
+    def intersection(self, other, strict: bool = False) -> Self | None:
+        if self.start > other.end:
+            return self.__class__(other.end, self.start)
+        if other.start > self.end:
+            return self.__class__(other.end, self.start)
+        return None
 
     # alias inner
 
-    @abstractmethod
-    def hull(self, other, strict: bool = False) -> AbstractSpan[Atom]: ...
+    def hull(self, other, strict: bool = False) -> Self:
+        return self.__class__(min(self.start, other.start), max(self.end, other.end))
 
     # alias outer, union, cover
 
     # def union(self, other, strict: bool = False): ...
 
-    @abstractmethod
-    def gap(self, other, strict: bool = False) -> AbstractSpan[Atom] | None: ...
+    def gap(self, other, strict: bool = False) -> Self | None:
+        start: Atom = get_start(other)
+        end: Atom = get_end(other)
+        if self.start > end:
+            return self.__class__(end, self.start)
+        if start > self.end:
+            return self.__class__(self.end, start)
+        if strict:
+            raise TemporalLogicError
+        return None
 
     # alias end_to_start
 
-    @abstractmethod
-    def overlap(self, other, strict: bool = False) -> AbstractSpan[Atom] | None: ...
+    def overlap(self, other: AbstractSpan[Atom], strict: bool = False) -> Self | None:
+        start = max(self.start, other.start)
+        end = min(self.end, other.end)
+        if (end < start):
+            if strict:
+                raise TemporalLogicError
+            return None
+        return self.__class__(start=start, end=end)
 
     # alias end_to_start
 
-    @abstractmethod
-    def snap_start_to(self, new_start: Atom) -> AbstractSpan[Atom]: ...
+    def snap_start_to(self, new_start: Atom) -> AbstractSpan[Atom]:
+        if new_start < self.start:
+            self._start = new_start
+            return self
+        raise ValueError
 
-    @abstractmethod
-    def split(self, cut_point: Atom) -> tuple[AbstractSpan[Atom], AbstractSpan[Atom]]: ...
+    def split(self, cut_point: Atom) -> tuple[AbstractSpan[Atom], AbstractSpan[Atom]]:
+        if not self.start <= cut_point <= self.end:
+            raise ValueError
+        return self.__class__(self.start, cut_point), self.__class__(cut_point, self.end)
 
-    @abstractmethod
-    def snap_end_to(self, new_end: Atom) -> AbstractSpan[Atom]: ...
+    def snap_end_to(self, new_end: Atom) -> AbstractSpan[Atom]:
+        if new_end > self.start:
+            self._end = new_end
+            return self
+        raise ValueError
 
-    @abstractmethod
-    def shift_start_rigid(self, new_start: Atom) -> AbstractSpan[Atom]: ...
+    def shift_start_rigid(self, new_start: Atom) -> AbstractSpan[Atom]:
+        shift = self.start.seconds_to(new_start)
+        self._start = new_start
+        self._end = self.end.add_seconds(shift)
+        return self
 
-    @abstractmethod
-    def shift_end_rigid(self, new_end: Atom) -> AbstractSpan[Atom]: ...
+    def shift_end_rigid(self, new_end: Atom) -> AbstractSpan[Atom]:
+        shift = self.end.seconds_to(new_end)
+        self._end = new_end
+        self._start = self.start.add_seconds(shift)
+        return self
 
-    @abstractmethod
-    def interior_point(self, alpha: float) -> Atom: ...
+    def interior_point(self, alpha: float, round_seconds_to: int = 3) -> Atom:
+        seconds_from_start = round(alpha * self.seconds, round_seconds_to)
+        return self.start.add_seconds(seconds_from_start)
 
-    @abstractmethod  # use dispatch: str | AbstractSpan | AbstractTime
-    def contains(self, other, include_start: bool = True, include_end: bool = False) -> bool: ...
+    def contains(self, other: SpanProtocol[Atom] | TimeProtocol, include_start: bool = True, include_end: bool = False) -> bool:
+        op_a = le if include_start else lt
+        op_b = le if include_start else lt
+        if isinstance(other, SpanProtocol):
+            return op_a(self.start, other.start) and op_b(other.end, self.end)
+        if isinstance(other, TimeProtocol):
+            return op_a(self.start, other) and op_b(other, self.end)
+        raise TypeError
 
-    # @abstractmethod
-    # @dispatch(str)
-    # def contains(
-    #     self, other: Atom, include_start: bool = True, include_end: bool = False) -> bool: ...
-
-    @abstractmethod
     def forward_affine_transform(
         self,
         *,
         scale_factor: float,
         new_start: Atom | None = None,
         min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]: ...
+    ) -> AbstractSpan[Atom]:
+        self._start = new_start or self.start
+        self._end = self._start.add_minutes(max(min_minutes, scale_factor * self.minutes))
+        return self
 
-    @abstractmethod
     def backward_affine_transform(
         self,
         *,
         scale_factor: float,
         new_end: Atom | None = None,
         min_minutes: int | float = 5,
-    ) -> AbstractSpan[Atom]: ...
+    ) -> AbstractSpan[Atom]:
+        self._end = new_end or self._end
+        self._start = self._end.add_minutes(-max(min_minutes, scale_factor * self.minutes))
+        return self
 
 
 class AbstractTimeRange[T: TimeProtocol, U: Unit](AbstractRange[T]):

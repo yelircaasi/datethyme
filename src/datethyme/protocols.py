@@ -5,7 +5,7 @@ from typing import Literal, Protocol, Self, TypeVar, overload, runtime_checkable
 
 from pydantic import NonNegativeInt
 
-from .constants import AddResult
+from .constants import AddResult, Unit
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 type ResultTriple[T] = tuple[AddResult, T, list[EntryProtocol]]
@@ -93,6 +93,7 @@ class TimeProtocol(AtomProtocol, Protocol):
     def __str__(self) -> str: ...
     def seconds_to(self, other: Self) -> float: ...
     def add_seconds(self, n: int | float) -> Self: ...
+    def add(self, unit: Unit, n: int | float) -> Self: ...
 
     @classmethod
     def parse(cls, raw: str) -> Self: ...
