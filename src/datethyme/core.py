@@ -440,16 +440,8 @@ class Time(BaseModel):
         return self.hour, self.minute, self.second
 
     @property
-    def day_start(self) -> Time:
-        return Time(hour=0)
-
-    @property
-    def day_end(self) -> Time:
-        return Time(hour=24)
-
-    @property
     def full_hours(self) -> int:
-        return int(self.to_hours() // Unit.HOUR.seconds)
+        return int(self.to_hours() // 1)
 
     @property
     def full_minutes(self) -> int:
@@ -517,7 +509,7 @@ class Time(BaseModel):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Time):
-            raise TypeError("Unsupported comparison.")
+            return False  # raise TypeError("Unsupported comparison.")
         if isinstance(other, Time):
             return self.to_seconds(places=self.decimal_places) == other.to_seconds(
                 places=self.decimal_places
@@ -630,29 +622,33 @@ class Time(BaseModel):
         raw_seconds = self.to_seconds()
         return self.__class__.from_seconds(self._round_to(raw_seconds, round_to, round_down))
 
-    def floor_hours(self, increment: int | float = 1) -> Time:
-        new_hours = self._floor(self.to_hours(), increment)
-        return self.__class__.from_hours(new_hours)
+    def floor(self, unit: Unit, increment: int | float = 1) -> Time:
+        match unit:
+            case Unit.HOUR:
+                new_hours = self._floor(self.to_hours(), increment)
+                return self.__class__.from_hours(new_hours)
+            case Unit.MINUTE:
+                new_minutes = self._floor(self.to_minutes(), increment)
+                return self.__class__.from_minutes(new_minutes)
+            case Unit.SECOND:
+                new_seconds = self._floor(self.to_seconds(), increment)
+                return self.__class__.from_seconds(new_seconds)
+            case _:
+                raise TemporalLogicError
 
-    def floor_minutes(self, increment: int | float = 1) -> Time:
-        new_minutes = self._floor(self.to_minutes(), increment)
-        return self.__class__.from_minutes(new_minutes)
-
-    def floor_seconds(self, increment: int | float = 1) -> Time:
-        new_seconds = self._floor(self.to_seconds(), increment)
-        return self.__class__.from_seconds(new_seconds)
-
-    def ceiling_hours(self, increment: int | float = 1) -> Time:
-        new_hours = self._ceiling(self.to_hours(), increment)
-        return self.__class__.from_hours(new_hours)
-
-    def ceiling_minutes(self, increment: int | float = 1) -> Time:
-        new_minutes = self._ceiling(self.to_minutes(), increment)
-        return self.__class__.from_minutes(new_minutes)
-
-    def ceiling_seconds(self, increment: int | float = 1) -> Time:
-        new_seconds = self._ceiling(self.to_seconds(), increment)
-        return self.__class__.from_seconds(new_seconds)
+    def ceiling(self, unit: Unit, increment: int | float = 1) -> Time:
+        match unit:
+            case Unit.HOUR:
+                new_hours = self._ceiling(self.to_hours(), increment)
+                return self.__class__.from_hours(new_hours)
+            case Unit.MINUTE:
+                new_minutes = self._ceiling(self.to_minutes(), increment)
+                return self.__class__.from_minutes(new_minutes)
+            case Unit.SECOND:
+                new_seconds = self._ceiling(self.to_seconds(), increment)
+                return self.__class__.from_seconds(new_seconds)
+            case _:
+                raise TemporalLogicError
 
     def to_hours(self, places: int | None = 10) -> float:
         raw = self.hour + self.minute / 60 + self.second / Unit.HOUR.seconds

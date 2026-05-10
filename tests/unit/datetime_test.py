@@ -20,8 +20,7 @@ def datetimes(draw):
 import pytest
 
 from datethyme import Date, DateTime, Time
-
-from ...src.datethyme.exceptions import DateTimeValidationError
+from datethyme.exceptions import DateTimeValidationError
 
 
 class TestDateTime:

@@ -1,3 +1,4 @@
+from .constants import Unit
 from .core import (
     Date,
     DateRange,
@@ -48,4 +49,5 @@ __all__ = (
     "TimeDelta",
     "TimeSpan",
     "TimeValidationError",
+    "Unit",
 )

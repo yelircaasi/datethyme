@@ -18,7 +18,9 @@ class DateValidationError(TypeError):
 class DateTimeValidationError(TypeError):
     @classmethod
     def from_value(cls, value: str | dict | list | tuple) -> Self:
-        return cls(f"Invalid value for conversion to Date: `{value}` ({value.__class__.__name__}).")
+        return cls(
+            f"Invalid value for conversion to DateTime: `{value}` ({value.__class__.__name__})."
+        )
 
 
 class TemporalLogicError(ValueError): ...

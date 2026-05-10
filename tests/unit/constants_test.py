@@ -124,3 +124,13 @@ class TestUnit:
         assert is_close_enough(Unit.SECOND.hours * Unit.HOUR.seconds)
         assert is_close_enough(Unit.MINUTE.hours * Unit.HOUR.minutes)
         assert is_close_enough(Unit.SECOND.minutes * Unit.MINUTE.seconds)
+
+    def test_other_errors(self) -> None:
+        with pytest.raises(TemporalLogicError):
+            _ = Unit.DAY.superunit
+
+        with pytest.raises(TemporalLogicError):
+            _ = Unit.SECOND.subunit
+
+        with pytest.raises(TemporalLogicError):
+            _ = Unit.SECOND.has_n(Unit.DAY)

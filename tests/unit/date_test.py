@@ -122,6 +122,9 @@ class TestDate:
         assert (self.st_pat - 5) == Date.parse("2027-03-12")
         assert (self.cinco_de_mayo - 20) == Date.parse("2025-04-15")
 
+        with pytest.raises(TypeError):
+            self.st_pat - None  # type: ignore
+
     def test_dunder_and(self):
         assert (self.cinco_de_mayo & self.time1613) == DateTime(
             year=2025,
@@ -130,6 +133,9 @@ class TestDate:
             hour=16,
             minute=13,
         )
+
+        with pytest.raises(TypeError):
+            self.st_pat - None  # type: ignore
 
     def test_dunder_bool(self):
         assert self.cinco_de_mayo
@@ -143,6 +149,9 @@ class TestDate:
         assert self.st_pat != Date.parse("2027-06-17")
         assert self.st_pat != Date.parse("2027-03-18")
 
+        with pytest.raises(TypeError):
+            self.st_pat == None  # type: ignore # noqa: E711
+
     def test_dunder_ge(self):
         assert self.st_pat >= Date.parse("2027-03-17")
         assert self.st_pat >= Date.parse("2026-03-16")
@@ -152,6 +161,9 @@ class TestDate:
         assert not (self.st_pat >= Date.parse("2027-03-18"))
         assert not (self.st_pat >= Date.parse("2027-04-16"))
 
+        with pytest.raises(TypeError):
+            self.st_pat >= None  # type: ignore
+
     def test_dunder_gt(self):
         assert not (self.st_pat > Date.parse("2027-03-17"))
         assert self.st_pat > Date.parse("2026-03-16")
@@ -160,6 +172,9 @@ class TestDate:
         assert not (self.st_pat > Date.parse("2028-02-16"))
         assert not (self.st_pat > Date.parse("2027-03-18"))
         assert not (self.st_pat > Date.parse("2027-04-16"))
+
+        with pytest.raises(TypeError):
+            self.st_pat > None  # type: ignore
 
     def test_dunder_hash(self):
         assert hash(self.st_pat) == 2660316880087496949
@@ -178,6 +193,9 @@ class TestDate:
         assert not (self.st_pat <= Date.parse("2027-02-20"))
         assert not (self.st_pat <= Date.parse("2026-09-30"))
 
+        with pytest.raises(TypeError):
+            self.st_pat <= None  # type: ignore
+
     def test_dunder_lt(self):
         assert not (self.st_pat < Date.parse("2027-03-17"))
         assert self.st_pat < Date.parse("2028-02-16")
@@ -186,6 +204,9 @@ class TestDate:
         assert not (self.st_pat < Date.parse("2027-03-16"))
         assert not (self.st_pat < Date.parse("2027-02-20"))
         assert not (self.st_pat < Date.parse("2026-09-30"))
+
+        with pytest.raises(TypeError):
+            self.st_pat < None  # type: ignore
 
     def test_dunder_pow(self):
         assert (self.cinco_de_mayo**self.st_pat) == DateRange(

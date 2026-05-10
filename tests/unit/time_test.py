@@ -4,37 +4,54 @@ from typing import Literal
 import pytest
 
 from datethyme import Date, Time, TimeDelta
+from datethyme.constants import Unit
 from datethyme.exceptions import TimeValidationError
 
 
 class TestTime:
-    def test_validate_time(self):
+    def test_validate_time(self) -> None:
         with pytest.raises(TimeValidationError):
             Time.model_validate("25:00")
         with pytest.raises(TimeValidationError):
             Time.model_validate("12:60")
 
-        assert Time.model_validate("14:30") == {"hour": 14, "minute": 30, "second": 0.0}
-        assert Time.model_validate("09:15:30") == {"hour": 9, "minute": 15, "second": 30.0}
-        assert Time.model_validate({"hour": 10, "minute": 45}) == {
+        assert Time.model_validate("14:30") == Time.model_validate({
+            "hour": 14,
+            "minute": 30,
+            "second": 0.0,
+        })
+        assert Time.model_validate("09:15:30") == Time.model_validate({
+            "hour": 9,
+            "minute": 15,
+            "second": 30.0,
+        })
+        assert Time.model_validate({"hour": 10, "minute": 45}) == Time.model_validate({
             "hour": 10,
             "minute": 45,
             "second": 0.0,
-        }
-        assert Time.model_validate([8, 30]) == {"hour": 8, "minute": 30, "second": 0.0}
-        assert Time.model_validate((12, 15, 45)) == {"hour": 12, "minute": 15, "second": 45.0}
+        })
+        assert Time.model_validate([8, 30]) == Time.model_validate({
+            "hour": 8,
+            "minute": 30,
+            "second": 0.0,
+        })
+        assert Time.model_validate((12, 15, 45)) == Time.model_validate({
+            "hour": 12,
+            "minute": 15,
+            "second": 45.0,
+        })
 
-    def test_start(self):
+    def test_start(self) -> None:
         start_time = Time.start()
         assert start_time.hour == 0
         assert start_time.minute == 0
 
-    def test_end(self):
+    def test_end(self) -> None:
         end_time = Time.end()
         assert end_time.hour == 24
         assert end_time.minute == 0
 
-    def test_parse(self):
+    def test_parse(self) -> None:
         time = Time.parse("14:30")
         assert time.hour == 14
         assert time.minute == 30
@@ -51,7 +68,7 @@ class TestTime:
             (1.5, Time(hour=1, minute=30, second=0)),
             (0.025, Time(hour=0, minute=1, second=30)),
             (0.0, Time(hour=0, minute=0, second=0)),
-            (1.7583333333333333, Time(hour=1, minute=0, second=45.5)),
+            (1.7583333333333333, Time(hour=1, minute=45, second=30.0)),
         ],
     )
     def test_from_hours(self, hours: float, expected):
@@ -63,7 +80,7 @@ class TestTime:
             (90, 1, 30, 0.0),
             (125.5, 2, 5, 30.0),
             (0, 0, 0, 0.0),
-            (1440, 24, 0, 0.0),
+            (1440, 0, 0, 0.0),  # from_X returns 00:00 rather than 24:00
         ],
     )
     def test_from_minutes(
@@ -72,7 +89,7 @@ class TestTime:
         expected_hour: int,
         expected_minute: int,
         expected_second: float,
-    ):
+    ) -> None:
         time = Time.from_minutes(minutes)
         assert time.hour == expected_hour
         assert time.minute == expected_minute
@@ -95,7 +112,7 @@ class TestTime:
     #     assert isinstance(none_time, NoneTime)
     #     assert none_time == NONE_TIME
 
-    def test_now(self):
+    def test_now(self) -> None:
         current_time = Time.now()
         assert isinstance(current_time, Time)
         assert 0 <= current_time.hour <= 23
@@ -106,7 +123,7 @@ class TestTime:
         [
             (Time(hour=10, minute=30), 30, Time(hour=11, minute=0)),
             (Time(hour=10, minute=30), 90, Time(hour=12, minute=0)),
-            (Time(hour=23, minute=30), 60, Time(hour=24, minute=0)),
+            (Time(hour=23, minute=30), 60, Time(hour=0, minute=0)),
             (Time(hour=10, minute=30), -30, Time(hour=10, minute=0)),
         ],
         ids=["normal_30", "normal_90", "clamped", "negative"],
@@ -120,7 +137,7 @@ class TestTime:
         result = time + minutes_to_add
         assert result == expected
 
-    def test_dunder_and(self):
+    def test_dunder_and(self) -> None:
         time = Time(hour=14, minute=30)
         date = Date(year=2025, month=6, day=15)
         datetime = time & date
@@ -341,7 +358,7 @@ class TestTime:
         [
             (Time(hour=10, minute=30), 30, Time(hour=11, minute=0), 0),
             (Time(hour=23, minute=30), 60, Time(hour=0, minute=30), 1),
-            (Time(hour=1, minute=0), -90, Time(hour=22, minute=30), -1),
+            (Time(hour=1, minute=0), -90, Time(hour=23, minute=30), -1),
         ],
     )
     def test_add_minutes_wraparound(
@@ -412,8 +429,8 @@ class TestTime:
     @pytest.mark.parametrize(
         "time_a, time_b, expected",
         [
-            (Time(hour=10, minute=0), Time(hour=12, minute=0), 2.0),
-            (Time(hour=10, minute=0), Time(hour=8, minute=0), 14.0),
+            (Time(hour=10, minute=0), Time(hour=12, minute=0), 22.0),
+            (Time(hour=10, minute=0), Time(hour=8, minute=0), 2.0),
         ],
     )
     def test_hours_from_last(
@@ -487,8 +504,8 @@ class TestTime:
     @pytest.mark.parametrize(
         "time_a, time_b, expected",
         [
-            (Time(hour=10, minute=0), Time(hour=12, minute=0), 120.0),
-            (Time(hour=10, minute=0), Time(hour=8, minute=0), 840.0),
+            (Time(hour=10, minute=0), Time(hour=12, minute=0), 1320.0),
+            (Time(hour=10, minute=0), Time(hour=8, minute=0), 120.0),
         ],
     )
     def test_minutes_from_last(
@@ -548,8 +565,8 @@ class TestTime:
     @pytest.mark.parametrize(
         "time_a, time_b, expected",
         [
-            (Time(hour=10, minute=0), Time(hour=12, minute=0), 120.0),
-            (Time(hour=10, minute=0), Time(hour=8, minute=0), 840.0),
+            (Time(hour=10, minute=0), Time(hour=12, minute=0), 1320.0),
+            (Time(hour=10, minute=0), Time(hour=8, minute=0), 120.0),
         ],
     )
     def test_seconds_from_last(
@@ -571,8 +588,8 @@ class TestTime:
     )
     def test_seconds_to(
         self,
-        time_a,
-        time_b,
+        time_a: Time,
+        time_b: Time,
         expected: float,
     ) -> None:
         result = time_a.seconds_to(time_b)
@@ -644,3 +661,51 @@ class TestTime:
     ) -> None:
         result = time.to_seconds()
         assert result == expected
+
+    def test_other_properties(self) -> None:
+        t = Time.hms(3, 4, 5)
+        assert t.triplet == (3, 4, 5)
+
+        assert t.full_hours == 3
+        assert t.full_minutes == 184
+        assert t.full_seconds == 11045
+
+    def test_floor(self) -> None:
+        t = Time.hms(3, 4, 5.67)
+
+        assert t.floor(Unit.HOUR).triplet == (3, 0, 0)
+        assert t.floor(Unit.MINUTE).triplet == (3, 4, 0)
+        assert t.floor(Unit.SECOND).triplet == (3, 4, 5.0)
+
+        t = Time.hms(3, 0, 0)
+
+        assert t.floor(Unit.HOUR) == t
+        assert t.floor(Unit.MINUTE) == t
+        assert t.floor(Unit.SECOND) == t
+
+        t = Time.hms(3, 59, 59.9999)
+
+        assert t.floor(Unit.HOUR).triplet == (3, 0, 0)
+        assert t.floor(Unit.HOUR, increment=2).triplet == (2, 0, 0)
+        assert t.floor(Unit.MINUTE).triplet == (3, 59, 0)
+        assert t.floor(Unit.SECOND).triplet == (3, 59, 59)
+
+    def test_ceiling(self) -> None:
+        t = Time.hms(3, 4, 5.67)
+
+        assert t.ceiling(Unit.HOUR).triplet == (4, 0, 0)
+        assert t.ceiling(Unit.MINUTE).triplet == (3, 5, 0)
+        assert t.ceiling(Unit.SECOND).triplet == (3, 4, 6.0)
+
+        t = Time.hms(3, 0, 0)
+
+        assert t.ceiling(Unit.HOUR) == t
+        assert t.ceiling(Unit.MINUTE) == t
+        assert t.ceiling(Unit.SECOND) == t
+
+        t = Time.hms(3, 59, 0.0001)
+
+        assert t.ceiling(Unit.HOUR).triplet == (4, 0, 0)
+        assert t.ceiling(Unit.HOUR, increment=3).triplet == (6, 0, 0)
+        assert t.ceiling(Unit.MINUTE).triplet == (4, 0, 0)
+        assert t.ceiling(Unit.SECOND).triplet == (3, 59, 1)

@@ -31,12 +31,12 @@ def truthy_falsy[T: _Boolable, U: _Boolable](a: T, b: U) -> _Output[T, U]:
 
 
 def transfer_case(reference: str, candidate: str) -> str:
-    if reference.istitle():
-        return candidate.title()
-    if reference.islower():
-        return candidate.lower()
     if reference.isupper():
         return candidate.upper()
+    if reference.islower():
+        return candidate.lower()
+    if reference.istitle():
+        return candidate.title()
     return candidate
 
 
@@ -109,18 +109,20 @@ def validate_time(raw_time: str | dict | list | tuple) -> dict[str, int | float]
             substrings = raw_time.split(":") if raw_time else []
             if 0 < len(substrings) < 4:
                 outdict = dict(zip(("hour", "minute", "second"), map(float, substrings)))
+            else:
+                raise TimeValidationError.from_value(raw_time)
         if isinstance(raw_time, list | tuple) and (0 < len(raw_time) < 4):
             outdict = dict(zip(("hour", "minute", "second"), raw_time))
 
         if (tuple(outdict.values()) == (-1, -1, -1.0)) or all((
             outdict,
             0 <= int(outdict["hour"]) <= 24,
-            0 <= int(outdict.get("minute", 0)) <= 60,
-            0.0 <= int(outdict.get("second", 0.0)) <= 60.0,
+            0 <= int(outdict.get("minute", 0)) < 60,
+            0.0 <= int(outdict.get("second", 0.0)) < 60.0,
         )):
             return outdict
         raise TimeValidationError.from_value(raw_time)
-    except AssertionError | ValueError | TypeError:
+    except (AssertionError, ValueError, TypeError, KeyError):
         raise TimeValidationError.from_value(raw_time)
 
 

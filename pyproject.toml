@@ -117,8 +117,8 @@ skip_covered = false
 exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",
+    "@overload",
 ]
-exclude_files = ["protocols.py", "_abc.py"]
 fail_under = 0
 
 [tool.coverage.html]

@@ -82,6 +82,9 @@ def test_validate_time():
     with pytest.raises(TimeValidationError):
         validate_time(None)  # type: ignore
 
+    with pytest.raises(TimeValidationError):
+        validate_time("12:12:12:12:12")
+
 
 def test_truthy_falsy():
     assert truthy_falsy("s", "") == (True, ("s", ""))
