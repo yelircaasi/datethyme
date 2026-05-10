@@ -10,7 +10,7 @@ from datethyme.scheduling.algorithms import (
 )
 from datethyme.scheduling.types import DateTimePartition as TimePartition
 
-REPLACE_ME = 99
+REPLACE_ME = 9
 
 PARTITION_3H = TimePartition([])
 PARTITION_5H = TimePartition([])

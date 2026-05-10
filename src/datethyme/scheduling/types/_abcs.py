@@ -6,11 +6,14 @@ from functools import lru_cache
 from itertools import pairwise
 from typing import Self
 
+from ..._abcs import AbstractSpan
+from ...constants import Unit
 from ...exceptions import TemporalLogicError
 from ...protocols import (
     DeltaProtocol,
     EntryProtocol,
     PartitionProtocol,
+    ResultTriple,
     SpanProtocol,
     TimeProtocol,
 )
@@ -19,6 +22,7 @@ from ..algorithms import (
     is_contiguous,
     stack_forward,
 )
+from ..utils import is_partitioned
 
 
 class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
@@ -494,5 +498,70 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
     #     return ("\n" + (" " * indent)).join(map(partial(self.format_span, indent=indent), span))
 
     @staticmethod
+    def format_span(span: SpanProtocol[T] | PartitionProtocol[T], indent: int = 0) -> str:
+        prefix = indent * " "
+        if isinstance(span, SpanProtocol):
+            return f"{prefix}{span.start} - {id(span)}"
+        elif isinstance(span, PartitionProtocol):
+            return repr(span).replace("\n", "\n" + prefix)
+        raise ValueError
+
+
+class AbstractBlock[T: TimeProtocol](AbstractSpan, ABC):
+    def __init__(
+        self,
+        start: T,
+        end: T,
+        name: str | None = None,
+        subentries: list[SpanProtocol[T]] | None = None,
+    ) -> None:
+        self._start = start
+        self._end = end
+        self._name = name
+        self._subentries = subentries or []
+        self.assert_partitioned()
+
+    @property
+    def name(self) -> str:
+        return self._name or f"TimeSpan[id{str(hash(self))[:16]}]"
+
+    @property
+    def start(self) -> T:
+        return self._start
+
+    @property
+    def end(self) -> T:
+        return self._end
+
+    def assert_partitioned(self) -> None:
+        if not is_partitioned(self._subentries):
+            msg = f"Data is not a correct partition:\n{self._subentries}"
+            raise TemporalLogicError(msg)
+
+    @property
+    def seconds(self) -> float:
+        self.assert_validity()
+        return round(self._start.minutes_to(self._end) * Unit.MINUTE.seconds)
+
+    @property
+    def minutes(self) -> float:
+        self.assert_validity()
+        return round(self._start.minutes_to(self._end))
+
+    @property
+    def hours(self) -> float:
+        self.assert_validity()
+        return round(self._start.minutes_to(self._end) / Unit.HOUR.minutes)
+
+    @property
+    def days(self) -> float:
+        self.assert_validity()
+        return round(self._start.minutes_to(self._end) / Unit.DAY.minutes)
+
+    def assert_validity(self) -> None: ...
+
     @abstractmethod
-    def format_span(span: SpanProtocol[T] | PartitionProtocol[T], indent: int = 0) -> str: ...
+    def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]: ...
+
+    @abstractmethod
+    def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]: ...

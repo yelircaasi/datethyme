@@ -113,22 +113,18 @@ class Date(BaseModel):
         return DateTime.from_pair(self, DAY_START)
 
     @property
-    # @deal.pure
     def stdlib(self) -> DATETIME.date:
         return DATETIME.date(self.year, self.month, self.day)
 
     @property
-    # @deal.pure
     def ordinal(self) -> int:
         return self.stdlib.toordinal()
 
     @property
-    # @deal.pure
     def weekday_ordinal(self) -> int:
         return self.stdlib.weekday()
 
     @property
-    # @deal.pure
     def weekday(self) -> WeekdayLiteral:
         weekday_dict: dict[int, WeekdayLiteral] = {
             0: "mon",
@@ -171,15 +167,12 @@ class Date(BaseModel):
             )
         return DateTime(year=self.year, month=self.month, day=self.day)
 
-    # @deal.pure
     def __str__(self) -> str:
         return f"{self.year}-{self.month:0>2}-{self.day:0>2}"
 
-    # @deal.pure
     def __repr__(self) -> str:
         return f"Date({self.__str__()})"
 
-    # @deal.pure
     def __bool__(self) -> bool:
         return True
 
@@ -204,7 +197,6 @@ class Date(BaseModel):
             raise TypeError("Date or int required for method __sub__ of Date.")
         return self.ordinal - subtrahend.ordinal
 
-    # @deal.pure
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, DATETIME.date | Date):
             raise TypeError("Unsupported comparison.")
@@ -214,39 +206,32 @@ class Date(BaseModel):
             other.day,
         )
 
-    # @deal.pure
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() < int(other)
 
-    # @deal.pure
     def __gt__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() > int(other)
 
-    # @deal.pure
     def __le__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() <= int(other)
 
-    # @deal.pure
     def __ge__(self, other: Any) -> bool:
         if not isinstance(other, Date):
             raise TypeError("Unsupported comparison.")
         return self.__int__() >= int(other)
 
-    # @deal.pure
     def __int__(self) -> int:
         return self.ordinal
 
-    # @deal.pure
     def __hash__(self) -> int:
         return hash((self.year, self.month, self.day))
 
-    # @deal.pure
     def __pow__(self, other: Date) -> DateRange:
         return DateRange(start=self, stop=other, step=1, inclusive=False)
 
@@ -280,7 +265,6 @@ class Date(BaseModel):
         return cls(year=d.year, month=d.month, day=d.day)
 
     @classmethod
-    # @deal.pure
     def from_ordinal(cls, ord: int) -> Self:
         d = DATETIME.date.fromordinal(ord)
         return cls(year=d.year, month=d.month, day=d.day)
@@ -420,12 +404,10 @@ class Date(BaseModel):
 
         return DateRange.from_sequence(dates)
 
-    # @deal.pure
     def days_to(self, date2: Date) -> int:
         return date2.ordinal - self.ordinal
 
     # @staticmethod
-    # @deal.pure
     # def none() -> "NoneDate":
     #     return NONE_DATE
 
@@ -450,7 +432,6 @@ class Time(BaseModel):
         return validate_time(raw_time)
 
     @model_serializer
-    # @deal.pure
     def serialize_time(self) -> str:
         return str(self)
 
@@ -506,17 +487,14 @@ class Time(BaseModel):
     def __rshift__(self, other: Time) -> TimeSpan:
         return self.to(other)
 
-    # @deal.pure
     def __str__(self) -> str:
         if self.second:
             return f"{self.hour:0>2}:{self.minute:0>2}:{self.second:06.3f}"
         return f"{self.hour:0>2}:{self.minute:0>2}"
 
-    # @deal.pure
     def __repr__(self) -> str:
         return f"Time({self.__str__()})"
 
-    # @deal.pure
     def __bool__(self):
         return True
 
@@ -537,7 +515,6 @@ class Time(BaseModel):
     def _sub(self, mins: int | float) -> Time:
         return Time.from_minutes(min(1440, max(0, self.to_minutes() - mins)))
 
-    # @deal.pure
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Time):
             raise TypeError("Unsupported comparison.")
@@ -571,7 +548,6 @@ class Time(BaseModel):
             raise TypeError("Unsupported comparison.")
         return self.to_minutes() >= other.to_minutes()
 
-    # @deal.pure
     def __hash__(self) -> int:
         return hash((self.hour, self.minute, self.second))
 
@@ -622,12 +598,10 @@ class Time(BaseModel):
         return cls.from_unit(Unit.SECOND, n, allow_wrap=allow_wrap)
 
     @classmethod
-    # @deal.pure
     def start(cls) -> Time:
         return cls(hour=0)
 
     @classmethod
-    # @deal.pure
     def end(cls) -> Time:
         return cls(hour=24)
 
@@ -680,87 +654,72 @@ class Time(BaseModel):
         new_seconds = self._ceiling(self.to_seconds(), increment)
         return self.__class__.from_seconds(new_seconds)
 
-    # @deal.pure
     def to_hours(self, places: int | None = 10) -> float:
         raw = self.hour + self.minute / 60 + self.second / Unit.HOUR.seconds
         return round(raw, places or 1)
 
-    # @deal.pure
     def to_minutes(self, places: int | None = 10) -> float:
         raw = 60.0 * self.hour + self.minute + self.second / 60.0
         return round(raw, places or 1)
 
-    # @deal.pure
     def to_seconds(self, places: int | None = 10) -> float:
         raw = Unit.HOUR.seconds * self.hour + 60.0 * self.minute + self.second
         return round(raw, places or 1)
 
-    # @deal.pure
     def minutes_to(self, other: Time) -> float:
         t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def minutes_from(self, other: Time) -> float:
         t2, t1 = self.to_minutes(), other.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def minutes_to_next(self, other: Time) -> float:
         if other >= self:
             return self.minutes_to(other)
         else:
             return self.minutes_to(DAY_END) + DAY_START.minutes_to(other)
 
-    # @deal.pure
     def minutes_from_last(self, other: Time) -> float:
         if other <= self:
             return other.minutes_to(self)
         else:
             return other.minutes_to(DAY_END) + DAY_START.minutes_to(self)
 
-    # @deal.pure
     def seconds_to(self, other: Time) -> float:
         t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def seconds_from(self, other: Time) -> float:
         t2, t1 = self.to_minutes(), other.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def seconds_to_next(self, other: Time) -> float:
         if other >= self:
             return self.minutes_to(other)
         else:
             return self.minutes_to(DAY_END) + DAY_START.minutes_to(other)
 
-    # @deal.pure
     def seconds_from_last(self, other: Time) -> float:
         if other <= self:
             return other.minutes_to(self)
         else:
             return other.minutes_to(DAY_END) + DAY_START.minutes_to(self)
 
-    # @deal.pure
     def hours_to(self, other: Time) -> float:
         t2, t1 = other.to_hours(), self.to_hours()
         return t2 - t1
 
-    # @deal.pure
     def hours_from(self, other: Time) -> float:
         t2, t1 = self.to_hours(), other.to_hours()
         return t2 - t1
 
-    # @deal.pure
     def hours_to_next(self, other: Time) -> float:
         if other >= self:
             return self.hours_to(other)
         else:
             return self.hours_to(DAY_END) + DAY_START.hours_to(other)
 
-    # @deal.pure
     def hours_from_last(self, other: Time) -> float:
         if other <= self:
             return other.hours_to(self)
@@ -829,11 +788,6 @@ class Time(BaseModel):
     ) -> TimeRange[U]:
         stop_time = (self.add(unit, stop)) if isinstance(stop, int) else stop
         return TimeRange(self, stop=stop_time, unit=unit, step=step, inclusive=inclusive)
-
-    # @staticmethod
-    # @deal.pure
-    # def none() -> "NoneTime":
-    #     return NONE_TIME
 
     def add(self, unit: Unit, n: int | float) -> Time:
         match unit:
@@ -1120,17 +1074,14 @@ class DateTime(BaseModel):
         time, wraps = self.time.add_seconds_wraparound(n)
         return (self.date + wraps) & time
 
-    # @deal.pure
     def minutes_to(self, other: DateTime) -> float:
         t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def minutes_from(self, other: DateTime) -> float:
         t2, t1 = self.to_minutes(), other.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def minutes_to_next(self, other: Time) -> float:
         self_time = self.time
         if other >= self_time:
@@ -1138,49 +1089,40 @@ class DateTime(BaseModel):
         else:
             return 1440 - other.minutes_from(self.time)
 
-    # @deal.pure
     def minutes_from_last(self, other: Time) -> float:
         return 1440 - self.minutes_to_next(other)
 
-    # @deal.pure
     def seconds_to(self, other: DateTime) -> float:
         t2, t1 = other.to_minutes(), self.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def seconds_from(self, dateother: DateTime) -> float:
         t2, t1 = self.to_minutes(), dateother.to_minutes()
         return t2 - t1
 
-    # @deal.pure
     def seconds_to_next(self, other: Time) -> float:
         if other >= self.time:
             return self.time.minutes_to(other)
         else:
             return self.time.minutes_to(DAY_END) + DAY_START.minutes_to(other)
 
-    # @deal.pure
     def seconds_from_last(self, other: Time) -> float:
         return Unit.DAY.seconds - self.seconds_to_next(other)
 
-    # @deal.pure
     def hours_to(self, dateother: DateTime) -> float:
         t2, t1 = dateother.to_hours(), self.to_hours()
         return t2 - t1
 
-    # @deal.pure
     def hours_from(self, dateother: DateTime) -> float:
         t2, t1 = self.to_hours(), dateother.to_hours()
         return t2 - t1
 
-    # @deal.pure
     def hours_to_next(self, other: Time) -> float:
         if other >= self.time:
             return self.time.hours_to(other)
         else:
             return self.time.hours_to(DAY_END) + DAY_START.hours_to(other)
 
-    # @deal.pure
     def hours_from_last(self, other: Time) -> float:
         return 24 - self.hours_to_next(other)
 
@@ -1193,7 +1135,9 @@ class DateTime(BaseModel):
         inclusive: bool = False,
     ) -> DateTimeRange[U]:
         stop_datetime: DateTime = self.add(unit, stop) if isinstance(stop, int) else stop
-        return DateTimeRange(start=self, stop=stop_datetime, unit=unit, step=step, inclusive=inclusive)
+        return DateTimeRange(
+            start=self, stop=stop_datetime, unit=unit, step=step, inclusive=inclusive
+        )
 
     def add(self, unit: Unit, n: int | float) -> DateTime:
         match unit:
@@ -1465,7 +1409,7 @@ class DateRange(AbstractRange[Date]):
     def overlap(self, other: DateRange, strict: bool = False) -> DateRange | None:
         start = max(self.start, other.start)
         stop = min(self.stop, other.stop)
-        if (stop < start):
+        if stop < start:
             if strict:
                 raise TemporalLogicError
             return None

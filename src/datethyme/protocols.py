@@ -66,21 +66,15 @@ class AtomProtocol(Protocol):
         **kwargs,
     ) -> RangeProtocol[Self]: ...
 
-    # @overload
-    # def range(
-    #     self,
-    #     stop: Self | int,
-    #     *,
-    #     step: int = 1,
-    #     inclusive: bool = False,
-    # ) -> RangeProtocol[Self]: ...
-
 
 @runtime_checkable
 class TimeProtocol(AtomProtocol, Protocol):
-    hour: int
-    minute: int
-    second: float
+    @property
+    def hour(self) -> int: ...
+    @property
+    def minute(self) -> int: ...
+    @property
+    def second(self) -> float: ...
 
     def __bool__(self) -> bool: ...
     def __eq__(self, other) -> bool: ...

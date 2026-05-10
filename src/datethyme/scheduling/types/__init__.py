@@ -11,7 +11,6 @@ from .schedules import (
     EmptyBlock,
     FixedBlock,
     FlexBlock,
-    ScheduledEntry,
 )
 
 __all__ = (
@@ -25,7 +24,6 @@ __all__ = (
     "Entry",
     "FixedBlock",
     "FlexBlock",
-    "ScheduledEntry",
     "TimePartition",
     "make_entries_adapter",
     "make_entry_adapter",

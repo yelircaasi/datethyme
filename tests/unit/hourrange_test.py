@@ -8,7 +8,7 @@ import pytest
 
 from datethyme import HourRange, Time
 
-from .timespan_test import PLACEHOLDER_TIME
+PLACEHOLDER_TIME = Time(hour=10, minute=0)
 
 
 class TestHourRange:

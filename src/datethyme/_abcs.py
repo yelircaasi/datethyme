@@ -6,16 +6,15 @@ from functools import lru_cache
 from operator import le, lt
 from typing import Literal, Self, TypeVar, overload
 
-from .exceptions import TemporalLogicError
-
 from .constants import Unit
+from .exceptions import TemporalLogicError
 from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
 from .utils import compute_index, get_end, get_start
 
 TimeUnit = TypeVar("TimeUnit", bound=Literal["day", "hour", "minute", "second"])
 
 
-class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol):
+class AbstractRange[Atom: AtomProtocol](ABC, RangeProtocol[Atom]):
     start: Atom
     stop: Atom
     step: int
@@ -190,9 +189,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         self._end = self._end.round_minutes(round_to=round_to, round_down=round_down)
         return self
 
-    def round_seconds(
-        self, round_to: float = 0, round_down: bool = False
-    ) -> AbstractSpan[Atom]:
+    def round_seconds(self, round_to: float = 0, round_down: bool = False) -> AbstractSpan[Atom]:
         self._start = self._start.round_seconds(round_to=round_to, round_down=round_down)
         self._end = self._end.round_seconds(round_to=round_to, round_down=round_down)
         return self
@@ -229,7 +226,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
     def overlap(self, other: AbstractSpan[Atom], strict: bool = False) -> Self | None:
         start = max(self.start, other.start)
         end = min(self.end, other.end)
-        if (end < start):
+        if end < start:
             if strict:
                 raise TemporalLogicError
             return None
@@ -270,7 +267,12 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
         seconds_from_start = round(alpha * self.seconds, round_seconds_to)
         return self.start.add_seconds(seconds_from_start)
 
-    def contains(self, other: SpanProtocol[Atom] | TimeProtocol, include_start: bool = True, include_end: bool = False) -> bool:
+    def contains(
+        self,
+        other: SpanProtocol[Atom] | TimeProtocol,
+        include_start: bool = True,
+        include_end: bool = False,
+    ) -> bool:
         op_a = le if include_start else lt
         op_b = le if include_start else lt
         if isinstance(other, SpanProtocol):
