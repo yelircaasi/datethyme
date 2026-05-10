@@ -624,6 +624,7 @@ class TestTimePartition:
         overlap_resolver,
         min_minutes,
         squeezed,
+        rollover,
     ):
         transformed = squeeze_with_rollover(
             original,
@@ -684,6 +685,7 @@ class TestTimePartition:
         overlap_resolver,
         min_minutes,
         squeezed,
+        rollforward,
     ):
         transformed = squeeze_with_rollover(
             original,

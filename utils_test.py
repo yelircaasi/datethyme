@@ -5,22 +5,11 @@ from datethyme.utils import (
     validate_date,
     validate_time,
 )
-
-
-class DateValidationError(ValueError):
-    """Could be a bit more like standard pydantic validation error."""
-
-    @classmethod
-    def from_value(cls, val):
-        return cls(f"Invalid date: {val}")
-
-
-class TimeValidationError(ValueError):
-    """Could be a bit more like standard pydantic validation error."""
-
-    @classmethod
-    def from_value(cls, val):
-        return cls(f"Invalid time: {val}")
+from datethyme.exceptions import (
+    DateTimeValidationError,
+    DateValidationError,
+    TimeValidationError,
+)
 
 
 def test_transfer_case():

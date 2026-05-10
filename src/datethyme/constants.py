@@ -5,6 +5,8 @@ from enum import Enum, StrEnum, auto
 from functools import lru_cache
 from typing import NamedTuple, overload
 
+from .exceptions import TemporalLogicError
+
 
 class AddResult(Enum):
     ADDED = auto()
@@ -106,18 +108,50 @@ class Unit(Enum):
         if hours == round(hours):
             return int(hours)
         raise ValueError
+    
+    @property
+    def superunit(self) -> Unit:
+        if self is Unit.DAY:
+            raise TemporalLogicError("Unit.DAY is the largest supported time unit.")
+        return {
+            Unit.SECOND: Unit.MINUTE,
+            Unit.MINUTE: Unit.HOUR,
+            Unit.HOUR: Unit.DAY
+        }[self]
+
+    @property
+    def subunit(self) -> Unit:
+        if self is Unit.SECOND:
+            raise TemporalLogicError("Unit.SECOND is the smallest supported time unit.")
+        return {
+            Unit.DAY: Unit.HOUR,
+            Unit.HOUR: Unit.MINUTE,
+            Unit.MINUTE: Unit.SECOND,
+        }[self]
 
     @overload
-    def wrt(self, larger_unit: Unit, n: int) -> tuple[int, int]: ...
+    def wrt_subunit(self, n: int) -> int: ...
     @overload
-    def wrt(self, larger_unit: Unit, n: float) -> tuple[int, float]: ...
-    def wrt(self, larger_unit: Unit, n: int | float) -> tuple[int, int | float]:
-        self_per_larger: int = larger_unit._n_per_self(self)
-        q, r = divmod(n, self_per_larger)
+    def wrt_subunit(self, n: float) -> float: ...
+    def wrt_subunit(self, n: int | float) -> int | float:
+        sub_per_self: int = self.subunit.n_in(self)
+        raw =  n * sub_per_self
+        return int(raw) if isinstance(n, int) else float(raw)
+
+    @overload
+    def wrt_superunit(self, n: int) -> tuple[int, int]: ...
+    @overload
+    def wrt_superunit(self, n: float) -> tuple[int, float]: ...
+    def wrt_superunit(self, n: int | float) -> tuple[int, int | float]:
+        self_per_super: int = self.superunit.has_n(self)
+        q, r = divmod(n, self_per_super)
         remainder = int(r) if isinstance(n, int) else float(r)
         return int(q), remainder
+    
+    def n_in(self, other: Unit) -> int:
+        return other.has_n(self)
 
-    def _n_per_self(self, other: Unit) -> int:
+    def has_n(self, other: Unit) -> int:
         if self is Unit.DAY and other is Unit.DAY:
             return 1
         match other:
@@ -130,14 +164,14 @@ class Unit(Enum):
             case _:
                 raise ValueError
 
-    def cascade(self, value: int | float) -> tuple[int, int, int, float]:
+    def cascade(self, value: int | float, round_to: int = 3) -> tuple[int, int, int, float]:
         """Perform cascading modular division at each of our four time resolutions of interest."""
         days, hours, minutes = 0, 0, 0
-        seconds = float(self.seconds * value)
-        minutes, seconds = Unit.SECOND.wrt(Unit.MINUTE, value)
-        hours, minutes = Unit.MINUTE.wrt(Unit.HOUR, minutes)
-        days, hours = Unit.HOUR.wrt(Unit.DAY, hours)
-        return (days, hours, minutes, float(seconds))
+        raw_seconds = float(self.seconds * value)
+        minutes, seconds = Unit.SECOND.wrt_superunit(raw_seconds)
+        hours, minutes = Unit.MINUTE.wrt_superunit(minutes)
+        days, hours = Unit.HOUR.wrt_superunit(hours)
+        return (days, hours, minutes, round(float(seconds), round_to))
 
-    def as_dhms(self, value: int | float) -> tuple[int, int, int, float]:
-        return self.cascade(value)
+    def as_dhms(self, value: int | float, round_to: int = 3) -> tuple[int, int, int, float]:
+        return self.cascade(value, round_to=round_to)

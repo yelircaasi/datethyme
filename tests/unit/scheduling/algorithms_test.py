@@ -294,8 +294,8 @@ def test_latest_end(original, latest):
 @pytest.mark.parametrize(
     "sequence, central_span",
     [
-        (...),
-        (...),
+        (tuple(), None),
+        (tuple(), None),
     ],
 )
 def test_most_central(sequence, central_span):

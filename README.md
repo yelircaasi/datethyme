@@ -8,7 +8,7 @@
 - [ ] 94 `NotImplementedError`s
 - [x] go through and fix all `__getitem__` methods in one fell swoop
 - [x] 10 `cast`s (review whether necessary)
-- [ ] clean up type hierarchy/ontology -> what is needed where? -> esp. wrt ScheduledEntry, scheduling
+- [ ] clean up type hierarchy/ontology -> what is needed where? -> esp. wrt_superunit ScheduledEntry, scheduling
 - [ ] implement jscalendar package in repo jscalendar-py
 - [ ] add nesting_mode to determine how nested time partitions are resized under different operations
 - [ ] support time zone info (at least enough for conversion back to zoned stdlib types)

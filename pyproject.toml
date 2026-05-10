@@ -102,7 +102,12 @@ style = [
 
 [tool.coverage.run]
 branch = true
-omit = ["src/datethyme/__main__.py"]
+omit = [
+    "src/datethyme/__main__.py",
+    "src/datethyme/protocols.py",
+    "src/datethyme/_abcs.py",
+    "src/datethyme/scheduling/types/_abcs.py",
+]
 data_file = ".cache/coverage"
 source = ["datethyme"]
 
@@ -113,6 +118,7 @@ exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",
 ]
+exclude_files = ["protocols.py", "_abc.py"]
 fail_under = 0
 
 [tool.coverage.html]

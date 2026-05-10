@@ -20,6 +20,7 @@ def datetimes(draw):
 import pytest
 
 from datethyme import Date, DateTime, Time
+from ...src.datethyme.exceptions import DateTimeValidationError
 
 
 class TestDateTime:
@@ -303,3 +304,7 @@ class TestDateTime:
         dt = DateTime(year=2024, month=6, day=22, hour=23, minute=59, second=59)
         time = Time(hour=0, minute=0, second=1)
         assert dt.seconds_to_next(time) >= 0
+
+    def test_error(self) -> None:
+        with pytest.raises(DateTimeValidationError):
+            _ = DateTime.model_validate("nonsense")
