@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal, Self, overload
 
 from adiumentum.pydantic import BaseDict, BaseModelRW
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from ..._abcs import TimeProtocol
 from ...constants import AddResult
@@ -20,7 +20,7 @@ from ...protocols import (
     SpanProtocol,
     TimeBlockProtocol,
 )
-from .entries import Entries
+from .entries import Entries, SerializedEntries
 from .log import SchedulingLog
 from .new_abstract_block import AbstractBlock
 
@@ -139,12 +139,6 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
     #     self._gaps: list[EmptyBlock[T]] = []
     #     self.end: T
 
-    # @classmethod
-    # def from_raw(cls, raw: object) -> Self:
-    #     fixed = []
-
-    #     return cls(fixed)
-
     def assert_partitioned(self) -> None: ...
 
     def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]:
@@ -250,14 +244,25 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
 
 
 class CalendarDay(BaseModelRW):  # PartitionProtocol[Time]):
-    schedule: DayPartition  # validate that start is 00:00 and end is 24:00
-    entries: Entries
+    # class Config():
+    #     arbitrary_types_allowed=True
 
-    @classmethod
-    def from_dict(cls, raw: dict[str, list[object]]) -> Self:
-        # schedule = DayPartition.from_raw(raw["schedule"])
-        # entries = Entries.from_raw(raw["entries"])
-        return cls.model_validate(raw)
+    schedule: DayPartition  # validate that start is 00:00 and end is 24:00
+    entries: SerializedEntries
+
+    # @field_validator("entries", mode="before")
+    # @classmethod
+    # def ensure_entries(cls, raw: Iterable) -> Entries:
+    #     entry_tuple = (Entry.model_validate(e) for e in raw)
+    #     return Entries({e.name: e for e in entry_tuple})
+
+    # @field_serializer("entries")
+    # def export_list(self, raw: dict) -> list[dict[str, object]]:
+    #     return list(raw.values())
+
+    # @classmethod
+    # def from_dict(cls, raw: dict[str, list[object]]) -> Self:
+    #     return cls.model_validate(raw)
 
 
 class Routines:
@@ -289,7 +294,7 @@ class ContextHierarchy:
 
 class Calendar(BaseDict[Date, CalendarDay]):
     @classmethod
-    def read_json_file(
+    def read_restricted(
         cls,
         calendar: Path,
         start: Date | None = None,
@@ -297,7 +302,15 @@ class Calendar(BaseDict[Date, CalendarDay]):
         ndays: int = 30,
     ) -> Self:
         raw = json.loads((calendar).read_text())
-        return cls({k: CalendarDay.from_dict(v) for k, v in raw.items()})
+        return cls.model_validate({k: CalendarDay.model_validate(v) for k, v in raw.items()})
+
+    def __str__(self) -> str:
+        return "\n".join((f"{k} -- {v!s}" for k, v in self.items()))
+
+    @model_validator(mode="before")
+    @classmethod
+    def ensure_validation(cls, value: dict[str, object]) -> dict[Date, CalendarDay]:
+        return {Date.model_validate(k): CalendarDay.model_validate(v) for k, v in value.items()}
 
     def create_schedule(
         self,
@@ -338,7 +351,7 @@ class Calendar(BaseDict[Date, CalendarDay]):
         *,
         context_hierarchy: ContextHierarchy,
     ) -> tuple[Entries, SchedulingLog]:
-        remaining = Entries(items=[])
+        remaining = Entries([])
         log = SchedulingLog()
         return remaining, log
 

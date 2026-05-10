@@ -1,1 +1,26 @@
-{}
+{
+    "2026-05-10": {
+        "schedule": {
+            "fixed": [],
+            "flex": [],
+            "gaps": []
+        },
+        "entries": [
+            {
+                "name": "A"
+            }
+        ]
+    },
+    "2026-05-11": {
+        "schedule": {
+            "fixed": [],
+            "flex": [],
+            "gaps": []
+        },
+        "entries": [
+            {
+                "name": "A"
+            }
+        ]
+    }
+}

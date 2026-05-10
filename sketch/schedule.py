@@ -62,7 +62,12 @@ Entry = make_entry_adapter(
 candidate_entries = []  # list(map(Entry, tasks.values()))
 
 
-calendar = Calendar.read_json_file(ppaths.calendar, start=Date.today(), ndays=30)
+calendar = Calendar.read_restricted(ppaths.calendar, start=Date.today(), ndays=30)
+print(calendar)
+print(calendar.keys())
+# print(type(calendar[str(Date.today())].entries))
+# breakpoint()
+print(calendar.model_dump_json())
 routines = Routines.read_json_file(ppaths.routines)
 recurring = Recurring.read_json_file(ppaths.recurring)
 context_hierarchy = ContextHierarchy.read_json_file(ppaths.context_hierarchy)
