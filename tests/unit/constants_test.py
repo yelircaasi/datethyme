@@ -1,4 +1,9 @@
+from math import isclose
+
+import pytest
+
 from datethyme.constants import Unit
+from datethyme.exceptions import TemporalLogicError
 
 
 class TestUnit:
@@ -70,3 +75,53 @@ class TestUnit:
         assert Unit.DAY.wrt_subunit(1.5) == 36.0
         assert Unit.HOUR.wrt_subunit(1.5) == 90.0
         assert Unit.MINUTE.wrt_subunit(1.5) == 90.0
+
+    def test_int_properties(self) -> None:
+        assert Unit.DAY.hours_int == 24
+        assert Unit.DAY.minutes_int == 1440
+
+        assert Unit.HOUR.hours_int == 1
+        assert Unit.HOUR.minutes_int == 60
+
+        assert Unit.MINUTE.minutes_int == 1
+
+    def test_int_properties_errors(self) -> None:
+        with pytest.raises(TemporalLogicError):
+            _ = Unit.SECOND.minutes_int
+
+        with pytest.raises(TemporalLogicError):
+            _ = Unit.SECOND.hours_int
+
+        with pytest.raises(TemporalLogicError):
+            _ = Unit.MINUTE.hours_int
+
+    def test_float_properties(self) -> None:
+        assert Unit.DAY.days == 1.0
+        assert Unit.DAY.hours == 24.0
+        assert Unit.DAY.minutes == 1440.0
+        assert Unit.DAY.seconds == 86400.0
+
+        assert isclose(Unit.HOUR.days, 1 / 24, abs_tol=1e-8)
+        assert Unit.HOUR.hours == 1.0
+        assert Unit.HOUR.minutes == 60.0
+        assert Unit.HOUR.seconds == 3600.0
+
+        assert isclose(Unit.MINUTE.days, 1 / 1440, abs_tol=1e-8)
+        assert isclose(Unit.MINUTE.hours, 1 / 60, abs_tol=1e-8)
+        assert Unit.MINUTE.minutes == 1.0
+        assert Unit.MINUTE.seconds == 60.0
+
+        assert isclose(Unit.SECOND.days, 1 / 86400, abs_tol=1e-8)
+        assert isclose(Unit.SECOND.hours, 1 / 3600, abs_tol=1e-8)
+        assert isclose(Unit.SECOND.minutes, 1 / 60, abs_tol=1e-8)
+        assert Unit.SECOND.seconds == 1.0
+
+    def test_roundtrip_to_milliseconds(self) -> None:
+        def is_close_enough(f: float) -> bool:
+            return isclose(f, 1.0, abs_tol=0.00001)
+        
+        assert is_close_enough(Unit.SECOND.days * Unit.DAY.seconds)
+        assert is_close_enough(Unit.MINUTE.days * Unit.DAY.minutes)
+        assert is_close_enough(Unit.SECOND.hours * Unit.HOUR.seconds)
+        assert is_close_enough(Unit.MINUTE.hours * Unit.HOUR.minutes)
+        assert is_close_enough(Unit.SECOND.minutes * Unit.MINUTE.seconds)

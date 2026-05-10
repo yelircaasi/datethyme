@@ -7,11 +7,13 @@ from typing import NamedTuple, overload
 
 from .exceptions import TemporalLogicError
 
+_DEFAULT_PLACES = 9
+
 
 class AddResult(Enum):
     ADDED = auto()
     ADDED_MODIFIED = auto()
-    DISPLACE = auto()
+    DISPLACED = auto()
     NOT_ADDED = auto()
 
 
@@ -81,17 +83,17 @@ class Unit(Enum):
     @property
     @lru_cache
     def minutes(self) -> float:
-        return round(self.value / 60, 10)
+        return round(self.value / 60, _DEFAULT_PLACES)
 
     @property
     @lru_cache
     def hours(self) -> float:
-        return round(self.value / 3600, 10)
+        return round(self.value / 3600, _DEFAULT_PLACES)
 
     @property
     @lru_cache
     def days(self) -> float:
-        return round(self.value * 86400, 10)
+        return round(self.value / 86400, _DEFAULT_PLACES)
 
     @property
     @lru_cache
@@ -99,7 +101,7 @@ class Unit(Enum):
         minutes = self.minutes
         if minutes == round(minutes):
             return int(minutes)
-        raise ValueError
+        raise TemporalLogicError(f"Cannot get property `minutes_int` from {self!s}")
 
     @property
     @lru_cache
@@ -107,7 +109,7 @@ class Unit(Enum):
         hours = self.hours
         if hours == round(hours):
             return int(hours)
-        raise ValueError
+        raise TemporalLogicError(f"Cannot get property `hours_int` from {self!s}")
     
     @property
     def superunit(self) -> Unit:
