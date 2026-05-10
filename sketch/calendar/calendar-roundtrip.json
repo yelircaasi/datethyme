@@ -1,0 +1,46 @@
+{
+    "2026-05-10": {
+        "schedule": {
+            "fixed": [],
+            "flex": [],
+            "gaps": []
+        },
+        "entries": [
+            {
+                "name": "A",
+                "normal_time": 30,
+                "projects": [],
+                "priority": 0.5,
+                "contexts": [],
+                "dependencies": null,
+                "min_time_explicit": null,
+                "ideal_time_explicit": null,
+                "max_time_explicit": null,
+                "due_date": null,
+                "earliest_date": null
+            }
+        ]
+    },
+    "2026-05-11": {
+        "schedule": {
+            "fixed": [],
+            "flex": [],
+            "gaps": []
+        },
+        "entries": [
+            {
+                "name": "A",
+                "normal_time": 30,
+                "projects": [],
+                "priority": 0.5,
+                "contexts": [],
+                "dependencies": null,
+                "min_time_explicit": null,
+                "ideal_time_explicit": null,
+                "max_time_explicit": null,
+                "due_date": null,
+                "earliest_date": null
+            }
+        ]
+    }
+}

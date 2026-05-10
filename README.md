@@ -2,6 +2,12 @@
 
 ## Roadmap
 
+Note to self: Have a lot of low-hanging fruit in `./sketch/schedule.py`:
+
+- [ ] fills in the gaps in datamodels
+- [ ] refine type hierarchy and ensure protocol conformity
+- [ ] get script running end-to-end with a sufficiently-complex MVP
+
 - [x] 50 `TODO`s
 - [ ] 2 ignore comments
 - [x] 8 `noqa` comments (not necessary to remove all; just review carefully)
