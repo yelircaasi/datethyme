@@ -110,16 +110,12 @@ class Unit(Enum):
         if hours == round(hours):
             return int(hours)
         raise TemporalLogicError(f"Cannot get property `hours_int` from {self!s}")
-    
+
     @property
     def superunit(self) -> Unit:
         if self is Unit.DAY:
             raise TemporalLogicError("Unit.DAY is the largest supported time unit.")
-        return {
-            Unit.SECOND: Unit.MINUTE,
-            Unit.MINUTE: Unit.HOUR,
-            Unit.HOUR: Unit.DAY
-        }[self]
+        return {Unit.SECOND: Unit.MINUTE, Unit.MINUTE: Unit.HOUR, Unit.HOUR: Unit.DAY}[self]
 
     @property
     def subunit(self) -> Unit:
@@ -137,7 +133,7 @@ class Unit(Enum):
     def wrt_subunit(self, n: float) -> float: ...
     def wrt_subunit(self, n: int | float) -> int | float:
         sub_per_self: int = self.subunit.n_in(self)
-        raw =  n * sub_per_self
+        raw = n * sub_per_self
         return int(raw) if isinstance(n, int) else float(raw)
 
     @overload
@@ -149,7 +145,7 @@ class Unit(Enum):
         q, r = divmod(n, self_per_super)
         remainder = int(r) if isinstance(n, int) else float(r)
         return int(q), remainder
-    
+
     def n_in(self, other: Unit) -> int:
         return other.has_n(self)
 

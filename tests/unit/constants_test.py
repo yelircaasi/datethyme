@@ -7,7 +7,6 @@ from datethyme.exceptions import TemporalLogicError
 
 
 class TestUnit:
-
     def test_as_dhms(self) -> None:
         NUM_A = 1.234567
         NUM_B = 99.99999
@@ -37,7 +36,7 @@ class TestUnit:
         assert Unit.HOUR.n_in(Unit.HOUR) == 1
         assert Unit.MINUTE.n_in(Unit.HOUR) == 60
         assert Unit.SECOND.n_in(Unit.HOUR) == 3600
-    
+
         assert Unit.MINUTE.n_in(Unit.MINUTE) == 1
         assert Unit.SECOND.n_in(Unit.MINUTE) == 60
 
@@ -52,7 +51,7 @@ class TestUnit:
         assert Unit.HOUR.has_n(Unit.HOUR) == 1
         assert Unit.HOUR.has_n(Unit.MINUTE) == 60
         assert Unit.HOUR.has_n(Unit.SECOND) == 3600
-    
+
         assert Unit.MINUTE.has_n(Unit.MINUTE) == 1
         assert Unit.MINUTE.has_n(Unit.SECOND) == 60
 
@@ -119,7 +118,7 @@ class TestUnit:
     def test_roundtrip_to_milliseconds(self) -> None:
         def is_close_enough(f: float) -> bool:
             return isclose(f, 1.0, abs_tol=0.00001)
-        
+
         assert is_close_enough(Unit.SECOND.days * Unit.DAY.seconds)
         assert is_close_enough(Unit.MINUTE.days * Unit.DAY.minutes)
         assert is_close_enough(Unit.SECOND.hours * Unit.HOUR.seconds)

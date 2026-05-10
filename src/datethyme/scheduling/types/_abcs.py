@@ -17,7 +17,7 @@ from ...protocols import (
     SpanProtocol,
     TimeProtocol,
 )
-from ...utils import assert_xor
+from ...utils import truthy_falsy
 from ..algorithms import (
     is_contiguous,
     stack_forward,
@@ -200,7 +200,7 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
         end: T | None = None,
         names: Iterable[str | None] | None = None,
     ) -> Self:
-        anchor_start = assert_xor(start, end)
+        anchor_start = truthy_falsy(start, end)[0]
         if not anchor_start:
             total = sum(minute_durations)
             assert end

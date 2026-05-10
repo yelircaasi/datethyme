@@ -5,18 +5,29 @@ from collections.abc import Callable
 from operator import le, lt
 from typing import Literal, overload
 
-import deal
-
 from .exceptions import DateValidationError, TimeValidationError
 from .protocols import AtomProtocol, RangeProtocol, SpanProtocol, TimeProtocol
 
+type _Boolable = bool | object | None
+type _Output[T, U] = tuple[Literal[True], tuple[T, U]] | tuple[Literal[False], tuple[U, T]]
 
-def assert_xor(a: bool | object | str | None, b: bool | object | str | None) -> bool:
+
+def assert_xor(a: _Boolable, b: _Boolable) -> None:
     if not (bool(a) ^ bool(b)):
         raise ValueError
-    if a:
-        return True
-    return False
+
+
+@overload
+def truthy_falsy[T: _Boolable](a: T, b: T) -> _Output[T, T]: ...
+@overload
+def truthy_falsy[T: _Boolable, U: _Boolable](a: T, b: U) -> _Output[T, U]: ...
+def truthy_falsy[T: _Boolable, U: _Boolable](a: T, b: U) -> _Output[T, U]:
+    """Maybe move this to adiumentum."""
+    assert_xor(a, b)
+
+    if not a:
+        return False, (b, a)
+    return True, (a, b)
 
 
 def transfer_case(reference: str, candidate: str) -> str:
@@ -44,8 +55,8 @@ WeekdayLiteral = Literal[
 ]
 
 
-@deal.has()
-@deal.raises(DateValidationError)
+# @deal.has()
+# @deal.raises(DateValidationError)
 def validate_date(raw_date: str | dict | list | tuple) -> dict[str, int | float]:
     MAX_DAYS = {
         1: 31,
@@ -85,30 +96,32 @@ def validate_date(raw_date: str | dict | list | tuple) -> dict[str, int | float]
     raise DateValidationError.from_value(raw_date)
 
 
-@deal.has()
-@deal.raises(TimeValidationError)
+# @deal.has()
+# @deal.raises(TimeValidationError)
 def validate_time(raw_time: str | dict | list | tuple) -> dict[str, int | float]:
-    if not raw_time:
+    try:
+        if not raw_time:
+            raise TimeValidationError.from_value(raw_time)
+        outdict: dict[str, int | float] = {}
+        if isinstance(raw_time, dict):
+            outdict = raw_time
+        if isinstance(raw_time, str):
+            substrings = raw_time.split(":") if raw_time else []
+            if 0 < len(substrings) < 4:
+                outdict = dict(zip(("hour", "minute", "second"), map(float, substrings)))
+        if isinstance(raw_time, list | tuple) and (0 < len(raw_time) < 4):
+            outdict = dict(zip(("hour", "minute", "second"), raw_time))
+
+        if (tuple(outdict.values()) == (-1, -1, -1.0)) or all((
+            outdict,
+            0 <= int(outdict["hour"]) <= 24,
+            0 <= int(outdict.get("minute", 0)) <= 60,
+            0.0 <= int(outdict.get("second", 0.0)) <= 60.0,
+        )):
+            return outdict
         raise TimeValidationError.from_value(raw_time)
-    outdict: dict[str, int | float] = {}
-    if isinstance(raw_time, dict):
-        outdict = raw_time
-    if isinstance(raw_time, str):
-        substrings = raw_time.split(":") if raw_time else []
-        if 0 < len(substrings) < 4:
-            outdict = dict(zip(("hour", "minute", "second"), map(float, substrings)))
-    if isinstance(raw_time, list | tuple) and (0 < len(raw_time) < 4):
-        outdict = dict(zip(("hour", "minute", "second"), raw_time))
-
-    if (tuple(outdict.values()) == (-1, -1, -1.0)) or all((
-        outdict,
-        0 <= outdict["hour"] <= 24,
-        0 <= outdict.get("minute", 0) <= 60,
-        0.0 <= outdict.get("second", 0.0) <= 60.0,
-    )):
-        return outdict
-
-    raise TimeValidationError.from_value(raw_time)
+    except AssertionError | ValueError | TypeError:
+        raise TimeValidationError.from_value(raw_time)
 
 
 def compute_index(*, start: int, current: int, step: int, tolerance: float = 1e-8) -> int:

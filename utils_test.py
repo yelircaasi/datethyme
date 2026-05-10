@@ -1,23 +1,34 @@
 import pytest
 
-from datethyme.utils import (
-    transfer_case,
-    validate_date,
-    validate_time,
-)
 from datethyme.exceptions import (
-    DateTimeValidationError,
     DateValidationError,
     TimeValidationError,
 )
+from datethyme.utils import (
+    assert_xor,
+    transfer_case,
+    truthy_falsy,
+    validate_date,
+    validate_time,
+)
 
 
-def test_transfer_case():
-    assert transfer_case("Hello", "world") == "World"
-    assert transfer_case("hello", "WORLD") == "world"
-    assert transfer_case("HELLO", "world") == "WORLD"
-    assert transfer_case("Mixed", "case") == "Case"
-    assert transfer_case("plain", "text") == "text"
+@pytest.mark.parametrize(
+    "reference,candidate,expected",
+    [
+        ("Hello", "world", "World"),
+        ("hello", "WORLD", "world"),
+        ("HELLO", "world", "WORLD"),
+        ("Mixed", "case", "Case"),
+        ("plain", "text", "text"),
+    ],
+)
+def test_transfer_case(reference: str, candidate: str, expected: str) -> None:
+    assert transfer_case(reference, candidate) == expected
+    assert transfer_case
+    assert transfer_case
+    assert transfer_case
+    assert transfer_case
 
 
 def test_validate_date():
@@ -76,4 +87,31 @@ def test_validate_time():
         validate_time(None)  # type: ignore
 
 
-def test_assert_xor(): ...
+def test_truthy_falsy():
+    assert truthy_falsy("s", "") == (True, ("s", ""))
+    assert truthy_falsy(True, False) == (True, (True, False))
+    assert truthy_falsy(False, True) == (False, (True, False))
+    assert truthy_falsy("", "some string") == (False, ("some string", ""))
+
+    class SomeClass:
+        def __eq__(self, value: object) -> bool:
+            return True
+
+        def __hash__(self) -> int:
+            return 123
+
+    INSTANCE = SomeClass()
+
+    assert truthy_falsy(None, INSTANCE) == (False, (INSTANCE, None))
+
+    for a, b in [
+        (True, True),
+        (False, False),
+        (None, None),
+        ("string", "other string"),
+        (INSTANCE, INSTANCE),
+    ]:
+        with pytest.raises(ValueError):
+            truthy_falsy(a, b)
+        with pytest.raises(ValueError):
+            assert_xor(a, b)
