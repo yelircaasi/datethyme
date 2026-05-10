@@ -25,7 +25,7 @@ from datethyme.protocols import (
     TimeBlockProtocol,
     TimeProtocol,
 )
-from datethyme.scheduling import DateTimePartition, TimePartition, make_entry_adapter
+from datethyme.scheduling import DateTimePartition, Entries, TimePartition, make_entry_adapter
 from datethyme.scheduling.types import (
     Calendar,
     CalendarDay,
@@ -107,21 +107,21 @@ class TestProtocols:
         DateTime(year=2025, month=11, day=20, hour=12, minute=30),
     )
     fixedblock = FixedBlock(
-        Time(hour=12, minute=30),
-        Time(hour=15, minute=30),
+        start=Time(hour=12, minute=30),
+        end=Time(hour=15, minute=30),
     )
     flexblock = FlexBlock(
-        Time(hour=12, minute=30),
-        Time(hour=15, minute=30),
+        start=Time(hour=12, minute=30),
+        end=Time(hour=15, minute=30),
     )
     emptyblock = EmptyBlock(
-        Time(hour=12, minute=30),
-        Time(hour=15, minute=30),
+        start=Time(hour=12, minute=30),
+        end=Time(hour=15, minute=30),
     )
     timepartition = TimePartition(spans=[])
     datetimepartition = DateTimePartition(spans=[])
     daypartition = DayPartition(fixed=[])
-    calendarday = CalendarDay()
+    calendarday = CalendarDay(schedule=DayPartition(fixed=[]), entries=Entries([]))
     calendar = Calendar()
 
     def test_atomprotocol_conformity(self) -> None:

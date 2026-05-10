@@ -1,22 +1,28 @@
 from __future__ import annotations
 
-from collections import UserDict
+import json
 from collections.abc import Iterable, Sequence
 from itertools import pairwise
-from typing import Self, overload
+from pathlib import Path
+from typing import Literal, Self, overload
+
+from adiumentum.pydantic import BaseDict, BaseModelRW
+from pydantic import Field
 
 from ..._abcs import TimeProtocol
 from ...constants import AddResult
 from ...core import Date, Time, TimeSpan
 from ...protocols import (
+    EntriesProtocol,
     EntryProtocol,
     PartitionProtocol,
     ResultTriple,
     SpanProtocol,
     TimeBlockProtocol,
 )
-from ._abcs import AbstractBlock, AbstractPartition
 from .entries import Entries
+from .log import SchedulingLog
+from .new_abstract_block import AbstractBlock
 
 DEFAULT_DATE = Date.parse("2000-01-01")
 
@@ -58,7 +64,7 @@ DEFAULT_DATE = Date.parse("2000-01-01")
 #     def assert_validity(self) -> None: ...
 
 
-class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], AbstractBlock):
+class FixedBlock[T: TimeProtocol](AbstractBlock[T]):
     # _start: T
     # _end: T
     # _name: str | None = None
@@ -75,7 +81,7 @@ class FixedBlock[T: TimeProtocol](TimeBlockProtocol[T], AbstractBlock):
         return result, self, remaining
 
 
-class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], AbstractBlock):
+class FlexBlock[T: TimeProtocol](AbstractBlock[T]):
     # _start: T
     # _end: T
     # _name: str | None = None
@@ -92,7 +98,7 @@ class FlexBlock[T: TimeProtocol](TimeBlockProtocol[T], AbstractBlock):
         return result, self, remaining
 
 
-class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T], TimeSpan):
+class EmptyBlock[T: TimeProtocol](AbstractBlock[T]):
     # _start: T
     # _end: T
     # _name: str | None = None
@@ -108,18 +114,36 @@ class EmptyBlock[T: TimeProtocol](TimeBlockProtocol[T], TimeSpan):
         return result, self, remaining
 
 
-class DayPartition[T: TimeProtocol](AbstractPartition[T]):
+class DayPartition[T: TimeProtocol](BaseModelRW):
     """Special case of [Date]TimePartition beginning at 00:00 and ending at 24:00 on the same day.
 
     Consideration: distinguish between "not added because of conflict" (for add_fixed)
         and "not added because of no room" (presumably only for add_flex)? -> AddResult enum
     """
 
-    def __init__(self, fixed: Iterable[FixedBlock[T]]) -> None:
-        self._fixed: list[FixedBlock[T]] = list(fixed)
-        self._flex: list[FlexBlock[T]] = []
-        self._gaps: list[EmptyBlock[T]] = []
-        self.end: T
+    fixed: list[FixedBlock[T]]
+    flex: list[FlexBlock[T]] = Field(default_factory=list)
+    gaps: list[EmptyBlock[T]] = Field(default_factory=list)
+
+    @property
+    def start(self) -> T:
+        return self.blocks[0].start
+
+    @property
+    def end(self) -> T:
+        return max(x.end for x in self.blocks)
+
+    # def __init__(self, fixed: Iterable[FixedBlock[T]]) -> None:
+    #     self._fixed: list[FixedBlock[T]] = list(fixed)
+    #     self._flex: list[FlexBlock[T]] = []
+    #     self._gaps: list[EmptyBlock[T]] = []
+    #     self.end: T
+
+    # @classmethod
+    # def from_raw(cls, raw: object) -> Self:
+    #     fixed = []
+
+    #     return cls(fixed)
 
     def assert_partitioned(self) -> None: ...
 
@@ -157,15 +181,13 @@ class DayPartition[T: TimeProtocol](AbstractPartition[T]):
         popped: list[EntryProtocol] = []
         return result, self, popped
 
-    _blocks: list[TimeBlockProtocol]
-
     def assert_validity(self) -> None: ...
 
     @property
-    def blocks(self) -> list[TimeBlockProtocol[T]]:
+    def blocks(self) -> list[EmptyBlock[T] | FlexBlock[T] | FixedBlock[T]]:
         self.assert_validity()
         all_blocks: Sequence[FixedBlock[T] | FlexBlock[T] | EmptyBlock[T]] = (
-            self._fixed + self._fixed + self._fixed
+            self.fixed + self.flex + self.gaps
         )
         return sorted(all_blocks, key=lambda x: (x.start, x.end))
 
@@ -227,9 +249,104 @@ class DayPartition[T: TimeProtocol](AbstractPartition[T]):
         return False
 
 
-class CalendarDay:  # PartitionProtocol[Time]):
+class CalendarDay(BaseModelRW):  # PartitionProtocol[Time]):
     schedule: DayPartition  # validate that start is 00:00 and end is 24:00
     entries: Entries
 
+    @classmethod
+    def from_dict(cls, raw: dict[str, list[object]]) -> Self:
+        # schedule = DayPartition.from_raw(raw["schedule"])
+        # entries = Entries.from_raw(raw["entries"])
+        return cls.model_validate(raw)
 
-class Calendar(UserDict[Date, CalendarDay]): ...
+
+class Routines:
+    @classmethod
+    def read_json_file(
+        cls,
+        path: Path,
+    ) -> Self:
+        return cls()
+
+
+class Recurring:
+    @classmethod
+    def read_json_file(
+        cls,
+        path: Path,
+    ) -> Self:
+        return cls()
+
+
+class ContextHierarchy:
+    @classmethod
+    def read_json_file(
+        cls,
+        path: Path,
+    ) -> Self:
+        return cls()
+
+
+class Calendar(BaseDict[Date, CalendarDay]):
+    @classmethod
+    def read_json_file(
+        cls,
+        calendar: Path,
+        start: Date | None = None,
+        end: Date | None = None,
+        ndays: int = 30,
+    ) -> Self:
+        raw = json.loads((calendar).read_text())
+        return cls({k: CalendarDay.from_dict(v) for k, v in raw.items()})
+
+    def create_schedule(
+        self,
+        *,
+        recurring: Recurring,
+        routines: Routines,
+        entries: EntriesProtocol,
+        context_hierarchy: ContextHierarchy,
+    ) -> tuple[
+        Calendar,
+        Entries,
+        list[SchedulingLog],
+    ]:
+        logs: list[SchedulingLog] = []
+
+        routines_logs = self.allocate_routines(routines)
+        logs.append(routines_logs)
+
+        recurring_log = self.allocate_recurring(recurring)
+        logs.append(recurring_log)
+        # interactive resolution of conflicts? simply return Conflicts object?
+
+        remaining, log = self.allocate_entries(
+            entries,
+            context_hierarchy=context_hierarchy,
+        )
+        logs.append(log)
+
+        return self, remaining, logs
+
+    def allocate_routines(self, routines: Routines) -> SchedulingLog:
+        log = SchedulingLog()
+        return log
+
+    def allocate_entries(
+        self,
+        entries: EntriesProtocol | Iterable[EntryProtocol],
+        *,
+        context_hierarchy: ContextHierarchy,
+    ) -> tuple[Entries, SchedulingLog]:
+        remaining = Entries(items=[])
+        log = SchedulingLog()
+        return remaining, log
+
+    def allocate_recurring(self, recurring: Recurring) -> SchedulingLog:
+        log = SchedulingLog()
+        return log
+
+    def export_latex(
+        self, style: Literal["compact"] | Literal["verbose"] | Literal["default"] = "default"
+    ) -> str:
+        return "PLACEHOLDER"

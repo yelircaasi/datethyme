@@ -123,11 +123,11 @@ class TestDateTimeSpan:
     def test_shift_start_rigid(self):
         assert self.span_ab.shift_start_rigid(PLACEHOLDER) == PLACEHOLDER
 
-    def test_snap_start_to(self):
-        assert self.span_bc.snap_start_to(PLACEHOLDER) == PLACEHOLDER
+    def test_with_start(self):
+        assert self.span_bc.with_start(PLACEHOLDER) == PLACEHOLDER
 
-    def test_snap_end_to(self):
-        assert self.span_bc.snap_end_to(PLACEHOLDER) == PLACEHOLDER
+    def test_with_end(self):
+        assert self.span_bc.with_end(PLACEHOLDER) == PLACEHOLDER
 
     def test_split(self):
         assert self.span_ac.split(PLACEHOLDER) == (self.span_ab, self.span_bc)

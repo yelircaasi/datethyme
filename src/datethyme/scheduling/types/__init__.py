@@ -3,6 +3,7 @@ from .adapters import (
     make_entry_adapter,
 )
 from .entries import Entries, Entry
+from .log import SchedulingLog
 from .partitions import DatePartition, DateTimePartition, TimePartition
 from .schedules import (
     Calendar,
@@ -24,6 +25,7 @@ __all__ = (
     "Entry",
     "FixedBlock",
     "FlexBlock",
+    "SchedulingLog",
     "TimePartition",
     "make_entries_adapter",
     "make_entry_adapter",

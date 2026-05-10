@@ -234,7 +234,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
 
     # alias end_to_start
 
-    def snap_start_to(self, new_start: Atom) -> AbstractSpan[Atom]:
+    def with_start(self, new_start: Atom) -> AbstractSpan[Atom]:
         if new_start < self.start:
             self._start = new_start
             return self
@@ -245,7 +245,7 @@ class AbstractSpan[Atom: TimeProtocol](ABC, SpanProtocol):
             raise ValueError
         return self.__class__(self.start, cut_point), self.__class__(cut_point, self.end)
 
-    def snap_end_to(self, new_end: Atom) -> AbstractSpan[Atom]:
+    def with_end(self, new_end: Atom) -> AbstractSpan[Atom]:
         if new_end > self.start:
             self._end = new_end
             return self

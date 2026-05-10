@@ -43,7 +43,7 @@ def snap_forward[T: TimeProtocol](first: SpanProtocol[T], second: SpanProtocol[T
 
     if first.end >= second.start:
         return first, second
-    return first.snap_end_to(second.start), second
+    return first.with_end(second.start), second
 
 
 def snap_back[T: TimeProtocol](first: SpanProtocol[T], second: SpanProtocol[T]) -> SpanPair[T]:
@@ -51,7 +51,7 @@ def snap_back[T: TimeProtocol](first: SpanProtocol[T], second: SpanProtocol[T]) 
 
     if first.end >= second.start:
         return first, second
-    return first, second.snap_start_to(first.end)
+    return first, second.with_start(first.end)
 
 
 def snap_between[T: TimeProtocol](
@@ -64,11 +64,11 @@ def snap_between[T: TimeProtocol](
     if earliest_none and latest_none:
         return span
     elif latest and earliest_none:
-        return span.snap_end_to(latest)
+        return span.with_end(latest)
     elif earliest and latest_none:
-        return span.snap_start_to(earliest)
+        return span.with_start(earliest)
     elif earliest and latest:
-        return span.snap_start_to(earliest).snap_end_to(latest)
+        return span.with_start(earliest).with_end(latest)
     raise ValueError
 
 
@@ -209,8 +209,8 @@ def split_overlap_equal[T: TimeProtocol](
     new_border = first.__class__(second.start, first.end).midpoint
 
     return (
-        first.snap_end_to(new_border),
-        second.snap_start_to(new_border),
+        first.with_end(new_border),
+        second.with_start(new_border),
     )
 
 
@@ -227,7 +227,7 @@ def split_overlap_proportional[T: TimeProtocol](
     first_proportion = length_first / (length_first + length_second)
     new_border = overlap.interior_point(first_proportion)
 
-    return first.snap_end_to(new_border), second.snap_start_to(new_border)
+    return first.with_end(new_border), second.with_start(new_border)
 
 
 def split_overlap_inverse_proportional[T: TimeProtocol](
@@ -243,7 +243,7 @@ def split_overlap_inverse_proportional[T: TimeProtocol](
     first_rel_share = length_second / (length_first + length_second)
     new_border = overlap.interior_point(first_rel_share)
 
-    return first.snap_end_to(new_border), second.snap_start_to(new_border)
+    return first.with_end(new_border), second.with_start(new_border)
 
 
 def split_gap_equal[T: TimeProtocol](
@@ -256,8 +256,8 @@ def split_gap_equal[T: TimeProtocol](
     gap = first.__class__(first.end, second.start)
 
     return (
-        first.snap_end_to(new_border := gap.midpoint),
-        second.snap_start_to(new_border),
+        first.with_end(new_border := gap.midpoint),
+        second.with_start(new_border),
     )
 
 
@@ -273,8 +273,8 @@ def split_gap_proportional[T: TimeProtocol](
     first_proportion = length_first / (length_first + length_second)
     new_border = gap.interior_point(first_proportion)
 
-    new_first = first.snap_end_to(new_border)
-    new_second = second.snap_start_to(new_border)
+    new_first = first.with_end(new_border)
+    new_second = second.with_start(new_border)
     return new_first, new_second
 
 
@@ -290,8 +290,8 @@ def split_gap_inverse_proportional[T: TimeProtocol](
     first_rel_share = length_second / (length_first + length_second)
     new_border = gap.interior_point(first_rel_share)
 
-    new_first = first.snap_end_to(new_border)
-    new_second = second.snap_start_to(new_border)
+    new_first = first.with_end(new_border)
+    new_second = second.with_start(new_border)
     return new_first, new_second
 
 

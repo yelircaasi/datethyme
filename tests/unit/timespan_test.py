@@ -151,13 +151,13 @@ class TestTimeSpan:
             PLACEHOLDER_TIME, PLACEHOLDER_TIME
         )
 
-    def test_snap_start_to(self) -> None:
-        assert self.span_bc.snap_start_to(PLACEHOLDER_TIME) == TimeSpan(
+    def test_with_start(self) -> None:
+        assert self.span_bc.with_start(PLACEHOLDER_TIME) == TimeSpan(
             PLACEHOLDER_TIME, PLACEHOLDER_TIME
         )
 
-    def test_snap_end_to(self) -> None:
-        assert self.span_bc.snap_end_to(PLACEHOLDER_TIME) == TimeSpan(
+    def test_with_end(self) -> None:
+        assert self.span_bc.with_end(PLACEHOLDER_TIME) == TimeSpan(
             PLACEHOLDER_TIME, PLACEHOLDER_TIME
         )
 

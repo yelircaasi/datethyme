@@ -327,11 +327,11 @@ class AbstractPartition[T: TimeProtocol](PartitionProtocol, ABC):
         shift = self.end.seconds_to(new_start)
         return self.shift_seconds(shift)
 
-    def snap_end_to(self, new_end: T) -> Self:
+    def with_end(self, new_end: T) -> Self:
         self._end = new_end
         return self
 
-    def snap_start_to(self, new_start: T) -> Self:
+    def with_start(self, new_start: T) -> Self:
         # may be better to add checks
         self._start = new_start
         return self

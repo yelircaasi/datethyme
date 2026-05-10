@@ -40,7 +40,7 @@ chore_backlog: Entries = Entries((
     Entry("d", 30),
 ))
 
-agenda = agenda.partition_element(
+agenda = agenda.partition_element(  # type: ignore
     "morning routine",
     morning_routine,
     min_length=1,

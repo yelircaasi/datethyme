@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from collections import UserList
 from collections.abc import Iterable
+from typing import Self
+
+from adiumentum.pydantic import BaseList
 
 from ...core import Date
 from ...protocols import EntryProtocol
@@ -113,7 +115,7 @@ class Entry(EntryProtocol):
         )
 
 
-class Entries[T](UserList[Entry]):
+class Entries[T](BaseList[Entry]):
     """Container type for a sequence of entries."""
 
     def __init__(self, items: Iterable[Entry]) -> None:
@@ -121,6 +123,12 @@ class Entries[T](UserList[Entry]):
         if not len(set(items)) == len(items):
             raise ValueError("Item names must be unique.")
         super().__init__(items)
+
+    @classmethod
+    def from_raw(cls, raw: object) -> Self:
+        items = []
+
+        return cls(items)
 
     @property
     def normal_time(self) -> float:

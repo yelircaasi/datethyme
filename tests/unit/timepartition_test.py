@@ -507,8 +507,8 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_snap_end_to(self, original, new_end, transformed):
-        assert original.snap_end_to(new_end=new_end) == transformed
+    def test_with_end(self, original, new_end, transformed):
+        assert original.with_end(new_end=new_end) == transformed
 
     @pytest.mark.parametrize(
         "original, new_start, transformed",
@@ -519,8 +519,8 @@ class TestTimePartition:
         ],
         ids=["REPLACE_ME", "REPLACE_ME", "REPLACE_ME"],
     )
-    def test_snap_start_to(self, original, new_start, transformed):
-        assert original.snap_start_to(new_start=new_start) == transformed
+    def test_with_start(self, original, new_start, transformed):
+        assert original.with_start(new_start=new_start) == transformed
 
     @pytest.mark.parametrize(
         "partition, spans",

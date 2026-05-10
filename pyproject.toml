@@ -4,12 +4,13 @@ version = "0.4.2"
 description = "A savory approach to date and time, built on Pydantic and datetime, with an emphasis on input validation and date/time arithmetic."
 authors = [{name = "Isaac Riley", email = "yelircaasi@proton.me"}]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "pydantic         >= 2.11 ",
     "deal             >  4.24 ",
     "multipledispatch >= 1    ",
     "loguru           >= 0.7.3",
+    "adiumentum       >= 0.8.7",
 ]
 
 [project.scripts]
