@@ -12,6 +12,7 @@ from pydantic import Field, model_validator
 from ..._abcs import TimeProtocol
 from ...constants import AddResult
 from ...core import Date, Time, TimeSpan
+from ...exceptions import TemporalLogicError
 from ...protocols import (
     EntriesProtocol,
     EntryProtocol,
@@ -20,6 +21,7 @@ from ...protocols import (
     SpanProtocol,
     TimeBlockProtocol,
 )
+from ..utils import is_partitioned
 from .entries import Entries, SerializedEntries
 from .log import SchedulingLog
 from .new_abstract_block import AbstractBlock
@@ -70,6 +72,12 @@ class FixedBlock[T: TimeProtocol](AbstractBlock[T]):
     # _name: str | None = None
     # subentries: list[SpanProtocol[T]] = []
 
+    start: T
+    end: T
+    name: str | None = None
+    contexts: set[str] = Field(default_factory=set)
+    subentries: list[SpanProtocol[T]] = Field(default_factory=list)
+
     def add_flex(self, entry: EntryProtocol) -> ResultTriple[Self]:
         result = AddResult.NOT_ADDED
         remaining: list[EntryProtocol] = [entry]
@@ -114,23 +122,45 @@ class EmptyBlock[T: TimeProtocol](AbstractBlock[T]):
         return result, self, remaining
 
 
-class DayPartition[T: TimeProtocol](BaseModelRW):
+class DayPartition(BaseModelRW):
     """Special case of [Date]TimePartition beginning at 00:00 and ending at 24:00 on the same day.
 
     Consideration: distinguish between "not added because of conflict" (for add_fixed)
         and "not added because of no room" (presumably only for add_flex)? -> AddResult enum
+
     """
 
-    fixed: list[FixedBlock[T]]
-    flex: list[FlexBlock[T]] = Field(default_factory=list)
-    gaps: list[EmptyBlock[T]] = Field(default_factory=list)
+    fixed: list[FixedBlock[Time]]
+    flex: list[FlexBlock[Time]] = Field(default_factory=list)
+    gaps: list[EmptyBlock[Time]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def infer_gaps(self) -> Self:
+        """TODO: add fixed entries to entries lookup?"""
+        blocks = self._blocks
+        first = Time(hour=0).span(Time(hour=0))
+        last = Time(hour=24).span(Time(hour=24))
+
+        for a, b in pairwise([first, *blocks, last]):
+            if a.end < b.start:
+                self.gaps.append(EmptyBlock(start=a.end, end=b.start))
+
+        self.gaps.sort(key=lambda x: x.start)
+        self.assert_validity()
+        return self
+
+    def plain_display(self) -> str:
+        return "\n  ".join(map(repr, self.blocks))
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}\n  {self.plain_display()}"
 
     @property
-    def start(self) -> T:
+    def start(self) -> Time:
         return self.blocks[0].start
 
     @property
-    def end(self) -> T:
+    def end(self) -> Time:
         return max(x.end for x in self.blocks)
 
     # def __init__(self, fixed: Iterable[FixedBlock[T]]) -> None:
@@ -139,9 +169,11 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
     #     self._gaps: list[EmptyBlock[T]] = []
     #     self.end: T
 
-    def assert_partitioned(self) -> None: ...
+    def assert_partitioned(self) -> None:
+        if not is_partitioned(self.blocks):
+            raise TemporalLogicError
 
-    def add_fixed(self, entry: EntryProtocol, earliest: T, latest: T) -> ResultTriple[Self]:
+    def add_fixed(self, entry: EntryProtocol, earliest: Time, latest: Time) -> ResultTriple[Self]:
         """Cases:
 
         - fits in gap
@@ -178,12 +210,16 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
     def assert_validity(self) -> None: ...
 
     @property
-    def blocks(self) -> list[EmptyBlock[T] | FlexBlock[T] | FixedBlock[T]]:
-        self.assert_validity()
-        all_blocks: Sequence[FixedBlock[T] | FlexBlock[T] | EmptyBlock[T]] = (
+    def _blocks(self) -> list[EmptyBlock[Time] | FlexBlock[Time] | FixedBlock[Time]]:
+        all_blocks: Sequence[FixedBlock[Time] | FlexBlock[Time] | EmptyBlock[Time]] = (
             self.fixed + self.flex + self.gaps
         )
         return sorted(all_blocks, key=lambda x: (x.start, x.end))
+
+    @property
+    def blocks(self) -> list[EmptyBlock[Time] | FlexBlock[Time] | FixedBlock[Time]]:
+        self.assert_validity()
+        return self._blocks
 
     def __contains__(self, obj: object) -> bool:
         if type(obj) is type(self.start):
@@ -194,14 +230,14 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
 
     @classmethod
     def from_spans(
-        cls, spans: dict[SpanProtocol[T], str] | Iterable[SpanProtocol[T]], end: T
+        cls, spans: dict[SpanProtocol[Time], str] | Iterable[SpanProtocol[Time]], end: Time
     ) -> Self:
         return cls(fixed=[])
         # should be: return cls((FixedBlock(span.start, span.end) for span in spans))
         # needs FixedBlock to implement all required methods
 
     @classmethod
-    def from_starts(cls, starts: dict[T, str] | Iterable[T], end: T) -> Self:
+    def from_starts(cls, starts: dict[Time, str] | Iterable[Time], end: Time) -> Self:
         names_ = tuple(starts.values()) if isinstance(starts, dict) else None
         starts = tuple(starts)
 
@@ -230,7 +266,7 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
         raise ValueError
 
     @staticmethod
-    def format_span(span: SpanProtocol[T] | PartitionProtocol[T], indent: int = 0) -> str:
+    def format_span(span: SpanProtocol[Time] | PartitionProtocol[Time], indent: int = 0) -> str:
         prefix = indent * " "
         if isinstance(span, SpanProtocol):
             return f"{prefix}{span.start} - {id(span)}"
@@ -241,6 +277,9 @@ class DayPartition[T: TimeProtocol](BaseModelRW):
     @property
     def passes_day_boundary(self) -> bool:
         return False
+    
+    def get_all_names(self) -> tuple[str, ...]:
+        raise NotImplementedError
 
 
 class CalendarDay(BaseModelRW):  # PartitionProtocol[Time]):
@@ -249,6 +288,20 @@ class CalendarDay(BaseModelRW):  # PartitionProtocol[Time]):
 
     schedule: DayPartition  # validate that start is 00:00 and end is 24:00
     entries: SerializedEntries
+
+    def plain_display(self) -> str:
+        return f"{self.schedule.plain_display()}\n\n  Entries: {', '.join(self.entries)}\n\n"
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}\n  {self.plain_display()}"
+
+    def assert_validity(self) -> None:
+        schedule_names = set(self.schedule.get_all_names())
+        entry_names = set(self.entries.keys())
+
+        if not schedule_names == entry_names:
+            msg = f"Scheduled names do not match entry names:\n  {schedule_names=}\n  {entry_names=}"
+            raise TemporalLogicError(msg)
 
     # @field_validator("entries", mode="before")
     # @classmethod
@@ -305,7 +358,10 @@ class Calendar(BaseDict[Date, CalendarDay]):
         return cls.model_validate({k: CalendarDay.model_validate(v) for k, v in raw.items()})
 
     def __str__(self) -> str:
-        return "\n".join((f"{k} -- {v!s}" for k, v in self.items()))
+        return "\n".join((f"{k!s}\n  {v.plain_display()}" for k, v in self.items()))
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     @model_validator(mode="before")
     @classmethod

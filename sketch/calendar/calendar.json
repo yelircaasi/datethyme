@@ -1,7 +1,20 @@
 {
     "2026-05-10": {
         "schedule": {
-            "fixed": [],
+            "fixed": [
+                {
+                    "name": "work (morning)",
+                    "start": "07:00",
+                    "end": "12:00",
+                    "contexts": ["work"]
+                },
+                {
+                    "name": "work (afternoon)",
+                    "start": "13:00",
+                    "end": "17:00",
+                    "contexts": ["work"]
+                }
+            ],
             "flex": [],
             "gaps": []
         },

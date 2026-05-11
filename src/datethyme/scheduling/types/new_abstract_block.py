@@ -19,6 +19,17 @@ class AbstractBlock[T: TimeProtocol](BaseModel, ABC):
     name: str | None = None
     subentries: list[SpanProtocol[T]] = Field(default_factory=list)
 
+    def __hash__(self) -> int:
+        return hash((self.start, self.end, self.name))
+
+    def __repr__(self) -> str:
+        class_name = self.__class__.__name__.split("[")[0] + ":"
+        name = f"'{self.name}'" if self.name else ""
+        subentries = (
+            f"\n    {'\n    '.join(repr(s) for s in self.subentries)}" if self.subentries else ""
+        )
+        return f"[{self.start!s}-{self.end!s}] {class_name:<15}{name}{subentries}"
+
     @model_validator(mode="after")
     def _validate_partitioned(self) -> Self:
         self.assert_partitioned()
