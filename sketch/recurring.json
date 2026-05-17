@@ -1,1 +1,62 @@
-{}
+[
+    {
+        "id": "XYZ",
+        "name": "sweep/vacuum floor",
+        "frequency": 1,
+        "last": "2026-05-10",
+        "routines": [
+            "morning",
+            "evening"
+        ]
+    },
+    {
+        "id": "XYZ",
+        "name": "wash sheets",
+        "frequency": 5,
+        "last": "2026-05-10"
+    },
+    {
+        "id": "XYZ",
+        "name": "vacuum mattress",
+        "frequency": 14,
+        "last": "2026-05-10"
+    },
+    {
+        "id": "XYZ",
+        "name": "deep clean kitchen",
+        "frequency": 7,
+        "last": "2026-05-10"
+    },
+    {
+        "id": "XYZ",
+        "name": "deep clean bathroom",
+        "frequency": 5,
+        "last": "2026-05-10"
+    },
+    {
+        "id": "XYZ",
+        "name": "vacuum carpet",
+        "frequency": 2,
+        "last": "2026-05-10",
+        "routines": [
+            "morning",
+            "evening"
+        ]
+    },
+    {
+        "id": "XYZ",
+        "name": "mop floor",
+        "frequency": 3,
+        "last": "2026-05-10",
+        "routines": [
+            "morning",
+            "evening"
+        ]
+    },
+    {
+        "id": "XYZ",
+        "name": "deep vacuum",
+        "frequency": 4,
+        "last": "2026-05-10"
+    }
+]
