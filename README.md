@@ -1,5 +1,13 @@
 # datethyme
 
+Is my current set of types optimal?
+
+- Calendar is a map Date=>CalendarDay
+- CalendarDay contains a schedule of the type DayPartition and a collection of entries as a lookup table (dict)
+- DayPartition contains collections of blocks: FixedBlock, FlexBlock, EmptyBlock
+  and is tasked with ensuring partititions
+- a block can contain other blocks, up to a predefined limit (`max_next` or similar)
+- an entry can be added to Calendar or CalendarDay; if added to CalendarDay, it will internally use the adding methods of DayPartition
 ## Roadmap
 
 Note to self: Have a lot of low-hanging fruit in `./sketch/schedule.py`:
