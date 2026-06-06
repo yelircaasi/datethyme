@@ -13,9 +13,7 @@ from adiumentum.fp import lmap, sfilter, smap
 from datethyme import Date, Time, TimeSpan
 from loguru import logger
 
-
-def GET_TIME(x) -> int:
-    return x.idealTime
+from .types import DurationType
 
 
 DATE_RE = re.compile(r"^[=\s]*(?P<date>\d{4}-\d{1,2}-\d{1,2})(?:\s+(?P<text>.*)\s*)?$")
@@ -197,7 +195,7 @@ def first_start(spans: Iterable[HasStartEnd], fallback: Time) -> Time:
 DAY_START = Time(hour=0)
 
 
-type DurationType = Literal["min"] | Literal["normal"] | Literal["ideal"] | Literal["max"]
+# type DurationType = Literal["min"] | Literal["normal"] | Literal["ideal"] | Literal["max"]
 
 
 class HasDuration(Protocol):
@@ -214,7 +212,7 @@ class HasDuration(Protocol):
 def sum_time(duration_type: DurationType, seq: Iterable[HasDuration], fallback: int = 0) -> int:
     if fallback and not seq:
         return fallback
-    getter = attrgetter(f"{duration_type}Time")
+    getter = attrgetter(f"{duration_type!s}Time")
     return sum(map(getter, seq))
 
 
@@ -375,25 +373,6 @@ def adjust_blocks[T: BlockProtocol](
                     stretched[j].end = stretched[j].end.add_minutes_bounded(direction)
 
     return stretched
-
-
-def resolve_contexts(
-    parent_contexts: set[str] | None, child_contexts: set[str], none_means_any: bool = False
-) -> set[str]:
-    if none_means_any and (parent_contexts is None):
-        return {"_any"}
-
-    parent_contexts = parent_contexts or set()
-    if "_any" in parent_contexts:
-        return {"_any"}
-
-    if "_locked" in parent_contexts:
-        return set()
-
-    CONTEXT_MAPPER: dict[str, str] = {"lds": "project", "plt": "project"}
-
-    mapped_contexts = child_contexts | sfilter(smap(CONTEXT_MAPPER.get, child_contexts))
-    return parent_contexts.intersection(mapped_contexts)
 
 
 def rescale[T: BlockProtocol](start: Time, end: Time, blocks: list[T]) -> list[T]:

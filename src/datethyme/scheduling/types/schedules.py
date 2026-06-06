@@ -277,7 +277,7 @@ class DayPartition(BaseModelRW):
     @property
     def passes_day_boundary(self) -> bool:
         return False
-    
+
     def get_all_names(self) -> tuple[str, ...]:
         raise NotImplementedError
 
@@ -300,7 +300,9 @@ class CalendarDay(BaseModelRW):  # PartitionProtocol[Time]):
         entry_names = set(self.entries.keys())
 
         if not schedule_names == entry_names:
-            msg = f"Scheduled names do not match entry names:\n  {schedule_names=}\n  {entry_names=}"
+            msg = (
+                f"Scheduled names do not match entry names:\n  {schedule_names=}\n  {entry_names=}"
+            )
             raise TemporalLogicError(msg)
 
     # @field_validator("entries", mode="before")

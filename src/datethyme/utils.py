@@ -122,7 +122,7 @@ def validate_time(raw_time: str | dict | list | tuple) -> dict[str, int | float]
         )):
             return outdict
         raise TimeValidationError.from_value(raw_time)
-    except (AssertionError, ValueError, TypeError, KeyError):
+    except AssertionError, ValueError, TypeError, KeyError:
         raise TimeValidationError.from_value(raw_time)
 
 
