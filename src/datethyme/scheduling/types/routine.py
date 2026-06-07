@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import UserDict
 from pathlib import Path
 from typing import Self
 
@@ -45,7 +46,7 @@ class Routine(BaseModel):
         return sum(x.maxTime for x in self.elements)
 
 
-class Routines(dict[str, Routine]):
+class Routines(UserDict[str, Routine]):
     # @model_validator(mode="before")
     # @classmethod
     # def _(cls, value: object) -> dict[str, object]:

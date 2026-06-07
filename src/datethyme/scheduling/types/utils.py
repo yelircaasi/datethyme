@@ -4,17 +4,16 @@ import itertools
 import re
 from collections.abc import Iterable
 from operator import attrgetter
-from typing import Any, Literal, Protocol, TypedDict
+from typing import Any, Protocol, TypedDict
 
-from adiumentum.fp import lmap, sfilter, smap
+from adiumentum.fp import lmap
+from loguru import logger
 
 # from adiumentum.num import round5
 # from adiumentum.num import round5
 from datethyme import Date, Time, TimeSpan
-from loguru import logger
 
-from .types import DurationType
-
+from .new import DurationType
 
 DATE_RE = re.compile(r"^[=\s]*(?P<date>\d{4}-\d{1,2}-\d{1,2})(?:\s+(?P<text>.*)\s*)?$")
 EVENT_RE = re.compile(
@@ -195,9 +194,6 @@ def first_start(spans: Iterable[HasStartEnd], fallback: Time) -> Time:
 DAY_START = Time(hour=0)
 
 
-# type DurationType = Literal["min"] | Literal["normal"] | Literal["ideal"] | Literal["max"]
-
-
 class HasDuration(Protocol):
     @property
     def minTime(self) -> int: ...
@@ -212,7 +208,9 @@ class HasDuration(Protocol):
 def sum_time(duration_type: DurationType, seq: Iterable[HasDuration], fallback: int = 0) -> int:
     if fallback and not seq:
         return fallback
-    getter = attrgetter(f"{duration_type!s}Time")
+    attr = f"{duration_type!s}Time"
+    print(attr)
+    getter = attrgetter(attr)
     return sum(map(getter, seq))
 
 
@@ -220,8 +218,8 @@ def negotiate_length(start: Time, end: Time, seq: Iterable[HasDuration]) -> list
     seq = tuple(seq)
     length = start.minutes_to(end)
 
-    min_total = sum_time("min", seq)
-    max_total = sum_time("max", seq)
+    min_total = sum_time(DurationType.MIN, seq)
+    max_total = sum_time(DurationType.MAX, seq)
 
     # Clamp target to what the sequence can physically achieve
     target = min(max(length, min_total), max_total)
@@ -250,7 +248,7 @@ def negotiate_length(start: Time, end: Time, seq: Iterable[HasDuration]) -> list
     time_pairs: list[tuple[Time, Time]] = []
     for d in durations:
         old = current
-        current = current + round(d)
+        current += round(d)
         time_pairs.append((old, current))
 
     return time_pairs
@@ -279,7 +277,10 @@ class BlockProtocol(Protocol):
 
 
 def adjust_blocks_OLD[T: BlockProtocol](
-    start: Time, end: Time, blocks: list[T], duration_type: DurationType = "normal"
+    start: Time,
+    end: Time,
+    blocks: list[T],
+    duration_type: DurationType = DurationType.NORMAL,
 ) -> list[T]:
     _getter = attrgetter(f"{duration_type}Time")
 
@@ -290,7 +291,7 @@ def adjust_blocks_OLD[T: BlockProtocol](
 
     stretched: list[T] = []
     size_minutes = round(start.minutes_to(end))
-    total = sum_time("normal", blocks, fallback=size_minutes)
+    total = sum_time(DurationType.NORMAL, blocks, fallback=size_minutes)
     ratio: float = size_minutes / total
     logger.info(f"{size_minutes=}, {total=}, {ratio=}")
 
@@ -310,7 +311,7 @@ def adjust_blocks_OLD[T: BlockProtocol](
 
 
 def adjust_blocks[T: BlockProtocol](
-    start: Time, end: Time, blocks: list[T], duration_type: DurationType = "normal"
+    start: Time, end: Time, blocks: list[T], duration_type: DurationType = DurationType.NORMAL
 ) -> list[T]:
     blocks = sorted(blocks, key=lambda x: x.start)
 

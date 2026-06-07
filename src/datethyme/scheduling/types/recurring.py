@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from adiumentum.pydantic import BaseList
-from datethyme import Date
 from pydantic import BaseModel, Field
+
+from datethyme import Date
 
 
 class RecurringTask(BaseModel):
@@ -10,6 +13,7 @@ class RecurringTask(BaseModel):
     name: str
     frequency: int
     last: Date
+    priority: float = Field(default=0.4999)
     contexts: set[str] = Field(default_factory=set)
     routines: set[str] = Field(default_factory=set)
     description: str = Field(default="")
@@ -59,13 +63,20 @@ class RecurringTask(BaseModel):
 
 
 class RecurringTasks(BaseList[RecurringTask]):
-    def get_due(self, date: Date | None = None) -> RecurringTasks:
+    def get_due(
+        self, date: Date | None = None, sort_key: Callable[[RecurringTask], tuple] | None = None
+    ) -> RecurringTasks:
         date = date or Date.today()
 
         def is_due_(task: RecurringTask) -> bool:
             return task.is_due(date)
 
-        return self.__class__.model_validate(filter(is_due_, self))
+        def default_sort_key(task: RecurringTask) -> tuple[float, Date]:
+            return task.priority, task.due_date
+
+        sort_key = sort_key or default_sort_key
+
+        return self.__class__.model_validate(sorted(filter(is_due_, self), key=sort_key))
 
     def get_not_due(self, date: Date | None = None) -> RecurringTasks:
         date = date or Date.today()

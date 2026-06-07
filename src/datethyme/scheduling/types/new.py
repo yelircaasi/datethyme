@@ -1,69 +1,34 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterator, Mapping
 from enum import StrEnum, auto
 from pathlib import Path
-from typing import Protocol, Self
+from typing import Self
 
-from adiumentum.fp import lmap, sfilter, smap, tfilter, tmap
+from adiumentum.fp import lmap, tfilter
 
 # from adiumentum.num import round5
 from adiumentum.pydantic import BaseDict
-from datethyme import Date, Time
 from loguru import logger
 from pydantic import BaseModel, Field, model_validator
 
-from .context import ContextValidator, make_context_validator, trivial_validator
+from datethyme import Date, Time
 
+from .context import ContextValidator, make_context_validator
+from .elementary_types import DurationType, IDType, NoteProtocol, NotesProtocol
 from .recurring import RecurringTask, RecurringTasks
 from .routine import Routine, RoutineItem, Routines
 from .utils import (
     DAY_START,
-    BlockProtocol,
-    # DurationType,
-    HasDuration,
     SpanMixin,
     adjust_blocks,
     last_end,
     parse_calendar,
     rescale,
-    resolve_contexts,
     sum_time,
 )
+
 # from consilium.notes.types.core import IDType, Note, Notes  # TODO: get adapters polished
-
-type IDType = str
-
-
-class DurationType(StrEnum):
-    MIN = auto()
-    NORMAL = auto()
-    IDEAL = auto()
-    MAX = auto()
-
-
-class NoteProtocol(Protocol):
-    @property
-    def id(self) -> str: ...
-    @property
-    def scheduling_contexts(self) -> set[str]: ...
-    @property
-    def normalTime(self) -> int: ...
-    @property
-    def idealTime(self) -> int: ...
-    @property
-    def minTime(self) -> int: ...
-    @property
-    def maxTime(self) -> int: ...
-    @property
-    def priority(self) -> float: ...
-    @property
-    def text(self) -> str: ...
-    @property
-    def link(self) -> str: ...
-
-
-class NotesProtocol(Protocol): ...
 
 
 class NoteAdapter(BaseModel):
@@ -92,6 +57,7 @@ class NoteAdapter(BaseModel):
             case _:
                 raise ValueError
 
+    @property
     def display_text(self) -> str:
         if not self.text or self.link:
             return "<empty>"
@@ -119,11 +85,16 @@ class NoteAdapter(BaseModel):
 class NotesAdapter(BaseModel):
     notes: dict[str, NoteAdapter]
 
+    def __iter__(self) -> Iterator[NoteAdapter]:
+        return iter(self.notes.values())
+
     @classmethod
-    def from_notes(cls, notes: dict[str, NoteProtocol] | Iterable[NoteProtocol]) -> Self:
+    def from_notes(cls, notes: Mapping[str, NoteProtocol] | list[NoteProtocol]) -> Self:
         if isinstance(notes, dict):
-            return cls(notes=notes)
-        return cls(notes={note.id: note for note in notes})
+            return cls(notes={k: NoteAdapter.from_note(v) for k, v in notes.items()})
+        elif isinstance(notes, list):
+            return cls(notes={note.id: NoteAdapter.from_note(note) for note in notes})
+        raise ValueError
 
 
 PLANNED = set()
@@ -146,16 +117,19 @@ class SubBlock(SpanMixin, BaseModel):
     contexts: str | None = Field(default=None)
     task: NoteAdapter | RoutineItem | RecurringTask | None = Field(default=None)
     origin: Origin = Field(default=Origin.NA)
-    context_validator: ContextValidator = Field(default=trivial_validator)
+    # context_validator: ContextValidator = Field(default=trivial_validator)
     context_mapping: dict[str, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _(self) -> Self:
         if not self.id:
             self.id = f"{self.start}--{self.end}"
-        if self.contexts:
-            self.context_validator = make_context_validator(self.contexts, self.context_mapping)
         return self
+
+    @property
+    def context_validator(self) -> ContextValidator:
+        validator = make_context_validator(self.contexts or "_any", self.context_mapping)
+        return validator
 
     @classmethod
     def from_routine_item(cls, element: RoutineItem) -> Self:
@@ -184,8 +158,8 @@ class SubBlock(SpanMixin, BaseModel):
         )
 
     @classmethod
-    def from_note(cls, note_orig: NoteProtocol, start: Time, end: Time) -> Self:
-        note = NoteAdapter.from_note(note_orig)
+    def from_note(cls, note: NoteAdapter, start: Time, end: Time) -> Self:
+        # note = NoteAdapter.from_note(note_orig)
         return cls(
             id=note.id,
             text=note.display_text,
@@ -202,7 +176,7 @@ class SubBlock(SpanMixin, BaseModel):
     def repr_contexts(self) -> str:
         if not self.contexts:
             return ""
-        return f" [{','.join(self.contexts)}]"
+        return f" [{self.contexts}]"
 
     @property
     def minTime(self) -> int:
@@ -231,7 +205,7 @@ class Block(SubBlock):
     # title: str
     # contexts: tuple[str, ...]
     children: list[SubBlock] = Field(default_factory=list)
-    registry: dict[str, Routine | RecurringTask | NoteProtocol] = Field(default_factory=dict)
+    registry: dict[str, Routine | RecurringTask | NoteAdapter] = Field(default_factory=dict)
 
     @classmethod
     def initial(cls, end: Time) -> Self:
@@ -252,40 +226,40 @@ class Block(SubBlock):
         ))
         return "\n".join(segments)
 
-    @property
-    def max_available(self) -> int:
-        if not self.children:
-            return self.size
-        return self.size - self.minTime
+    # @property
+    # def max_available(self) -> int:
+    #     if not self.children:
+    #         return self.size
+    #     return self.size - self.minTime
 
-    @property
-    def normal_available(self) -> int:
-        if not self.children:
-            return self.size
-        return self.size - self.normalTime
+    # @property
+    # def normal_available(self) -> int:
+    #     if not self.children:
+    #         return self.size
+    #     return self.size - self.normalTime
 
-    @property
-    def ideal_available(self) -> int:
-        if not self.children:
-            return self.size
-        return self.size - self.idealTime
+    # @property
+    # def ideal_available(self) -> int:
+    #     if not self.children:
+    #         return self.size
+    #     return self.size - self.idealTime
 
-    @property
-    def min_available(self) -> int:
+    # @property
+    # def min_available(self) -> int:
+    #     if not self.children:
+    #         return self.size
+    #     return self.size - self.maxTime
+
+    def available(self, duration_type: DurationType) -> int:
         if not self.children:
             return self.size
-        return self.size - self.maxTime
-    
+        print("available:", self.size - self.duration(duration_type))
+        return self.size - self.duration(duration_type)
+
     def duration(self, duration_type: DurationType) -> int:
         match duration_type:
             case DurationType.IDEAL | DurationType.NORMAL | DurationType.MIN | DurationType.MAX:
                 return sum_time(duration_type, self.registry.values(), fallback=self.size)
-            case DurationType.NORMAL:
-                return self.normalTime
-            case DurationType.MIN:
-                type_name = "min"
-            case DurationType.MAX:
-                return self.maxTime
             case _:
                 raise ValueError
 
@@ -306,22 +280,21 @@ class Block(SubBlock):
         return sum_time(DurationType.MAX, self.registry.values(), fallback=self.size)
 
     def add_routines(self, routines: Routines) -> tuple[str, ...]:
-        contexts = resolve_contexts(self.contexts, set(routines)) # TODO: replace with self.context_validator
         added: list[str] = []
         for name, routine in routines.items():
-            if name in contexts:
+            if self.context_validator({name}):
                 # logger.info(f"Routine context resolved: {name}")
                 self._add_routine_items(routine=routine)
                 added.append(name)
-                self.contexts = set(self.contexts or []) | {"_locked"}
+                self.contexts = "_locked"
                 return tuple(added)
         return tuple()
 
     def add_recurring_tasks(self, *, date: Date, recurring_due: RecurringTasks) -> RecurringTasks:
         for task in recurring_due.get_due():
-            if resolve_contexts(self.contexts, task.contexts, none_means_any=False): # TODO: replace with self.context_validator
+            if self.context_validator(task.contexts):
                 # logger.info(f"Task context resolved: {task.id}")
-                if task.minTime <= (av := self.normal_available):
+                if task.minTime <= (av := self.available(DurationType.NORMAL)):
                     self._add_recurring_task(task)
                     # logger.info("Should have added task.")
                     task.last = date
@@ -332,21 +305,23 @@ class Block(SubBlock):
 
     def add_notes(
         self,
-        notes: NotesProtocol,
+        notes_orig: NotesProtocol,
         scheduled: set[IDType],
         when_loose: DurationType = DurationType.IDEAL,
         at_margin: DurationType = DurationType.NORMAL,
     ) -> set[IDType]:
         print(scheduled)
-        for note in notes.values():
+        notes = NotesAdapter.from_notes(notes_orig)
+        for note in notes:
             if (note.id in scheduled) or (note.id in self.registry):
                 print("already_contained")
                 continue
-            elif ctxs := resolve_contexts( # TODO: replace with self.context_validator
-                self.contexts, note.projects | note.contexts, none_means_any=True
-            ):
-                logger.info(f"Task context resolved: {note.id} {ctxs}")
-                if note.duration(at_margin) <= (av := self.duration(when_loose)):
+            elif self.context_validator(note.scheduling_contexts):
+                logger.info(f"Task context resolved: {note.id} {note.scheduling_contexts}")
+                print(note.duration(at_margin), self.available(when_loose), len(self.registry))
+
+                if note.duration(at_margin) <= (av := self.available(when_loose)):
+                    print(av)
                     self._add_note(note)
                     scheduled.add(note.id)
                     logger.info("Should have added note.")
@@ -390,8 +365,8 @@ class Block(SubBlock):
         name = routine.name
         new_subblocks = SubBlock.from_routine(name, routine, start=start, end=self.end)
         n = len(new_subblocks)
-        if not routine.minTime <= self.max_available:
-            raise ValueError(f"{routine.minTime} > {self.max_available}")
+        if not routine.minTime <= self.available(DurationType.MAX):
+            raise ValueError(f"{routine.minTime} > {self.available(DurationType.MAX)}")
         # print(self.children, n)
         self.children = adjust_blocks(self.start, self.end, [*self.children, *new_subblocks])
         if not len(self.children) == n:
@@ -406,7 +381,7 @@ class Block(SubBlock):
         self.children = adjust_blocks(self.start, self.end, [*(self.children or []), new_subblock])
         self.registry.update({recurring.name: recurring})
 
-    def _add_note(self, note: NoteProtocol) -> None:
+    def _add_note(self, note: NoteAdapter) -> None:
         start = last_end(self.children, self.start)
         new_subblock = SubBlock.from_note(note, start=start, end=start + note.idealTime)
         self.children = adjust_blocks(self.start, self.end, [*(self.children or []), new_subblock])
@@ -432,9 +407,17 @@ class Day(BaseModel):
             recurring_due = block.add_recurring_tasks(date=date, recurring_due=recurring_due)
         return recurring_due
 
-    def add_notes(self, notes: NotesProtocol, scheduled: set[IDType]) -> set[IDType]:
+    def add_notes(
+        self,
+        notes: NotesProtocol,
+        scheduled: set[IDType],
+        when_loose: DurationType = DurationType.IDEAL,
+        at_margin: DurationType = DurationType.NORMAL,
+    ) -> set[IDType]:
         for block in self.blocks:
-            scheduled.update(block.add_notes(notes, scheduled))
+            scheduled.update(
+                block.add_notes(notes, scheduled, when_loose=when_loose, at_margin=at_margin)
+            )
         return scheduled
 
     def add_gaps(self) -> None:

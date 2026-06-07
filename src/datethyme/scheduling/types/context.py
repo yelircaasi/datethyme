@@ -1,20 +1,16 @@
 from __future__ import annotations
 
-from ast import And
-from collections.abc import Iterable
-from dataclasses import dataclass
-from enum import Enum, StrEnum, auto
 import re
-from typing import Callable, Literal
-from wsgiref import validate
-
-from adiumentum.collections import FrozenDict
-from adiumentum.fp import sfilter, smap
+from collections import UserList
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from enum import Enum
+from typing import Literal
 
 UNIVERSAL_CONTEXT: str = "_any"
 LOCKED_CONTEXT: str = "_locked"
 
-type ContextValidator = Callable[[set[str]], bool]
+type ContextValidator = Callable[[set[str] | frozenset[str]], bool]
 type Aggregator = Callable[[Iterable[ContextValidator]], ContextValidator]
 
 
@@ -27,21 +23,21 @@ def _locked_validator(_: object) -> bool:
 
 
 def _all_of(validators: Iterable[ContextValidator]) -> ContextValidator:
-    def inner(ss: set[str]) -> bool:
+    def inner(ss: set[str] | frozenset[str]) -> bool:
         for v in validators:
             if not v(ss):
-                print(False, v)
+                # print(False, v)
                 return False
         return True
-    
+
     return inner
 
 
 def _any_of(validators: Iterable[ContextValidator]) -> ContextValidator:
-    def inner(ss: set[str]) -> bool:
+    def inner(ss: set[str] | frozenset[str]) -> bool:
         for v in validators:
             if v(ss):
-                print(True, v)
+                # print(True, v)
                 return True
         return False
 
@@ -121,9 +117,9 @@ class _Symbols:
 
     def __hash__(self) -> int:
         return hash((self.main, self.secondary))
-    
+
     def __contains__(self, elem: object) -> bool:
-        return (elem == self.main) or (elem == self.secondary)
+        return (elem == self.main) or (elem == self.secondary)  # noqa: PLR1714
 
 
 class Token(_Symbols, Enum):
@@ -136,14 +132,14 @@ class Token(_Symbols, Enum):
 type Operator = Literal[Token.AND] | Literal[Token.OR]
 
 
-class Tokens(list[str]):
+class Tokens(UserList[str]):
     def next_is(self, tok: Token) -> bool:
         if not self:
             return False
         return self[0] in tok.value
 
     def consume(self, tok: Token | None = None) -> str:
-        print(f"Consuming {self[0]}")
+        # print(f"Consuming {self[0]}")
         if tok is None:
             return self.pop(0)
         if not self.next_is(tok):
@@ -251,31 +247,32 @@ class _Parser:
             first = self.parse_bracketed()
         else:
             first = self.parse_atom()
-        operands = [first]
 
         if self.tokens:
+            operands = [first]
             op = self.tokens.peek_op()
-            print(op)
+            # print(op)
             while self.tokens and self.tokens.next_is(op):
                 self.tokens.consume_op()
                 term = self.parse_bracketed()
                 operands.append(term)
 
-        aggregator = self.get_aggregator(op)
-        print("aggregator", aggregator)
-        return aggregator(operands)
+            aggregator = self.get_aggregator(op)
+            # print("aggregator", aggregator)
+            return aggregator(operands)
+        return first
 
     def parse_bracketed(self) -> ContextValidator:
         """A term is either a parenthesised OR-group or a bare atom."""
         if self.tokens.next_is(Token.LEFT):
-            print("IN LEFT LOOP")
+            # print("IN LEFT LOOP")
             self.tokens.consume(Token.LEFT)
             parsed = self.parse_expressions()
             self.tokens.consume(Token.RIGHT)
         else:
             parsed = self.parse_atom()
 
-        print("IN ATOM LOOP")
+        # print("IN ATOM LOOP")
         return parsed
 
     def get_aggregator(self, op: Operator) -> Aggregator:
@@ -286,7 +283,7 @@ class _Parser:
 
     def parse_atom(self) -> ContextValidator:
         tok = self.tokens.peek()
-        print(f"{tok=}")
+        # print(f"{tok=}")
         if tok is None or not re.fullmatch(r"[A-Za-z0-9_]+", tok):
             raise ValueError(f"Expected atom, got {tok!r}")
         self.tokens.consume()
@@ -294,7 +291,7 @@ class _Parser:
 
     @staticmethod
     def _condition_from_atom(context: str) -> ContextValidator:
-        def inner(ss: set[str]) -> bool:
+        def inner(ss: set[str] | frozenset[str]) -> bool:
             return context in ss
 
         return inner
@@ -305,9 +302,9 @@ class _Parser:
 # ---------------------------------------------------------------------------
 
 
-
-
-def make_context_validator(context_expression: str, child_mapper: dict[str, str]) -> ContextValidator:
+def make_context_validator(
+    context_expression: str, child_mapper: dict[str, str]
+) -> ContextValidator:
     """
     Parse an AND/OR expression into a validator.
 
@@ -315,19 +312,24 @@ def make_context_validator(context_expression: str, child_mapper: dict[str, str]
         parse("a,b")({"a"})            # True  — OR
         parse("(a,b).c")({"a", "c"})  # True  — (a OR b) AND c
     """
-    if context_expression == LOCKED_CONTEXT:
+    locked_expression = re.compile(f"\\b{LOCKED_CONTEXT}\\b")
+    universal_expression = re.compile(f"\\b{UNIVERSAL_CONTEXT}\\b")
+
+    if locked_expression.search(context_expression):
         return _locked_validator
-    if context_expression == UNIVERSAL_CONTEXT:
+    if universal_expression.search(context_expression):
         return trivial_validator
 
     check_syntax(context_expression)
     tokens = _tokenize(context_expression)
-    print(tokens)
+    # print(tokens)
     validator = _Parser(tokens).parse()
 
-    def validate_contexts(child_contexts: set[str]) -> bool:
-        # CONTEXT_MAPPER: dict[str, str] = 
-        mapped_contexts = child_contexts | {c for c in map(child_mapper.get, child_contexts) if c is not None}
+    def validate_contexts(child_contexts: set[str] | frozenset[str]) -> bool:
+        # CONTEXT_MAPPER: dict[str, str] =
+        mapped_contexts = child_contexts | {
+            c for c in map(child_mapper.get, child_contexts) if c is not None
+        }
 
         return validator(mapped_contexts)
 
@@ -347,7 +349,7 @@ assert abc
 assert abd
 assert not abe
 
-'''
+"""
 # TODO: add context expression parser and integrate it with 'virtual contexts',
 #     i.e. special values such as '_any' and '_locked'
 def resolve_contexts(
@@ -367,4 +369,4 @@ def resolve_contexts(
 
     mapped_contexts = child_contexts | sfilter(smap(CONTEXT_MAPPER.get, child_contexts))
     return parent_contexts.intersection(mapped_contexts)
-'''
+"""

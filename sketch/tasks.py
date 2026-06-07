@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 from pathlib import Path
 
-from pydantic import BaseModel, Field
 from adiumentum.pydantic import BaseList
+from pydantic import BaseModel, Field
+
 from datethyme import Date
 
 
@@ -53,7 +55,10 @@ class RecurringTask(BaseModel):
         return (date - self.last) > self.frequency
 
     def __str__(self) -> str:
-        return f"DUE: {self.due_date}  |  {self.name:<20} |{self.frequency:>2}|  last done: {self.last}  |  {self.duration_repr}"
+        return (
+            f"DUE: {self.due_date}  |  {self.name:<20} |{self.frequency:>2}"
+            f"|  last done: {self.last}  |  {self.duration_repr}"
+        )
 
 
 class RecurringTasks(BaseList[RecurringTask]):
