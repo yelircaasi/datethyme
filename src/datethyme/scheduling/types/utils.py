@@ -52,15 +52,15 @@ NESTED_RE = re.compile(
 )
 
 
-def _parse_contexts(raw: str | None) -> list[str]:
+def _parse_contexts(raw: str | None) -> str: #list[str]:
     if not raw:
-        return []
+        return ""
 
     inner = raw[1:-1].strip()
     if not inner:
-        return []
+        return ""
 
-    return [x.strip() for x in inner.split(",") if x.strip()]
+    return inner.replace(" ", "") #[x.strip() for x in inner.split(",") if x.strip()]
 
 
 class DayDict(TypedDict):

@@ -89,7 +89,7 @@ def validate_date(raw_date: str | dict | list | tuple) -> dict[str, int | float]
         outdict
         and (outdict["month"] in MAX_DAYS)
         and (0 < outdict["day"] <= MAX_DAYS[int(outdict["month"])])
-        and all((outdict["year"] > 1970, outdict["month"] > 0, outdict["day"] > 0))
+        and all((outdict["year"] > 1969, outdict["month"] > 0, outdict["day"] > 0))
     ):
         return outdict
 

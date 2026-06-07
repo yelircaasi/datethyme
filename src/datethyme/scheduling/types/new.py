@@ -394,6 +394,9 @@ class Day(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.text}\n{'\n'.join(map(str, self.blocks))}"
+    
+    def available_by_context(self, context: str) -> list[Block]:
+        return [block for block in self.blocks if block.context_validator({context})]
 
     def add_routines(self, routines: Routines) -> set[str]:
         """TODO"""
